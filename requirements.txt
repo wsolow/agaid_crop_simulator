@@ -61,4 +61,3 @@ tzdata==2024.1
 urllib3==2.2.2
 wandb==0.17.7
 Werkzeug==3.0.4
--e git+https://github.com/wsolow/agaid_crop_simulator.git@a48e0ef3fa9b71c0fad8657776c024edbbab4c28#egg=wofost_gym&subdirectory=wofost_gym
