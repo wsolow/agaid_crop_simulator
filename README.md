@@ -1,6 +1,7 @@
 # Project Title
 
-Simple overview of use/purpose.
+This is the Crop Simulator for the joint [AgAid](https://agaid.org/) Project between Oregon State 
+University (OSU) and Washington State University (WSU).
 
 ## Description
 
@@ -47,7 +48,7 @@ Email soloww@oregonstate.edu with any questions
 Contributors names and contact info
 
 Will Solow (soloww@oregonstate.edu)
- 
+
 Dr. Sandhya Saisubramanian (sandhya.sai@oregonstate.edu)
 
 ## Version History
