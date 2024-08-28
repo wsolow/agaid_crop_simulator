@@ -52,17 +52,22 @@ needed to run all scripts in the agaid_crop_simulator package
 ### Executing program
 
 * How to run the program
+
 After following the above installation instructions: 
 1. Navigate to the base directory ../agaid_crop_simulator/
 2. Run the testing domain with: python3 test_wofost.py 
-3. 
 
-
+When this runs successfully, to train an RL agent:
+1. Run: python3 train_agent.py --agent-type <str: PPO | SAC | DQN>
+2. If you have Weights and Biases set up, run:  
+    python3 train_agent.py --agent-type <str: PPO | SAC | DQN> --<ag-type>.track
 
 ## Help
 
-Initial configuration parameters, including sys.path parameters, can be modified 
-in the utils.py file. This filename should show the path to the ../agaid_crop_simulator/
+Initial configuration for the Gym Environment parameters (Note: NOT the actual crop simulation) 
+can be modified in the utils.py file. 
+
+This filename should show the path to the ../agaid_crop_simulator/
 directory. From there, the env_config/ folder can be found with the corresponding
 agromanagement, crop, and site parameters. For further information, please see the 
 following READMEs:
@@ -76,7 +81,7 @@ following READMEs:
 * env_config/site_config/README_site_states.md - an overview of all site state and rate
     variables available for output with corresponding units.
 
-* * env_config/crop_config/README_add_crop.md - overview of how to add a new crop
+* env_config/crop_config/README_add_crop.md - overview of how to add a new crop
     with all required parameters.
 * env_config/crop_config/README_crop_paramters.md - an overview of all configurable crop 
     parameters
@@ -95,8 +100,6 @@ Email soloww@oregonstate.edu with any further questions
 
 ## Authors
 
-Contributors names and contact info
-
 Will Solow (soloww@oregonstate.edu)
 
 Dr. Sandhya Saisubramanian (sandhya.sai@oregonstate.edu)
@@ -108,7 +111,7 @@ Dr. Sandhya Saisubramanian (sandhya.sai@oregonstate.edu)
 
 ## License
 
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
+This project is licensed under the MIT License - see the LICENSE.md file for details
 
 ## Acknowledgments
 

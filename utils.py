@@ -11,6 +11,7 @@ class NPK_Args:
     path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
 
     """Output Variables"""
+    """See env_config/README.md for more information"""
     output_vars: list = field(default_factory = lambda: ['DVS', 'LAI', 'RD', 'WSO', 'NuptakeTotal', 'PuptakeTotal', 'KuptakeTotal', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
@@ -18,6 +19,7 @@ class NPK_Args:
     """Intervention Interval"""
     intvn_interval: int = 1
     """Number of NPK Fertilization Actions"""
+    """Total number of actions available will be 3*num_fert^3 + num_irrig"""
     num_fert: int = 2
     """Number of Irrgiation Actions"""
     num_irrig: int = 2

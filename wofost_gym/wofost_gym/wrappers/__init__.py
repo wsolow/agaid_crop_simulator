@@ -1,0 +1,1 @@
+import wofost_gym.envs.npk_env as npk_env

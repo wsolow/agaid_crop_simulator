@@ -8,6 +8,12 @@ import gymnasium as gym
 import pcse
 from pathlib import Path
 
+# Action Enums
+N_ACT = 0
+P_ACT = 1
+K_ACT = 2
+W_ACT = 3
+
 class NPK_Env(gym.Env):
 
     def __init__(self, args):
@@ -45,6 +51,7 @@ class NPK_Env(gym.Env):
         self.num_p = args.num_fert
         self.num_k = args.num_fert
         self.num_irrig = args.num_irrig
+        self.num_actions = np.max([self.num_n, self.num_p, self.num_k, self.num_irrig])
 
         self.fert_amount = args.fert_amount
         self.irrig_amount = args.irrig_amount
@@ -56,7 +63,7 @@ class NPK_Env(gym.Env):
         self.beta = args.beta
 
         # Create action and observation spaces
-        self.action_space = gym.spaces.MultiDiscrete(nvec=[self.num_n, self.num_p, self.num_k, self.num_irrig],dtype=int)
+        self.action_space = gym.spaces.MultiDiscrete(nvec=[4, self.num_actions], dtype=int)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, \
                                 shape=(len(self.output_vars)+len(self.weather_vars)*args.intvn_interval,))
 
@@ -201,10 +208,10 @@ class NPK_Env(gym.Env):
 
     # Send action to the model
     def _take_action(self, action):
-        n_amount = self.fert_amount * action[0]
-        p_amount = self.fert_amount * action[1]
-        k_amount = self.fert_amount * action[2]
-        irrig_amount = self.irrig_amount * action[3]
+        n_amount = self.fert_amount * action[1] * (action[0] == N_ACT)
+        p_amount = self.fert_amount * action[1] * (action[0] == P_ACT)
+        k_amount = self.fert_amount * action[1] * (action[0] == K_ACT)
+        irrig_amount = self.irrig_amount * action[1] * (action[0] == W_ACT)
 
         self.model._send_signal(signal=pcse.signals.apply_npk, N_amount=n_amount, \
                                 P_amount=p_amount, K_amount=k_amount, N_recovery=self.n_recovery,\
