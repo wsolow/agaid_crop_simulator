@@ -13,4 +13,4 @@ echo "Task ID: $SLURM_ARRAY_TASK_ID"
 
 SEED="${SLURM_ARRAY_JOB_ID}${SLURM_ARRAY_TASK_ID}"
 cd ../
-python3 train_agent.py --agent-type "SAC"
+python3 train_agent.py --agent-type "SAC" --sac.npk.path "/nfs/hpc/share/soloww/CropSim/agaid_crop_simulator/" --sac.track
