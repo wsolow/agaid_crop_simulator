@@ -1,0 +1,8 @@
+2024-08-28 12:59:39,697 INFO    StreamThr :14049 [internal.py:wandb_internal():85] W&B internal server running at pid: 14049, started at: 2024-08-28 12:59:39.696198
+2024-08-28 12:59:39,698 DEBUG   HandlerThread:14049 [handler.py:handle_request():158] handle_request: status
+2024-08-28 12:59:39,704 INFO    WriterThread:14049 [datastore.py:open_for_write():87] open: /Users/wsolow/Projects/agaid_crop_simulator/wandb/run-20240828_125939-qww50uf6/run-qww50uf6.wandb
+2024-08-28 12:59:39,705 DEBUG   SenderThread:14049 [sender.py:send():391] send: header
+2024-08-28 12:59:39,829 DEBUG   HandlerThread:14049 [handler.py:handle_request():158] handle_request: shutdown
+2024-08-28 12:59:39,829 INFO    HandlerThread:14049 [handler.py:finish():880] shutting down handler
+2024-08-28 12:59:40,710 INFO    WriterThread:14049 [datastore.py:close():296] close: /Users/wsolow/Projects/agaid_crop_simulator/wandb/run-20240828_125939-qww50uf6/run-qww50uf6.wandb
+2024-08-28 12:59:40,711 INFO    SenderThread:14049 [sender.py:finish():1631] shutting down sender
