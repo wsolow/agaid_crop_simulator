@@ -8,7 +8,7 @@ class NPK_Args:
     """Environment seed"""
     seed: int = 0
     """Path"""
-    path: Path = Path("/Users/wsolow/Projects/agaid_crop_simulator/")
+    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
 
     """Output Variables"""
     output_vars: list = field(default_factory = lambda: ['DVS', 'LAI', 'RD', 'WSO', 'NuptakeTotal', 'PuptakeTotal', 'KuptakeTotal', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC'])
