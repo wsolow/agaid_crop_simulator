@@ -51,7 +51,7 @@ class Args:
     """the id of the environment"""
     total_timesteps: int = 5000000
     """total timesteps of the experiments"""
-    buffer_size: int = int(1e6)
+    buffer_size: int = int(1e4)
     """the replay memory buffer size"""  # smaller than in original paper but evaluation is done only for 100k steps anyway
     gamma: float = 0.99
     """the discount factor gamma"""
@@ -67,7 +67,7 @@ class Args:
     """the learning rate of the Q network network optimizer"""
     update_frequency: int = 4
     """the frequency of training updates"""
-    target_network_frequency: int = 8000
+    target_network_frequency: int = 650
     """the frequency of updates for the target networks"""
     alpha: float = 0.2
     """Entropy regularization coefficient."""
