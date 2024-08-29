@@ -151,7 +151,7 @@ class NPK_Env(gym.Env):
                 list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
             self.crop_end_date = \
                 list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-            
+        
         self.date = self.crop_start_date
         # Reset weather 
         self.weatherdataprovider = self._get_weatherdataprovider()
