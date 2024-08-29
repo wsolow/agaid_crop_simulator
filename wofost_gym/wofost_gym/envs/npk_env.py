@@ -97,7 +97,7 @@ class NPK_Env(gym.Env):
     
     # Get the training weather data
     def _get_train_weather_data(self):
-        all_years = range(1983, 2018)
+        all_years = range(1984, 2018)
         missing_data = []
         train_weather_data = [year for year in all_years if year not in missing_data]
         return train_weather_data
