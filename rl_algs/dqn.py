@@ -7,7 +7,7 @@ from pathlib import Path
 
 import gymnasium as gym
 import wofost_gym
-from wofost_gym.wrappers.discrete_wrapper import npk_discrete
+from wofost_gym.wrappers import NPKDiscreteWrapper
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,6 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 # Import relative npk_args file
 sys.path.append(str(Path(__file__).parent.parent))
 from utils import NPK_Args
+import utils
 
 @dataclass
 class Args:
@@ -50,7 +51,7 @@ class Args:
     """the user or org name of the model repository from the Hugging Face Hub"""
 
     # Algorithm specific arguments
-    env_id: str = "npk-v0"
+    env_id: str = "wofost-v0"
     """the id of the environment"""
     total_timesteps: int = 1000000
     """total timesteps of the experiments"""
@@ -88,7 +89,12 @@ def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
         else:
             env = gym.make(env_id, **{'args': kwargs})
         env = gym.wrappers.RecordEpisodeStatistics(env)
-        env = npk_discrete(env)
+
+        # Wrap the action space to discrete
+        env = NPKDiscreteWrapper(env)
+        # Change the reward function used as specified by args.env_reward
+        env = utils.wrap_env_reward(env, kwargs)
+
         env.action_space.seed(seed)
 
         return env

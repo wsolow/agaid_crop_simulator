@@ -1,1 +1,3 @@
-import wofost_gym.envs.npk_env as npk_env
+from wofost_gym.wrappers.wrappers import NPKDiscreteWrapper
+from wofost_gym.wrappers.wrappers import RewardTotalGrowthWrapper
+from wofost_gym.wrappers.wrappers import RewardFertilizationCostWrapper

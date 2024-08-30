@@ -1,10 +1,17 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+import wofost_gym.wrappers.wrappers as wrappers
+import typing
+import gymnasium as gym
 
 
 # Configuration parameters for NPK WOFOST Gym Environment
 @dataclass
 class NPK_Args:
+    """Environment ID"""
+    env_id: str = "wofost-v0"
+    """Env Reward Function"""
+    env_reward: str = "default"
     """Environment seed"""
     seed: int = 0
     """Path"""
@@ -12,7 +19,7 @@ class NPK_Args:
 
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['DVS', 'LAI', 'RD', 'WSO', 'NuptakeTotal', 'PuptakeTotal', 'KuptakeTotal', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC'])
+    output_vars: list = field(default_factory = lambda: ['DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
 
@@ -46,3 +53,13 @@ class NPK_Args:
 
     """Flag for resetting to random year"""
     random_reset: bool = False
+
+# Function to wrap the environment with a given reward function
+# Based on the reward functions created in the wofost_gym/wrappers/
+def wrap_env_reward(env: gym.Env, args: NPK_Args):
+    if args.env_reward == "default":
+        return env
+    elif args.env_reward == "totalgrowth":
+        return wrappers.RewardTotalGrowthWrapper(env)
+    elif args.env_reward == "fertilizationcost":
+        return wrappers.RewardFertilizationCostWrapper
