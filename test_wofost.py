@@ -11,7 +11,7 @@ import utils
 
 def policy(obs, k):
     if k % 4 == 0:
-        action = [3,1]
+        action = [3,0]
     elif k % 4 == 1:
         action = [2, 3]
     else:
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Make the gym environment
     env = gym.make(env_id, **env_kwargs)
-    env = utils.wrap_env_reward(args, env)
+    env = utils.wrap_env_reward(env, args)
 
     obs_arr = []
     obs, info = env.reset()

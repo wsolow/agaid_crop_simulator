@@ -140,7 +140,7 @@ SiteParameters:
        - ['-']
        SMLIM:     
        - 0.3
-       - limiting amount of volumetric moisture in upper soil layer 
+       - initial maximum moisture content in initial root zone
        - ['-']
        #
        # EVAPOTRANSPIRATION

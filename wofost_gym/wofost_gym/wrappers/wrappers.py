@@ -59,6 +59,7 @@ class RewardTotalGrowthWrapper(gym.Wrapper):
 
         return obs, reward, done, truncation, self.env.unwrapped.log
     
+    
 class RewardFertilizationCostWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)

@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), Juli 2015
 # from __future__ import print_function
+# Modified by Will Solow, 2024
 """Implementation of AgroManager and related classes for agromanagement actions in PCSE.
 
 Available classes:

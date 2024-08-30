@@ -16,7 +16,7 @@ W_ACT = 3
 
 # Base model simulating growth of crop subject to NPK and water limited dynamics
 class NPK_Env(gym.Env):
-
+    config = "Wofost80.conf"
     def __init__(self, args):
         self.seed(args.seed)
         self.log = self._init_log()
@@ -43,8 +43,8 @@ class NPK_Env(gym.Env):
         self.train_weather_data = self._get_train_weather_data()
         
         # Create crop model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
+        self.model = pcse.models.Wofost80(self.parameterprovider, self.weatherdataprovider,
+                                         self.agromanagement, config=self.config)
         self.date = self.crop_start_date
 
         # NPK/Irrigation action amounts
@@ -156,8 +156,8 @@ class NPK_Env(gym.Env):
         # Reset weather 
         self.weatherdataprovider = self._get_weatherdataprovider()
         # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
+        self.model = pcse.models.Wofost80(self.parameterprovider, self.weatherdataprovider,
+                                         self.agromanagement, config=self.config)
         
         # Generate first part of output 
         output = self._run_simulation(self.model)
@@ -254,294 +254,32 @@ class NPK_Env(gym.Env):
 # Excess water to be available in the soil 
 class PP_Env(NPK_Env):
     def __init__(self, args):
+        self.config="Wofost80_PP.conf"
         super().__init__(args)
-
-    # Inherits same reset function, except for manually holding npk and water 
-    # level values at maximum
-    def reset(self, **kwargs):
-        self.log = self._init_log()
-
-        # Reset to random year if flag
-        if self.random_reset:
-            self.crop_start_date, self.crop_end_date = self._random_year()
-        else:
-            self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-            self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-        
-        self.date = self.crop_start_date
-        # Reset weather 
-        self.weatherdataprovider = self._get_weatherdataprovider()
-        # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
-        
-        self.model.soil.WaterbalanceFD.states.WC =  100.
-        self.model.soil.NPK_Soil_Dynamics.states.NAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-        
-        # Generate first part of output 
-        output = self._run_simulation(self.model)
-        observation = self._process_output(output)
-
-
-        return observation, self.log
-
-    # Step through the environment
-    def step(self, action):
-        # Manually set soil values to maximum
-        self.model.soil.WaterbalanceFD.states.WC = 100. 
-        self.model.soil.NPK_Soil_Dynamics.states.NAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-
-        npk, irrigation = self._take_action(action)
-        output = self._run_simulation(self.model)
-
-        observation = self._process_output(output)
-        self.date = output.index[-1]
-        reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
-
-        self._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return observation, reward, done, truncation, self.log
 
 # Simulating production under abundant water but limited NPK dynamics
 class Limited_NPK_Env(NPK_Env):
 
     def __init__(self, args):
+        self.config = "Wofost80_LNPK.conf"
         super().__init__(args)
 
-    # Inherits same reset function, except for manually holding npk and water 
-    # level values at maximum
-    def reset(self, **kwargs):
-        self.log = self._init_log()
-
-        # Reset to random year if flag
-        if self.random_reset:
-            self.crop_start_date, self.crop_end_date = self._random_year()
-        else:
-            self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-            self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-        
-        self.date = self.crop_start_date
-        # Reset weather 
-        self.weatherdataprovider = self._get_weatherdataprovider()
-        # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
-        
-        self.model.soil.WaterbalanceFD.states.WC =  100.
-        
-        # Generate first part of output 
-        output = self._run_simulation(self.model)
-        observation = self._process_output(output)
-
-
-        return observation, self.log
-
-    # Step through the environment
-    def step(self, action):
-        # Manually set soil values to maximum
-        self.model.soil.WaterbalanceFD.states.WC = 100. 
-
-        npk, irrigation = self._take_action(action)
-        output = self._run_simulation(self.model)
-
-        observation = self._process_output(output)
-        self.date = output.index[-1]
-        reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
-
-        self._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return observation, reward, done, truncation, self.log
-    
 # Simulating production under limited Nitrogen but abundant water and P/K
 class Limited_N_Env(NPK_Env):
 
     def __init__(self, args):
+        self.config = "Wofost80_LN.conf"
         super().__init__(args)
 
-    # Inherits same reset function, except for manually holding npk and water 
-    # level values at maximum
-    def reset(self, **kwargs):
-        self.log = self._init_log()
-
-        # Reset to random year if flag
-        if self.random_reset:
-            self.crop_start_date, self.crop_end_date = self._random_year()
-        else:
-            self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-            self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-        
-        self.date = self.crop_start_date
-        # Reset weather 
-        self.weatherdataprovider = self._get_weatherdataprovider()
-        # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
-        
-        self.model.soil.WaterbalanceFD.states.WC =  100.
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-        
-        # Generate first part of output 
-        output = self._run_simulation(self.model)
-        observation = self._process_output(output)
-
-
-        return observation, self.log
-
-    # Step through the environment
-    def step(self, action):
-        # Manually set soil values to maximum
-        self.model.soil.WaterbalanceFD.states.WC = 100. 
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-
-        npk, irrigation = self._take_action(action)
-        output = self._run_simulation(self.model)
-
-        observation = self._process_output(output)
-        self.date = output.index[-1]
-        reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
-
-        self._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return observation, reward, done, truncation, self.log
-    
 # Simulating production under limited water and Nitrogen
 class Limited_NW_Env(NPK_Env):
 
     def __init__(self, args):
+        self.config = "Wofost80_LNW.conf"
         super().__init__(args)
-
-    # Inherits same reset function, except for manually holding npk and water 
-    # level values at maximum
-    def reset(self, **kwargs):
-        self.log = self._init_log()
-
-        # Reset to random year if flag
-        if self.random_reset:
-            self.crop_start_date, self.crop_end_date = self._random_year()
-        else:
-            self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-            self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-        
-        self.date = self.crop_start_date
-        # Reset weather 
-        self.weatherdataprovider = self._get_weatherdataprovider()
-        # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
-        
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-        
-        # Generate first part of output 
-        output = self._run_simulation(self.model)
-        observation = self._process_output(output)
-
-
-        return observation, self.log
-
-    # Step through the environment
-    def step(self, action):
-        # Manually set soil values to maximum
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-
-        npk, irrigation = self._take_action(action)
-        output = self._run_simulation(self.model)
-
-        observation = self._process_output(output)
-        self.date = output.index[-1]
-        reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
-
-        self._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return observation, reward, done, truncation, self.log
 
 # Simulating production under limited water 
 class Limited_W_Env(NPK_Env):
     def __init__(self, args):
+        self.config = "Wofost80_LW.conf"
         super().__init__(args)
-
-    # Inherits same reset function, except for manually holding npk and water 
-    # level values at maximum
-    def reset(self, **kwargs):
-        self.log = self._init_log()
-
-        # Reset to random year if flag
-        if self.random_reset:
-            self.crop_start_date, self.crop_end_date = self._random_year()
-        else:
-            self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-            self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
-        
-        self.date = self.crop_start_date
-        # Reset weather 
-        self.weatherdataprovider = self._get_weatherdataprovider()
-        # Reset model
-        self.model = pcse.models.Wofost80_NWLP_FD_beta(self.parameterprovider, self.weatherdataprovider,
-                                         self.agromanagement)
-        
-        self.model.soil.NPK_Soil_Dynamics.states.NAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-        
-        # Generate first part of output 
-        output = self._run_simulation(self.model)
-        observation = self._process_output(output)
-
-
-        return observation, self.log
-
-    # Step through the environment
-    def step(self, action):
-        # Manually set soil values to maximum
-        self.model.soil.NPK_Soil_Dynamics.states.NAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.PAVAIL = 100.
-        self.model.soil.NPK_Soil_Dynamics.states.KAVAIL = 100.
-
-        npk, irrigation = self._take_action(action)
-        output = self._run_simulation(self.model)
-
-        observation = self._process_output(output)
-        self.date = output.index[-1]
-        reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
-
-        self._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return observation, reward, done, truncation, self.log
- 

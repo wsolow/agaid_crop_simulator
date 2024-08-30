@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2018 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2018
+# Modified by Will Solow, 2024
 """
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
