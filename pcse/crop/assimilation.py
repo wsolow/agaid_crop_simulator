@@ -159,7 +159,7 @@ class WOFOST_Assimilation2(SimulationObject):
                as function of DVS
     TMPFTB     Reduction factor of AMAX as function of        TCr      -
                daily mean temperature.
-    TMPFTB     Reduction factor of AMAX as function of        TCr      -
+    TMNFTB     Reduction factor of AMAX as function of        TCr      -
                daily minimum temperature.
     CO2AMAXTB  Correction factor for AMAX given atmos-        TCr      -
                pheric CO2 concentration.

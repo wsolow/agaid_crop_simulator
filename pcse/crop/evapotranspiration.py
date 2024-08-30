@@ -58,7 +58,7 @@ class EvapotranspirationCO2(SimulationObject):
     SM0      Soil porosity                                   S       -
     SMW      Volumetric soil moisture content at wilting     S       -
              point
-    SMCFC    Volumetric soil moisture content at field       S       -
+    SMFCF    Volumetric soil moisture content at field       S       -
              capacity
     SM0      Soil porosity                                   S       -
     CO2      Atmospheric CO2 concentration                   S       ppm

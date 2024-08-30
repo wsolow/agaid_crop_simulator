@@ -8,7 +8,6 @@ import tyro
 import utils
 
 
-
 def policy(obs, k):
     if k % 4 == 0:
         action = [3,0]
