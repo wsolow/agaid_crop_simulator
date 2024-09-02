@@ -69,6 +69,10 @@ class NPK_Soil_Dynamics(SimulationObject):
      NAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      PAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
+
+     TOTN     Total mineral N applied by fertilization           Y    |kg ha-1|
+     TOTP     Total mineral P applied by fertilization           Y    |kg ha-1|
+     TOTK     Total mineral K applied by fertilization           Y    |kg ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -152,6 +156,10 @@ class NPK_Soil_Dynamics(SimulationObject):
         NAVAIL = Float(-99.)  # total mineral N from soil and fertiliser  kg N ha-1
         PAVAIL = Float(-99.)  # total mineral P from soil and fertiliser  kg N ha-1
         KAVAIL = Float(-99.)  # total mineral K from soil and fertiliser  kg N ha-1
+
+        TOTN = Float(-99.) # total mineral N applied by fertilization kg N / ha
+        TOTP = Float(-99.) # total mineral P applied by fertilization kg N / ha
+        TOTK = Float(-99.) # total mineral K applied by fertilization kg N / ha
       
     class RateVariables(RatesTemplate):
         RNSOIL = Float(-99.)
@@ -184,9 +192,11 @@ class NPK_Soil_Dynamics(SimulationObject):
         self.KSOILI = p.KSOILBASE
         
         self.states = self.StateVariables(kiosk,
-            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL"],
+            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", 
+                     "TOTN", "TOTP", "TOTK"],
             NSOIL=p.NSOILBASE, PSOIL=p.PSOILBASE, KSOIL=p.KSOILBASE,
-            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI)
+            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI, 
+            TOTN=0., TOTP=0., TOTK=0.)
         
         self.rates = self.RateVariables(kiosk, 
             publish=["RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", 
@@ -243,6 +253,10 @@ class NPK_Soil_Dynamics(SimulationObject):
         self._FERT_N_SUPPLY = N_amount * N_recovery
         self._FERT_P_SUPPLY = P_amount * P_recovery
         self._FERT_K_SUPPLY = K_amount * K_recovery
+
+        self.states.TOTN += N_amount
+        self.states.TOTP += P_amount
+        self.states.TOTK += K_amount
 
 
 class NPK_Soil_Dynamics_PP(SimulationObject):
@@ -305,6 +319,10 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
      NAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      PAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
+
+     TOTN     Total mineral N applied by fertilization           Y    |kg ha-1|
+     TOTP     Total mineral P applied by fertilization           Y    |kg ha-1|
+     TOTK     Total mineral K applied by fertilization           Y    |kg ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -389,6 +407,10 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         PAVAIL = Float(-99.)  # total mineral P from soil and fertiliser  kg N ha-1
         KAVAIL = Float(-99.)  # total mineral K from soil and fertiliser  kg N ha-1
       
+        TOTN = Float(-99.) # total mineral N applied by fertilization kg N / ha
+        TOTP = Float(-99.) # total mineral P applied by fertilization kg N / ha
+        TOTK = Float(-99.) # total mineral K applied by fertilization kg N / ha
+
     class RateVariables(RatesTemplate):
         RNSOIL = Float(-99.)
         RPSOIL = Float(-99.)
@@ -420,9 +442,11 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         self.KSOILI = p.KSOILBASE
         
         self.states = self.StateVariables(kiosk,
-            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL"],
+            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", 
+                     "TOTN", "TOTP", "TOTK"],
             NSOIL=p.NSOILBASE, PSOIL=p.PSOILBASE, KSOIL=p.KSOILBASE,
-            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI)
+            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI, 
+            TOTN=0., TOTP=0., TOTK=0.)
         
         self.rates = self.RateVariables(kiosk, 
             publish=["RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", 
@@ -483,6 +507,10 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         self._FERT_N_SUPPLY = N_amount * N_recovery
         self._FERT_P_SUPPLY = P_amount * P_recovery
         self._FERT_K_SUPPLY = K_amount * K_recovery
+
+        self.states.TOTN += N_amount
+        self.states.TOTP += P_amount
+        self.states.TOTK += K_amount
 
 
 class NPK_Soil_Dynamics_LN(SimulationObject):
@@ -546,6 +574,10 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
      NAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      PAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
      KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
+
+     TOTN     Total mineral N applied by fertilization           Y    |kg ha-1|
+     TOTP     Total mineral P applied by fertilization           Y    |kg ha-1|
+     TOTK     Total mineral K applied by fertilization           Y    |kg ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -629,6 +661,10 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         NAVAIL = Float(-99.)  # total mineral N from soil and fertiliser  kg N ha-1
         PAVAIL = Float(-99.)  # total mineral P from soil and fertiliser  kg N ha-1
         KAVAIL = Float(-99.)  # total mineral K from soil and fertiliser  kg N ha-1
+
+        TOTN = Float(-99.) # total mineral N applied by fertilization kg N / ha
+        TOTP = Float(-99.) # total mineral P applied by fertilization kg N / ha
+        TOTK = Float(-99.) # total mineral K applied by fertilization kg N / ha
       
     class RateVariables(RatesTemplate):
         RNSOIL = Float(-99.)
@@ -661,9 +697,11 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         self.KSOILI = p.KSOILBASE
         
         self.states = self.StateVariables(kiosk,
-            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL"],
+            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", 
+                     "TOTN", "TOTP", "TOTK"],
             NSOIL=p.NSOILBASE, PSOIL=p.PSOILBASE, KSOIL=p.KSOILBASE,
-            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI)
+            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI, 
+            TOTN=0., TOTP=0., TOTK=0.)
         
         self.rates = self.RateVariables(kiosk, 
             publish=["RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", 
@@ -724,3 +762,6 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         self._FERT_P_SUPPLY = P_amount * P_recovery
         self._FERT_K_SUPPLY = K_amount * K_recovery
 
+        self.states.TOTN += N_amount
+        self.states.TOTP += P_amount
+        self.states.TOTK += K_amount

@@ -1,3 +1,6 @@
+# Written in Aug 2024, by Will Solow
+# Basic code to support training a few Deep RL Agents
+
 import sys
 import tyro
 from dataclasses import dataclass

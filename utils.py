@@ -4,58 +4,14 @@ import wofost_gym.wrappers.wrappers as wrappers
 import typing
 import gymnasium as gym
 import warnings
+from inspect import getmembers, isfunction
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# Configuration parameters for NPK WOFOST Gym Environment
+# Configuration parameters for the WOFOST model - to be used only if 
+# making a new configuration file is not desired
 @dataclass
-class NPK_Args:
-    """Environment ID"""
-    env_id: str = "wofost-v0"
-    """Env Reward Function"""
-    env_reward: str = "default"
-    """Environment seed"""
-    seed: int = 0
-    """Path"""
-    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
-
-    """Output Variables"""
-    """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
-    """Weather Variables"""
-    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
-
-    """Intervention Interval"""
-    intvn_interval: int = 1
-    """Number of NPK Fertilization Actions"""
-    """Total number of actions available will be 3*num_fert^3 + num_irrig"""
-    num_fert: int = 2
-    """Number of Irrgiation Actions"""
-    num_irrig: int = 2
-
-    """Coefficient for Nitrogen Recovery after fertilization"""
-    n_recovery: float = 0.7
-    """Coefficient for Phosphorous Recovery after fertilization"""
-    p_recovery: float = 0.7
-    """Coefficient for Potassium Recovery after fertilization"""
-    k_recovery: float = 0.7
-    """Amount of fertilizer coefficient in kg/ha"""
-    fert_amount: float = 2
-    """Amount of water coefficient in cm/water"""
-    irrig_amount: float  = 0.5
-    """Coefficient for cost of fertilization"""
-    beta: float = 10.0
-
-    """Relative path to agromanagement configuration file"""
-    agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"
-    """Relative path to crop configuration file"""
-    crop_fpath: str = "env_config/crop_config/"
-    """Relative path to site configuration file"""
-    site_fpath: str = "env_config/site_config/"
-
-    """Flag for resetting to random year"""
-    random_reset: bool = False
-
+class WOFOST_Args:
     # All editable parameters for the WOFOST crop and soil. If left to default
     # of None, values will be drawn from the .yaml files in /env_config/
     # NPK Soil dynamics params
@@ -351,13 +307,232 @@ class NPK_Args:
     # NPK Translocation Parameters
     NPK_TRANSLRT_FR: float = None 
     
+# Configuration parameters for NPK WOFOST Gym Environment
+@dataclass
+class NPK_Args:
+    """"""
+    wf_args: WOFOST_Args
+
+    """Environment ID"""
+    env_id: str = "wofost-v0"
+    """Env Reward Function"""
+    env_reward: str = "default"
+    """Environment seed"""
+    seed: int = 0
+    """Path"""
+    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
+
+    """Output Variables"""
+    """See env_config/README.md for more information"""
+    output_vars: list = field(default_factory = lambda: ['DVS', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
+    """Weather Variables"""
+    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+
+    """Intervention Interval"""
+    intvn_interval: int = 1
+    """Number of NPK Fertilization Actions"""
+    """Total number of actions available will be 3*num_fert^3 + num_irrig"""
+    num_fert: int = 2
+    """Number of Irrgiation Actions"""
+    num_irrig: int = 2
+
+    """Maximum N applied in kg/ha (used in reward function)"""
+    max_n: float = 20
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_p: float = 20
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_k: float = 20
+    """Max water applied in cm (used in reward function)"""
+    max_w: float = 20
+
+    """Coefficient for Nitrogen Recovery after fertilization"""
+    n_recovery: float = 0.7
+    """Coefficient for Phosphorous Recovery after fertilization"""
+    p_recovery: float = 0.7
+    """Coefficient for Potassium Recovery after fertilization"""
+    k_recovery: float = 0.7
+    """Amount of fertilizer coefficient in kg/ha"""
+    fert_amount: float = 2
+    """Amount of water coefficient in cm/water"""
+    irrig_amount: float  = 0.5
+    """Coefficient for cost of fertilization"""
+    beta: float = 10.0
+
+    """Relative path to agromanagement configuration file"""
+    agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"
+    """Relative path to crop configuration file"""
+    crop_fpath: str = "env_config/crop_config/"
+    """Relative path to site configuration file"""
+    site_fpath: str = "env_config/site_config/"
+
+    """Flag for resetting to random year"""
+    random_reset: bool = False
+
+@dataclass
+class GenData_Args:
+    """Parameters for the WOFOST8 model"""
+    """Best if modified in /env_config/ but can be modified here for small changes"""
+    wf_args: WOFOST_Args
+
+    """Location to save data file"""
+    save_path: str = "data/test.csv"
+
+    """Environment ID"""
+    env_id: str = "wofost-v0"
+    """Env Reward Function"""
+    env_reward: str = "default"
+    """Environment seed"""
+    seed: int = 0
+    """Path"""
+    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
+    """Path to policy if using a trained Deep RL Agent Policy"""
+    """Typically in wandb/files/"""
+    agent_path: str = None
+    """Agent type (PPO, DQN, SAC)"""
+    agent_type: str = None
+    """Policy name if using a policy in the policies.py file"""
+    policy_name: str = None
+
+    """Output Variables"""
+    """See env_config/README.md for more information"""
+    output_vars: list = field(default_factory = lambda: ['DVS', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
+    """Weather Variables"""
+    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    """Year range, incremented by 1"""
+    year_range: list = field(default_factory = lambda: [1984, 2000])
+    """Latitude Range, incremented by .5"""
+    lat_range: list = field(default_factory = lambda: [50, 50])
+    """Longitude Range of values, incremented by .5"""
+    long_range: list = field(default_factory = lambda: [5, 5])
+
+    """Intervention Interval"""
+    intvn_interval: int = 1
+    """Number of NPK Fertilization Actions"""
+    """Total number of actions available will be 3*num_fert^3 + num_irrig"""
+    num_fert: int = 2
+    """Number of Irrgiation Actions"""
+    num_irrig: int = 2
+
+    """Maximum N applied in kg/ha (used in reward function)"""
+    max_n: float = 2
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_p: float = 20
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_k: float = 20
+    """Max water applied in cm (used in reward function)"""
+    max_w: float = 20
+
+    """Coefficient for Nitrogen Recovery after fertilization"""
+    n_recovery: float = 0.7
+    """Coefficient for Phosphorous Recovery after fertilization"""
+    p_recovery: float = 0.7
+    """Coefficient for Potassium Recovery after fertilization"""
+    k_recovery: float = 0.7
+    """Amount of fertilizer coefficient in kg/ha"""
+    fert_amount: float = 2
+    """Amount of water coefficient in cm/water"""
+    irrig_amount: float  = 0.5
+    """Coefficient for cost of fertilization"""
+    beta: float = 10.0
+
+    """Relative path to agromanagement configuration file"""
+    agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"
+    """Relative path to crop configuration file"""
+    crop_fpath: str = "env_config/crop_config/"
+    """Relative path to site configuration file"""
+    site_fpath: str = "env_config/site_config/"
+
+    """Flag for resetting to random year"""
+    random_reset: bool = False
+
+@dataclass
+class VizData_Args:
+    """Parameters for the WOFOST8 model"""
+    """Best if modified in /env_config/ but can be modified here for small changes"""
+    wf_args: WOFOST_Args
+
+    """Location of data folder which contains multiple runs"""
+    save_folder: str = "data/"
+
+    """Environment ID"""
+    env_id: str = "wofost-v0"
+    """Env Reward Function"""
+    env_reward: str = "default"
+    """Environment seed"""
+    seed: int = 0
+    """Path"""
+    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
+    """Path to policy if using a trained Deep RL Agent Policy"""
+    """Typically in wandb/files/"""
+    agent_path: str = None
+    """Agent type (PPO, DQN, SAC)"""
+    agent_type: str = None
+    """Policy name if using a policy in the policies.py file"""
+    policy_name: str = None
+
+    """Output Variables"""
+    """See env_config/README.md for more information"""
+    output_vars: list = field(default_factory = lambda: ['DVS', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
+    """Weather Variables"""
+    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    """Year range, incremented by 1"""
+    year_range: list = field(default_factory = lambda: [1984, 2000])
+    """Latitude Range, incremented by .5"""
+    lat_range: list = field(default_factory = lambda: [50, 50])
+    """Longitude Range of values, incremented by .5"""
+    long_range: list = field(default_factory = lambda: [5, 5])
+
+    """Intervention Interval"""
+    intvn_interval: int = 1
+    """Number of NPK Fertilization Actions"""
+    """Total number of actions available will be 3*num_fert^3 + num_irrig"""
+    num_fert: int = 2
+    """Number of Irrgiation Actions"""
+    num_irrig: int = 2
+
+    """Maximum N applied in kg/ha (used in reward function)"""
+    max_n: float = 20
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_p: float = 20
+    """Maximum K applied in kg/ha (used in reward function)"""
+    max_k: float = 20
+    """Max water applied in cm (used in reward function)"""
+    max_w: float = 20
+
+    """Coefficient for Nitrogen Recovery after fertilization"""
+    n_recovery: float = 0.7
+    """Coefficient for Phosphorous Recovery after fertilization"""
+    p_recovery: float = 0.7
+    """Coefficient for Potassium Recovery after fertilization"""
+    k_recovery: float = 0.7
+    """Amount of fertilizer coefficient in kg/ha"""
+    fert_amount: float = 2
+    """Amount of water coefficient in cm/water"""
+    irrig_amount: float  = 0.5
+    """Coefficient for cost of fertilization"""
+    beta: float = 10.0
+
+    """Relative path to agromanagement configuration file"""
+    agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"
+    """Relative path to crop configuration file"""
+    crop_fpath: str = "env_config/crop_config/"
+    """Relative path to site configuration file"""
+    site_fpath: str = "env_config/site_config/"
+
+    """Flag for resetting to random year"""
+    random_reset: bool = False
 
 # Function to wrap the environment with a given reward function
 # Based on the reward functions created in the wofost_gym/wrappers/
-def wrap_env_reward(env: gym.Env, args: NPK_Args):
+def wrap_env_reward(env: gym.Env, args):
+
+
     if args.env_reward == "default":
+        print('Default Reward Function')
         return env
-    elif args.env_reward == "totalgrowth":
-        return wrappers.RewardTotalGrowthWrapper(env)
     elif args.env_reward == "fertilizationcost":
-        return wrappers.RewardFertilizationCostWrapper
+        print('Fertilization Cost Reward Function')
+        return wrappers.RewardFertilizationCostWrapper(env)
+    elif args.env_reward == 'fertilization_threshold':
+        print('Fertilization Threshold Reward Function')
+        return wrappers.RewardFertilizationThresholdWrapper(env)

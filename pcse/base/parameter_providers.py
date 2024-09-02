@@ -42,8 +42,9 @@ class ParameterProvider(MutableMapping):
     _override = dict()
     _iter = 0  # Counter for iterator
     _ncrops_activated = 0  # Counts the number of times `set_crop_type()` has been called.
+    _nsites_activated = 0  # Counts the number of times `set_site_type()` has been called.
 
-    def __init__(self, sitedata=None, timerdata=None, soildata=None, cropdata=None):
+    def __init__(self, sitedata=None, timerdata=None, soildata=None, cropdata=None, override=None):
         if sitedata is not None:
             self._sitedata = sitedata
         else:
@@ -60,7 +61,11 @@ class ParameterProvider(MutableMapping):
             self._timerdata = timerdata
         else:
             self._timerdata = {}
-        self._override = {}
+        if override is not None:
+            self._override = override
+        else:
+            self._override = {}
+
         self._maps = [self._override, self._sitedata, self._timerdata, self._soildata, self._cropdata]
         self._test_uniqueness()
 
@@ -155,7 +160,7 @@ class ParameterProvider(MutableMapping):
                       "rotations with the same crop."
                 self.logger.warning(msg)
 
-        self._ncrops_activated += 1
+        self._nsites_activated += 1
         self._test_uniqueness()
 
 

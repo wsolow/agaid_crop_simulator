@@ -100,6 +100,7 @@ class WaterbalanceFD(SimulationObject):
               of root growth
     TOTINF    Total amount of infiltration                      N    cm
     TOTIRR    Total amount of effective irrigation              N    cm
+    TOTIRRIG  Total amount of irrigation                        N    cm
     PERCT     Total amount of water percolating from rooted     N    cm
               zone to subsoil
     LOSST     Total amount of water lost to deeper soil         N    cm
@@ -190,6 +191,7 @@ class WaterbalanceFD(SimulationObject):
         SOPE   = Float(-99.)
         KSUB   = Float(-99.)
         RDMSOL = Float(-99.)
+        SMLIM  = Float(-99.)
         # Site parameters
         IFUNRN = Float(-99.)
         SSMAX  = Float(-99.)
@@ -207,16 +209,17 @@ class WaterbalanceFD(SimulationObject):
         WLOWI = Float(-99.)
         WWLOW = Float(-99.)
         # Summation variables 
-        WTRAT  = Float(-99.)
-        EVST   = Float(-99.)
-        EVWT   = Float(-99.)
-        TSR    = Float(-99.)
-        RAINT  = Float(-99.)
-        WART   = Float(-99.)
-        TOTINF = Float(-99.)
-        TOTIRR = Float(-99.)
-        PERCT  = Float(-99.)
-        LOSST  = Float(-99.)
+        WTRAT    = Float(-99.)
+        EVST     = Float(-99.)
+        EVWT     = Float(-99.)
+        TSR      = Float(-99.)
+        RAINT    = Float(-99.)
+        WART     = Float(-99.)
+        TOTINF   = Float(-99.)
+        TOTIRR   = Float(-99.)
+        TOTIRRIG = Float(-99.)
+        PERCT    = Float(-99.)
+        LOSST    = Float(-99.)
         # Checksums for rootzone (RT) and total system (TT)
         WBALRT = Float(-99.)
         WBALTT = Float(-99.)
@@ -292,12 +295,14 @@ class WaterbalanceFD(SimulationObject):
                                                    "WLOW", "WLOWI", "WWLOW", "WTRAT", 
                                                    "EVST", "EVWT", "TSR", "RAINT", 
                                                    "WART", "TOTINF", "TOTIRR", "PERCT", 
-                                                   "LOSST", "WBALRT", "WBALTT", "DSOS"], 
+                                                   "LOSST", "WBALRT", "WBALTT", "DSOS",
+                                                   "TOTIRRIG"], 
                            SM=SM, SS=SS,
                            SSI=p.SSI, WC=WC, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
                            WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
                            RAINT=0., WART=0., TOTINF=0., TOTIRR=0., DSOS=0,
-                           PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
+                           PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999., 
+                           TOTIRRIG=0.)
         self.rates = self.RateVariables(kiosk, 
                                         publish=["EVS", "EVW", "WTRA", "RIN", 
                                                  "RIRR", "PERC", "LOSS", "DW",
@@ -559,6 +564,7 @@ class WaterbalanceFD(SimulationObject):
         self.rooted_layer_needs_reset = True
 
     def _on_IRRIGATE(self, amount, efficiency):
+        self.states.TOTIRRIG += amount
         self._RIRR = amount * efficiency
 
 
@@ -646,6 +652,7 @@ class WaterbalancePP(SimulationObject):
               of root growth
     TOTINF    Total amount of infiltration                      N    cm
     TOTIRR    Total amount of effective irrigation              N    cm
+    TOTIRRIG  Total amount of irrigation                        N    cm
     PERCT     Total amount of water percolating from rooted     N    cm
               zone to subsoil
     LOSST     Total amount of water lost to deeper soil         N    cm
@@ -736,6 +743,7 @@ class WaterbalancePP(SimulationObject):
         SOPE   = Float(-99.)
         KSUB   = Float(-99.)
         RDMSOL = Float(-99.)
+        SMLIM  = Float(-99.)
         # Site parameters
         IFUNRN = Float(-99.)
         SSMAX  = Float(-99.)
@@ -753,16 +761,17 @@ class WaterbalancePP(SimulationObject):
         WLOWI = Float(-99.)
         WWLOW = Float(-99.)
         # Summation variables 
-        WTRAT  = Float(-99.)
-        EVST   = Float(-99.)
-        EVWT   = Float(-99.)
-        TSR    = Float(-99.)
-        RAINT  = Float(-99.)
-        WART   = Float(-99.)
-        TOTINF = Float(-99.)
-        TOTIRR = Float(-99.)
-        PERCT  = Float(-99.)
-        LOSST  = Float(-99.)
+        WTRAT    = Float(-99.)
+        EVST     = Float(-99.)
+        EVWT     = Float(-99.)
+        TSR      = Float(-99.)
+        RAINT    = Float(-99.)
+        WART     = Float(-99.)
+        TOTINF   = Float(-99.)
+        TOTIRR   = Float(-99.)
+        TOTIRRIG = Float(-99.)
+        PERCT    = Float(-99.)
+        LOSST    = Float(-99.)
         # Checksums for rootzone (RT) and total system (TT)
         WBALRT = Float(-99.)
         WBALTT = Float(-99.)
@@ -838,12 +847,14 @@ class WaterbalancePP(SimulationObject):
                                                    "WLOW", "WLOWI", "WWLOW", "WTRAT", 
                                                    "EVST", "EVWT", "TSR", "RAINT", 
                                                    "WART", "TOTINF", "TOTIRR", "PERCT", 
-                                                   "LOSST", "WBALRT", "WBALTT", "DSOS"], 
+                                                   "LOSST", "WBALRT", "WBALTT", "DSOS"
+                                                   "TOTIRRIG"], 
                            SM=SM, SS=SS,
                            SSI=p.SSI, WC=WC, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
                            WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
                            RAINT=0., WART=0., TOTINF=0., TOTIRR=0., DSOS=0,
-                           PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
+                           PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.,
+                           TOTIRRIG=0.)
         self.rates = self.RateVariables(kiosk, 
                                         publish=["EVS", "EVW", "WTRA", "RIN", 
                                                  "RIRR", "PERC", "LOSS", "DW",
@@ -1106,4 +1117,5 @@ class WaterbalancePP(SimulationObject):
         self.rooted_layer_needs_reset = True
 
     def _on_IRRIGATE(self, amount, efficiency):
+        self.states.TOTIRRIG += amount
         self._RIRR = amount * efficiency

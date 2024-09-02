@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import tyro
+import stable_baselines3 as sb3
 
 from stable_baselines3.common.buffers import ReplayBuffer
 from torch.distributions.categorical import Categorical
@@ -76,6 +77,8 @@ class Args:
     """automatic tuning of the entropy coefficient"""
     target_entropy_scale: float = 0.89
     """coefficient for scaling the autotune entropy target"""
+    checkpoint_frequency: int = 50
+    """How often to save the agent during training"""
 
 
 def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
@@ -87,11 +90,11 @@ def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
             env = gym.make(env_id,  **{'args': kwargs})
         env = gym.wrappers.RecordEpisodeStatistics(env)
 
-        # Wrap the action space to discrete
-        env = NPKDiscreteWrapper(env)
         # Change the reward function used as specified by args.env_reward
         env = utils.wrap_env_reward(env, kwargs)
-
+        # Wrap the action space to discrete
+        env = NPKDiscreteWrapper(env)
+    
         env.action_space.seed(seed)
         return env
 
@@ -145,15 +148,10 @@ class Actor(nn.Module):
 
 
 def main(args):
-    import stable_baselines3 as sb3
 
-    if sb3.__version__ < "2.0":
-        raise ValueError(
-            """Ongoing migration: run the following command to install the new dependencies:
+    CHECKPOINT_FREQUENCY = args.checkpoint_frequency
+    starting_update = 1
 
-poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-license]==0.28.1"  "ale-py==0.8.1" 
-"""
-        )
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
     if args.track:
         import wandb
@@ -217,6 +215,16 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
     # TRY NOT TO MODIFY: start the game
     obs, _ = envs.reset(seed=args.seed)
     for global_step in range(args.total_timesteps):
+
+         # Save the agent
+        if args.track:
+            # make sure to tune `CHECKPOINT_FREQUENCY` 
+            # so models are not saved too frequently
+            if global_step % CHECKPOINT_FREQUENCY == 0:
+                torch.save(actor.state_dict(), f"{wandb.run.dir}/agent.pt")
+                wandb.save(f"{wandb.run.dir}/agent.pt", policy="now")
+
+
         # ALGO LOGIC: put action logic here
         if global_step < args.learning_starts:
             actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])

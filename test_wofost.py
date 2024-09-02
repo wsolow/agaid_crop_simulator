@@ -1,3 +1,7 @@
+# Written Aug 2024, by Will Solow
+# Test the WOFOST Gym environment
+# With a few simple plots
+
 import gymnasium as gym
 import numpy as np
 import wofost_gym
@@ -6,17 +10,8 @@ import matplotlib.pyplot as plt
 from utils import NPK_Args
 import tyro
 import utils
+from policies import default_policy as pol
 
-
-def policy(obs, k):
-    if k % 4 == 0:
-        action = [3,0]
-    elif k % 4 == 1:
-        action = [2, 3]
-    else:
-        action = [0,1]
-
-    return action
 
 if __name__ == "__main__":
 
@@ -30,20 +25,18 @@ if __name__ == "__main__":
     env = utils.wrap_env_reward(env, args)
 
     obs_arr = []
-    obs, info = env.reset()
+    obs, info = env.reset(**{'year':2000})
     done = False
-    curr_reward = 0
     obs_arr = []
     reward_arr = []
 
-    k=0
     while not done:
-        k+=1 
-        action = policy(obs, k)
+        action = pol(obs)
         next_obs, rewards, done, trunc, info = env.step(action)
-        curr_reward += rewards
+
         obs_arr.append(obs)
         reward_arr.append(rewards)
+
         # Append data
         obs = next_obs
         if done:
@@ -55,10 +48,11 @@ if __name__ == "__main__":
     plt.title('Rewards')
     plt.plot(np.cumsum(reward_arr))
     plt.show()
-
-    for i in range(len(args.output_vars)):
+    
+    all_vars = args.output_vars + args.weather_vars
+    for i in range(len(all_vars)):
         plt.figure(i+1)
-        plt.title(args.output_vars[i])
+        plt.title(all_vars[i])
         plt.plot(all_obs[ :, i])  
         plt.show()
 

@@ -20,6 +20,10 @@ class NPKDiscreteWrapper(gym.ActionWrapper):
         self.num_irrig = env.unwrapped.num_irrig
         self.num_actions = env.unwrapped.num_actions
         self.action_space = gym.spaces.Discrete(4 * self.num_actions)
+    
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+    
 
     def action(self, act):
         action = np.array([0,0])
@@ -37,29 +41,8 @@ class NPKDiscreteWrapper(gym.ActionWrapper):
             action[1] = np.minimum(action[1], self.num_irrig-1)
 
         return action
+ 
 
-class RewardTotalGrowthWrapper(gym.Wrapper):
-    def __init__(self, env):
-        super().__init__(env)
-        self.env = env
-
-    def step(self, action):
-        npk, irrigation = self.env.unwrapped._take_action(action)
-        output = self.env.unwrapped._run_simulation(self.env.unwrapped.model)
-
-        obs = self.env.unwrapped._process_output(output)
-        self.date = output.index[-1]
-        reward = output.iloc[-1]['WSO']
-        done = self.date >= self.env.unwrapped.crop_end_date
-
-        self.env.unwrapped._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
-
-        return obs, reward, done, truncation, self.env.unwrapped.log
-    
-    
 class RewardFertilizationCostWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
@@ -67,7 +50,7 @@ class RewardFertilizationCostWrapper(gym.Wrapper):
 
     def step(self, action):
         npk, irrigation = self.env.unwrapped._take_action(action)
-        output = self.env.unwrapped._run_simulation(self.env.unwrapped.model)
+        output = self.env.unwrapped._run_simulation()
 
         obs = self.env.unwrapped._process_output(output)
         self.date = output.index[-1]
@@ -90,3 +73,44 @@ class RewardFertilizationCostWrapper(gym.Wrapper):
         reward = output.iloc[-1]['WSO'] - \
                         (np.sum(self.beta * np.array([n_amount, p_amount, k_amount])))
         return reward
+    
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+    
+        
+class RewardFertilizationThresholdWrapper(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.env = env
+
+    def step(self, action):
+        npk, irrigation = self.env.unwrapped._take_action(action)
+        output = self.env.unwrapped._run_simulation()
+
+        obs = self.env.unwrapped._process_output(output)
+        self.date = output.index[-1]
+        reward = self._get_reward(output,action)
+        done = self.date >= self.env.unwrapped.crop_end_date
+
+        self.env.unwrapped._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
+
+        #TODO Truncations and crop signals
+        truncation = False
+
+        return obs, reward, done, truncation, self.env.unwrapped.log
+    
+     # Get reward from the simulation
+    def _get_reward(self, output, action):
+        if output.iloc[-1]['TOTN'] > self.max_n:
+            return -1e4
+        if output.iloc[-1]['TOTP'] > self.max_p:
+            return -1e4
+        if output.iloc[-1]['TOTK'] > self.max_k:
+            return -1e4
+        if output.iloc[-1]['TOTIRRIG'] > self.max_w:
+            return -1e4
+        
+        return output.iloc[-1]['WSO']
+    
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)

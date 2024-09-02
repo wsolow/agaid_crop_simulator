@@ -16,6 +16,7 @@ import torch.optim as optim
 import tyro
 from stable_baselines3.common.buffers import ReplayBuffer
 from torch.utils.tensorboard import SummaryWriter
+import stable_baselines3 as sb3
 
 # Import relative npk_args file
 sys.path.append(str(Path(__file__).parent.parent))
@@ -43,12 +44,6 @@ class Args:
     """the entity (team) of wandb's project"""
     capture_video: bool = False
     """whether to capture videos of the agent performances (check out `videos` folder)"""
-    save_model: bool = False
-    """whether to save model into the `runs/{run_name}` folder"""
-    upload_model: bool = False
-    """whether to upload the saved model to huggingface"""
-    hf_entity: str = ""
-    """the user or org name of the model repository from the Hugging Face Hub"""
 
     # Algorithm specific arguments
     env_id: str = "wofost-v0"
@@ -79,6 +74,8 @@ class Args:
     """timestep to start learning"""
     train_frequency: int = 10
     """the frequency of training"""
+    checkpoint_frequency: int = 50
+    """How often to save the agent during training"""
 
 
 def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
@@ -90,11 +87,11 @@ def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
             env = gym.make(env_id, **{'args': kwargs})
         env = gym.wrappers.RecordEpisodeStatistics(env)
 
-        # Wrap the action space to discrete
-        env = NPKDiscreteWrapper(env)
         # Change the reward function used as specified by args.env_reward
         env = utils.wrap_env_reward(env, kwargs)
-
+        # Wrap the action space to discrete
+        env = NPKDiscreteWrapper(env)
+        
         env.action_space.seed(seed)
 
         return env
@@ -124,15 +121,9 @@ def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
 
 
 def main(args):
-    import stable_baselines3 as sb3
+    CHECKPOINT_FREQUENCY = args.checkpoint_frequency
+    starting_update = 1
 
-    if sb3.__version__ < "2.0":
-        raise ValueError(
-            """Ongoing migration: run the following command to install the new dependencies:
-
-poetry run pip install "stable_baselines3==2.0.0a1"
-"""
-        )
     assert args.num_envs == 1, "vectorized envs are not supported at the moment"
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
     if args.track:
@@ -184,6 +175,16 @@ poetry run pip install "stable_baselines3==2.0.0a1"
     # TRY NOT TO MODIFY: start the game
     obs, _ = envs.reset(seed=args.seed)
     for global_step in range(args.total_timesteps):
+
+         # Save the agent
+        if args.track:
+            # make sure to tune `CHECKPOINT_FREQUENCY` 
+            # so models are not saved too frequently
+            if global_step % CHECKPOINT_FREQUENCY == 0:
+                torch.save(q_network.state_dict(), f"{wandb.run.dir}/agent.pt")
+                wandb.save(f"{wandb.run.dir}/agent.pt", policy="now")
+
+
         # ALGO LOGIC: put action logic here
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
         if random.random() < epsilon:
@@ -240,32 +241,6 @@ poetry run pip install "stable_baselines3==2.0.0a1"
                     target_network_param.data.copy_(
                         args.tau * q_network_param.data + (1.0 - args.tau) * target_network_param.data
                     )
-
-    if args.save_model:
-        model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
-        torch.save(q_network.state_dict(), model_path)
-        print(f"model saved to {model_path}")
-        from cleanrl_utils.evals.dqn_eval import evaluate
-
-        episodic_returns = evaluate(
-            model_path,
-            make_env,
-            args.env_id,
-            eval_episodes=10,
-            run_name=f"{run_name}-eval",
-            Model=QNetwork,
-            device=device,
-            epsilon=0.05,
-        )
-        for idx, episodic_return in enumerate(episodic_returns):
-            writer.add_scalar("eval/episodic_return", episodic_return, idx)
-
-        if args.upload_model:
-            from cleanrl_utils.huggingface import push_to_hub
-
-            repo_name = f"{args.env_id}-{args.exp_name}-seed{args.seed}"
-            repo_id = f"{args.hf_entity}/{repo_name}" if args.hf_entity else repo_name
-            push_to_hub(args, episodic_returns, repo_id, "DQN", f"runs/{run_name}", f"videos/{run_name}-eval")
 
     envs.close()
     writer.close()

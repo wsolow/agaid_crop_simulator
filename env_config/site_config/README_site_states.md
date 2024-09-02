@@ -19,6 +19,9 @@ KSOIL    total mineral soil K available at start of         N    [kg ha-1]
 NAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
 PAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
 KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
+TOTN     Total mineral N applied by fertilization           Y    |kg ha-1|
+TOTP     Total mineral P applied by fertilization           Y    |kg ha-1|
+TOTK     Total mineral K applied by fertilization           Y    |kg ha-1|
 =======  ================================================= ==== ============
 **Rate variables** (For output to observation space):
 ==============  ================================================= ==== =============
@@ -65,6 +68,7 @@ RAINT     Total amount of rainfall (eff + non-eff)          N    cm
 WART      Amount of water added to root zone by increase    N    cm
             of root growth
 TOTINF    Total amount of infiltration                      N    cm
+TOTIRRIG  Total amount of irrigation                        N    cm
 TOTIRR    Total amount of effective irrigation              N    cm
 PERCT     Total amount of water percolating from rooted     N    cm
             zone to subsoil

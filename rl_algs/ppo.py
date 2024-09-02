@@ -52,7 +52,7 @@ class Args:
     """total timesteps of the experiments"""
     learning_rate: float = 2.5e-4
     """the learning rate of the optimizer"""
-    num_envs: int = 4
+    num_envs: int = 1
     """the number of parallel game environments"""
     num_steps: int = 650
     """the number of steps to run in each environment per policy rollout"""
@@ -80,6 +80,8 @@ class Args:
     """the maximum norm for the gradient clipping"""
     target_kl: float = None
     """the target KL divergence threshold"""
+    checkpoint_frequency: int = 50
+    """How often to save the agent during training"""
 
     # to be filled in runtime
     batch_size: int = 0
@@ -99,10 +101,10 @@ def make_env(env_id, kwargs, idx, capture_video, run_name):
             env = gym.make(env_id, **{'args': kwargs})
         env = gym.wrappers.RecordEpisodeStatistics(env)
 
-        # Wrap the action space to discrete
-        env = NPKDiscreteWrapper(env)
         # Change the reward function used as specified by args.env_reward
         env = utils.wrap_env_reward(env, kwargs)
+        # Wrap the action space to discrete
+        env = NPKDiscreteWrapper(env)
         return env
 
     return thunk
@@ -134,6 +136,12 @@ class Agent(nn.Module):
 
     def get_value(self, x):
         return self.critic(x)
+    
+    def forward(self, x):
+        x = torch.from_numpy(x)
+        logits = self.actor(x)
+        probs = Categorical(logits=logits)
+        return probs.sample()
 
     def get_action_and_value(self, x, action=None):
         logits = self.actor(x)
@@ -147,6 +155,10 @@ def main(args):
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
+
+    CHECKPOINT_FREQUENCY = args.checkpoint_frequency
+    starting_update = 1
+
     if args.track:
         import wandb
 
@@ -198,6 +210,17 @@ def main(args):
     next_done = torch.zeros(args.num_envs).to(device)
 
     for iteration in range(1, args.num_iterations + 1):
+
+        # Save the agent
+        if args.track:
+            # make sure to tune `CHECKPOINT_FREQUENCY` 
+            # so models are not saved too frequently
+            if iteration % CHECKPOINT_FREQUENCY == 0:
+                print(f'\n\n\nTRACKIGN SAVE \n\n\n')
+                print(f'{wandb.run.dir}')
+                torch.save(agent.state_dict(), f"{wandb.run.dir}/agent.pt")
+                wandb.save(f"{wandb.run.dir}/agent.pt", policy="now")
+
         # Annealing the rate if instructed to do so.
         if args.anneal_lr:
             frac = 1.0 - (iteration - 1.0) / args.num_iterations
