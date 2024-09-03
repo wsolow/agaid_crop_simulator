@@ -20,8 +20,7 @@ import yaml
 
 from ..base import MultiCropDataProvider
 from .. import exceptions as exc
-from .. import settings
-from ..util import version_tuple
+from ..util import version_tuple, get_working_directory
 
 
 class YAMLSiteDataProvider(MultiCropDataProvider):
@@ -118,7 +117,9 @@ class YAMLSiteDataProvider(MultiCropDataProvider):
         """
         cache_fname = "%s.pkl" % self.__class__.__name__
         if fpath is None:
-            cache_fname_fp = os.path.join(settings.METEO_CACHE_DIR, cache_fname)
+            PCSE_USER_HOME = os.path.join(get_working_directory(), ".pcse")
+            METEO_CACHE_DIR = os.path.join(PCSE_USER_HOME, "meteo_cache")
+            cache_fname_fp = os.path.join(METEO_CACHE_DIR, cache_fname)
         else:
             cache_fname_fp = os.path.join(fpath, cache_fname)
         return cache_fname_fp

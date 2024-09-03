@@ -33,72 +33,28 @@ __license__ = "European Union Public License"
 __stable__ = True
 __version__ = "5.5.6"
 
-
 import sys, os
 from . import util
 
-# First define and run setup before importing the rest of the stuff
-def setup():
-    """
-    Set up the .pcse folder and user settings file, add ~/.pcse to the
-    sys.path.
-    """
-
-    user_home = util.get_user_home()
-    pcse_user_home = os.path.join(user_home, ".pcse")
-    if not os.path.exists(pcse_user_home):
-        os.mkdir(pcse_user_home)
-
-    # Add PCSE home to python PATH
-    sys.path.append(pcse_user_home)
-
-    # Check existence of user settings file. If not exists, create it.
-    user_settings_file = os.path.join(pcse_user_home, "user_settings.py")
-    if not os.path.exists(user_settings_file):
-        pcse_dir = os.path.dirname(__file__)
-        default_settings_file = os.path.join(pcse_dir, "settings", "default_settings.py")
-        lines = open(default_settings_file).readlines()
-        with open(user_settings_file, "w") as fp:
-            for line in lines:
-                if line.startswith(("#", '"', "'", "import")):
-                    cline = line
-                elif len(line.strip()) == 0: # empty line
-                    cline = line
-                else:
-                    cline = "# " + line
-                fp.write(cline)
-
-setup()
-
 import logging.config
-from .settings import settings
-logging.config.dictConfig(settings.LOG_CONFIG)
-
-from . import db
+from .nasapower import NASAPowerWeatherDataProvider
 from . import fileinput
 from . import agromanager
 from . import soil
 from . import crop
-
 from .base import ParameterProvider
-from . import models
 
-# If no PCSE demo database, build it!
-pcse_db_file = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
-if not os.path.exists(pcse_db_file):
-    print("Building PCSE demo database at: %s ..." % pcse_db_file, end=" ")
-    pcse_home = os.path.dirname(__file__)
-    pcse_db_dump_file = os.path.join(pcse_home, "db", "pcse", "pcse_dump.sql")
-    try:
-        util.load_SQLite_dump_file(pcse_db_dump_file, pcse_db_file)
-        print("OK")
-    except Exception as e:
-        logger = logging.getLogger()
-        msg1 = "Failed to create the PCSE demo database: %s" % e
-        msg2 = "PCSE will likely be functional, but some tests and demos may fail."
-        logger.warning(msg1)
-        logger.warning(msg2)
 
-if not __stable__:
-    print("Warning: You are running a PCSE development version:  %s" % __version__)
+user_home = util.get_working_directory()
+
+# Make .pcse cache folder in the current working directory
+pcse_user_home = os.path.join(user_home, ".pcse")
+if not os.path.exists(pcse_user_home):
+        os.mkdir(pcse_user_home)
+
+meteo_cache_dir = os.path.join(pcse_user_home, "meteo_cache")
+if not os.path.exists(meteo_cache_dir):
+    os.mkdir(meteo_cache_dir)
+
+
 

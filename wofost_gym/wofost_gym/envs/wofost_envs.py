@@ -8,6 +8,8 @@ import gymnasium as gym
 import pcse
 from pathlib import Path
 
+import pcse.engine
+
 # Action Enums
 N_ACT = 0
 P_ACT = 1
@@ -48,7 +50,7 @@ class NPK_Env(gym.Env):
         self._set_params(self.wofost_params)
         
         # Create crop model
-        self.model = pcse.models.Wofost80(self.parameterprovider, self.weatherdataprovider,
+        self.model = pcse.engine.Wofost80(self.parameterprovider, self.weatherdataprovider,
                                          self.agromanagement, config=self.config)
         self.date = self.crop_start_date
 
@@ -645,7 +647,7 @@ class NPK_Env(gym.Env):
             latitude = self.np_random.choice([51.5, 52, 52.5])
             longitude = self.np_random.choice([5, 5.5, 6])
             location = (latitude, longitude)
-        return pcse.db.NASAPowerWeatherDataProvider(*location)
+        return pcse.NASAPowerWeatherDataProvider(*location)
     
     # Get the training weather data
     def _get_train_weather_data(self):
@@ -729,7 +731,7 @@ class NPK_Env(gym.Env):
         self._set_params(self.wofost_params)
 
         # Reset model
-        self.model = pcse.models.Wofost80(self.parameterprovider, self.weatherdataprovider,
+        self.model = pcse.engine.Wofost80(self.parameterprovider, self.weatherdataprovider,
                                          self.agromanagement, config=self.config)
         
         # Generate first part of output 

@@ -12,5 +12,5 @@ from .engine import BaseEngine
 from .parameter_providers import ParameterProvider, MultiCropDataProvider
 from .simulationobject import SimulationObject, AncillaryObject
 from .states_rates import StatesTemplate, RatesTemplate, StatesWithImplicitRatesTemplate, ParamTemplate
-from .weather import WeatherDataContainer, WeatherDataProvider
+#from .weather import WeatherDataContainer, WeatherDataProvider
 from .dispatcher import DispatcherObject

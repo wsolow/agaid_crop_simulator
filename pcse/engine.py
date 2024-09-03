@@ -20,14 +20,14 @@ import gc
 import numpy as np
 
 from .traitlets import Instance, Bool, List, Dict
-from .base import (VariableKiosk, WeatherDataProvider,
-                           AncillaryObject, SimulationObject,
+from .base import (VariableKiosk, AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
+from .nasapower import WeatherDataProvider
 from .util import ConfigurationLoader, check_date
 from .timer import Timer
 from . import signals
 from . import exceptions as exc
-from .settings import settings
+
 
 
 class Engine(BaseEngine):
@@ -182,8 +182,7 @@ class Engine(BaseEngine):
             self.soil.integrate(day, delt)
 
         # Set all rate variables to zero
-        if settings.ZEROFY:
-            self.zerofy()
+        self.zerofy()
 
         # Flush rate variables from the kiosk after state updates
         self.kiosk.flush_rates()
@@ -430,3 +429,18 @@ class Engine(BaseEngine):
         """
 
         return self._saved_terminal_output
+
+
+class Wofost80(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    #
+    # config = "Wofost80_NWLP_FD.conf"
+
+def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config):
+    Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                    config=config)

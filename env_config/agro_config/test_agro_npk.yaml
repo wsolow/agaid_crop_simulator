@@ -13,5 +13,3 @@
         crop_end_date: 1984-08-01
         crop_end_type: harvest
         max_duration: 365
-    StateEvents:
-    TimedEvents:

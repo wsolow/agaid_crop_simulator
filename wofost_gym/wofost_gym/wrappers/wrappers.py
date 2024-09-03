@@ -89,7 +89,7 @@ class RewardFertilizationThresholdWrapper(gym.Wrapper):
 
         obs = self.env.unwrapped._process_output(output)
         self.date = output.index[-1]
-        reward = self._get_reward(output,action)
+        reward = self._get_reward(output, action)
         done = self.date >= self.env.unwrapped.crop_end_date
 
         self.env.unwrapped._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
@@ -102,13 +102,13 @@ class RewardFertilizationThresholdWrapper(gym.Wrapper):
      # Get reward from the simulation
     def _get_reward(self, output, action):
         if output.iloc[-1]['TOTN'] > self.max_n:
-            return -1e4
+            return -1e6
         if output.iloc[-1]['TOTP'] > self.max_p:
-            return -1e4
+            return -1e6
         if output.iloc[-1]['TOTK'] > self.max_k:
-            return -1e4
+            return -1e6
         if output.iloc[-1]['TOTIRRIG'] > self.max_w:
-            return -1e4
+            return -1e6
         
         return output.iloc[-1]['WSO']
     

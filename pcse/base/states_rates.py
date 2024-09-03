@@ -8,7 +8,6 @@ from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
 from ..pydispatch import dispatcher
 from ..util import Afgen
 from .. import exceptions as exc
-from ..settings import settings
 from .variablekiosk import VariableKiosk
 
 

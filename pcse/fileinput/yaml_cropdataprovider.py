@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2022 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), August 2022
+# Modified 2024, Will Solow
 import logging
 import os, sys
 
@@ -19,8 +20,7 @@ import yaml
 
 from ..base import MultiCropDataProvider
 from .. import exceptions as exc
-from .. import settings
-from ..util import version_tuple
+from ..util import version_tuple, get_working_directory
 
 
 class YAMLCropDataProvider(MultiCropDataProvider):
@@ -158,7 +158,9 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         """
         cache_fname = "%s.pkl" % self.__class__.__name__
         if fpath is None:
-            cache_fname_fp = os.path.join(settings.METEO_CACHE_DIR, cache_fname)
+            PCSE_USER_HOME = os.path.join(get_working_directory(), ".pcse")
+            METEO_CACHE_DIR = os.path.join(PCSE_USER_HOME, "meteo_cache")
+            cache_fname_fp = os.path.join(METEO_CACHE_DIR, cache_fname)
         else:
             cache_fname_fp = os.path.join(fpath, cache_fname)
         return cache_fname_fp
