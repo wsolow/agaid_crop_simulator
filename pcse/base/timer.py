@@ -7,8 +7,6 @@ import datetime
 from ..base import AncillaryObject
 from ..utils.traitlets import HasTraits, Instance, Bool, Int, Enum
 from ..utils import signals
-from ..util import is_a_dekad, is_a_month, is_a_week
-
 
 class Timer(AncillaryObject):
     """This class implements a basic timer for use with the WOFOST crop model.
@@ -89,13 +87,13 @@ class Timer(AncillaryObject):
                 if (self.day_counter % self.interval_days) == 0:
                     output = True
             elif self.interval_type == "weekly":
-                if is_a_week(self.current_date, self.output_weekday):
+                if Timer.is_a_week(self.current_date, self.output_weekday):
                     output = True 
             elif self.interval_type == "dekadal":
-                if is_a_dekad(self.current_date):
+                if Timer.is_a_dekad(self.current_date):
                     output = True
             elif self.interval_type == "monthly":
-                if is_a_month(self.current_date):
+                if Timer.is_a_month(self.current_date):
                     output = True
 
         # Send output signal if True
@@ -109,5 +107,49 @@ class Timer(AncillaryObject):
             self._send_signal(signal=signals.terminate)
             
         return self.current_date, float(self.time_step.days)
+    
+    @staticmethod
+    def is_a_month(day):
+        """Returns True if the date is on the last day of a month."""
+
+        if day.month==12:
+            if day == datetime.date(day.year, day.month, 31):
+                return True
+        else:
+            if (day == datetime.date(day.year, day.month+1, 1) -
+                    datetime.timedelta(days=1)):
+                return True
+        return False
+
+    @staticmethod
+    def is_a_week(day, weekday=0):
+        """Default weekday is Monday. Monday is 0 and Sunday is 6"""
+        if day.weekday() == weekday:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def is_a_dekad(day):
+        """Returns True if the date is on a dekad boundary, i.e. the 10th,
+        the 20th or the last day of each month"""
+
+        if day.month == 12:
+            if day == datetime.date(day.year, day.month, 10):
+                return True
+            elif day == datetime.date(day.year, day.month, 20):
+                return True
+            elif day == datetime.date(day.year, day.month, 31):
+                return True
+        else:
+            if day == datetime.date(day.year, day.month, 10):
+                return True
+            elif day == datetime.date(day.year, day.month, 20):
+                return True
+            elif (day == datetime.date(day.year, day.month+1, 1) -
+                        datetime.timedelta(days=1)):
+                return True
+        return False
+
 
 

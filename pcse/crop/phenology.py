@@ -13,11 +13,13 @@ import numpy as np
 from ..utils.traitlets import Float, Instance, Enum, Bool
 from ..utils.decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength, AfgenTrait
+from ..util import limit, AfgenTrait, daylength
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from ..utils import signals
 from ..utils import exceptions as exc
+
+from math import cos, sin, asin, pi, radians
 
 #-------------------------------------------------------------------------------
 class Vernalisation(SimulationObject):
@@ -179,7 +181,7 @@ class Vernalisation(SimulationObject):
                    "at day %s, " +
                    "but vernalization requirements not yet fulfilled. " +
                    "Forcing vernalization now (VERN=%f).")
-            self.logger.warning(msg % (day, states.VERN))
+            self.logger.info(msg % (day, states.VERN))
 
         else:  # Reduction factor for phenologic development
             states.ISVERNALISED = False
@@ -499,3 +501,4 @@ class DVS_Phenology(SimulationObject):
         """
         if finish_type in ['harvest', 'earliest']:
             self._for_finalize["DOH"] = day
+

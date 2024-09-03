@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 import sys
 
-from utils import VizData_Args
+from utils import NPK_Args
 import tyro
 import utils
 import policies
@@ -52,6 +52,7 @@ def plot_average_farms(args, filenames):
     for i in range(len(farm_avg)):
         plt.plot(farm_avg[i,:,-1],label=filenames[i])
         plt.fill_between(np.arange(clipped_length),farm_avg[i,:,-1]-farm_std[i,:,-1],farm_avg[i,:,-1]+farm_std[i,:,-1], alpha=.5, linestyle='solid')
+        plt.xlabel('Days')
     plt.legend()
     plt.show()
 
@@ -63,6 +64,7 @@ def plot_average_farms(args, filenames):
         for i in range(len(farm_avg)):
             plt.plot(farm_avg[i,:,j],label=filenames[i])
             plt.fill_between(np.arange(clipped_length),farm_avg[i,:,j]-farm_std[i,:,j],farm_avg[i,:,j]+farm_std[i,:,j], alpha=.5, linestyle='solid')
+            plt.xlabel('Days')
         plt.legend()
         plt.show()
 
@@ -71,7 +73,8 @@ def plot_average_farms(args, filenames):
        
 if __name__ == "__main__":
 
-    args = tyro.cli(VizData_Args)
+
+    args = tyro.cli(NPK_Args)
 
     env_kwargs = {'args':args}
     env_id = args.env_id

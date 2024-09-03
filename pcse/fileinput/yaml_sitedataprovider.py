@@ -18,12 +18,12 @@ else:
 
 import yaml
 
-from ..base import MultiCropDataProvider
+from ..base import MultiSiteDataProvider
 from .. import exceptions as exc
 from ..util import version_tuple, get_working_directory
 
 
-class YAMLSiteDataProvider(MultiCropDataProvider):
+class YAMLSiteDataProvider(MultiSiteDataProvider):
     """A site data provider for reading site and soil parameter sets stored in the YAML format.
        This directly extends the crop format by allowing multiple sites to be created
        with different parameters
@@ -38,17 +38,14 @@ class YAMLSiteDataProvider(MultiCropDataProvider):
     sites which is different from most other site data providers that only can
     hold data for a single site/soil type.
     """
-    default_repository = "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master/"
-
-    HTTP_OK = 200
     current_site_name = None
     current_variation_name = None
 
     # Compatibility of data provider with YAML parameter file version
     compatible_version = "1.0.0"
 
-    def __init__(self, fpath=None, repository=None, force_reload=False):
-        MultiCropDataProvider.__init__(self)
+    def __init__(self, fpath=None, force_reload=False):
+        MultiSiteDataProvider.__init__(self)
 
         if force_reload is True or self._load_cache(fpath) is False:  # either force a reload or load cache fails
             # enforce a clear state
@@ -58,14 +55,10 @@ class YAMLSiteDataProvider(MultiCropDataProvider):
             if fpath is not None:
                 self.read_local_repository(fpath)
 
-            elif repository is not None:
-                self.read_remote_repository(repository)
-
             else:
-                msg = f"No path or URL specified where to find YAML site parameter files, " \
-                      f"using default at {self.default_repository}"
+                msg = f"No path or specified where to find YAML site parameter files " 
                 self.logger.info(msg)
-                self.read_remote_repository(self.default_repository)
+                exc.PCSEError(msg)
 
             with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
@@ -80,36 +73,6 @@ class YAMLSiteDataProvider(MultiCropDataProvider):
             with open(yaml_fname) as fp:
                 parameters = yaml.safe_load(fp)
             self._check_version(parameters, site_fname=yaml_fname)
-            self._add_site(site_name, parameters)
-
-    def read_remote_repository(self, repository):
-        """Reads the site files from a remote git repository
-
-        :param repository: The url of the repository pointing to the URL where the raw inputs can be obtained.
-            E.g. for github this is https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master
-        :return:
-        """
-
-        if not repository.endswith("/"):
-            repository += "/"
-        self.repository = repository
-        try:
-            url = self.repository + "sites.yaml"
-            response = urlopen(url)
-            self.site_types = yaml.safe_load(response)["available_sites"]
-        except URLError as e:
-            msg = "Unable to find sites.yaml at '%s' due to: %s" % (url, e)
-            raise exc.PCSEError(msg)
-
-        for site_name in self.site_types:
-            url = self.repository + site_name + ".yaml"
-            try:
-                response = urlopen(url)
-            except URLError as e:
-                msg = "Unable to open '%s' due to: %s" % (url, e)
-                raise exc.PCSEError(msg)
-            parameters = yaml.safe_load(response)
-            self._check_version(parameters, site_fname=site_name)
             self._add_site(site_name, parameters)
 
     def _get_cache_fname(self, fpath):
@@ -168,7 +131,7 @@ class YAMLSiteDataProvider(MultiCropDataProvider):
             v = parameters['Version']
             if version_tuple(v) != version_tuple(self.compatible_version):
                 msg = "Version supported by %s is %s, while parameter set version is %s!"
-                raise exc.PCSEError(msg % (self.__class__.__name__, xatible_version, parameters['Version']))
+                raise exc.PCSEError(msg % (self.__class__.__name__, self.compatible_version, parameters['Version']))
         except Exception as e:
             msg = f"Version check failed on site parameter file: {site_fname}"
             raise exc.PCSEError(msg)

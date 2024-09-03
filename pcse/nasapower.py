@@ -12,9 +12,39 @@ import logging
 import pickle
 
 #from .base import WeatherDataProvider, WeatherDataContainer
-from .util import ea_from_tdew, reference_ET, check_angstromAB
+from .util import reference_ET, check_angstromAB
 from .utils import exceptions as exc
+from math import exp
 
+def ea_from_tdew(tdew):
+    """
+    Calculates actual vapour pressure, ea [kPa] from the dewpoint temperature
+    using equation (14) in the FAO paper. As the dewpoint temperature is the
+    temperature to which air needs to be cooled to make it saturated, the
+    actual vapour pressure is the saturation vapour pressure at the dewpoint
+    temperature. This method is preferable to calculating vapour pressure from
+    minimum temperature.
+
+    Taken from fao_et0.py written by Mark Richards
+
+    Reference:
+    Allen, R.G., Pereira, L.S., Raes, D. and Smith, M. (1998) Crop
+        evapotranspiration. Guidelines for computing crop water requirements,
+        FAO irrigation and drainage paper 56)
+
+    Arguments:
+    tdew - dewpoint temperature [deg C]
+    """
+    # Raise exception:
+    if tdew < -95.0 or tdew > 65.0:
+        # Are these reasonable bounds?
+        msg = 'tdew=%g is not in range -95 to +60 deg C' % tdew
+        raise ValueError(msg)
+
+    tmp = (17.27 * tdew) / (tdew + 237.3)
+    ea = 0.6108 * exp(tmp)
+    return ea
+ 
 # Define some lambdas to take care of unit conversions.
 MJ_to_J = lambda x: x * 1e6
 mm_to_cm = lambda x: x / 10.

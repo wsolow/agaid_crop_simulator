@@ -9,11 +9,11 @@
 
 cd ../
 
-python3 gen_data.py --wf-args.RDMSOL 50 --save-path data/farm_RDMSOL_50.csv
-python3 gen_data.py --save-path data/farm_default.csv
-python3 gen_data.py --wf-args.SMLIM .4 --save-path data/farm_SMLIM_.4.csv
-python3 gen_data.py --wf-args.RDMSOL 200 --save-path data/farm_RDMSOL_200.csv
-python3 gen_data.py --wf-args.SSI 2 --save-path data/farm_SSI_2.csv
-python3 gen_data.py --wf-args.CO2 100 --save-path data/farm_CO2_100.csv
-python3 gen_data.py --wf-args.CO2 450 --save-path data/farm_CO2_450.csv
-python3 gen_data.py --wf-args.KSUB .7 --save-path data/farm_KSUB_.7.csv
+python3 gen_data.py --wf-args.RDMSOL 50 --save_folder data/farm_RDMSOL_50.csv --env-reward fertilization_threshold
+python3 gen_data.py --save_folder data/farm_default.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.SMLIM .4 --save_folder data/farm_SMLIM_.4.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.RDMSOL 200 --save_folder data/farm_RDMSOL_200.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.SSI 2 --save_folder data/farm_SSI_2.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.CO2 100 --save_folder data/farm_CO2_100.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.CO2 450 --save_folder data/farm_CO2_450.csv --env-reward fertilization_threshold
+python3 gen_data.py --wf-args.KSUB .7 --save_folder data/farm_KSUB_.7.csv --env-reward fertilization_threshold

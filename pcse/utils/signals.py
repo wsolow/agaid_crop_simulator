@@ -173,6 +173,8 @@ Keyword arguments with `signals.mowing`:
 .. _PyDispatcher: http://pydispatcher.sourceforge.net/
 """
 
+site_start = "SITE_START"
+site_finish = "SITE_FINISH"
 crop_start = "CROP_START"
 crop_emerged = "CROP_EMERGED"
 crop_finish = "CROP_FINISH"

@@ -116,7 +116,7 @@ class ParameterProvider(MutableMapping):
         self._test_uniqueness()
 
     
-    def set_active_site(self, site_name=None, variation_name=None, crop_start_type=None, crop_end_type=None):
+    def set_active_site(self, site_name=None, variation_name=None):
         """Activate the site parameters for the given site_name and variation_name.
 
         :param site_name: string identifying the site name, is ignored as only
@@ -141,17 +141,14 @@ class ParameterProvider(MutableMapping):
         crop which is required for all crops by the phenology module.
 
         """
-
-        self._timerdata["CROP_START_TYPE"] = crop_start_type
-        self._timerdata["CROP_END_TYPE"] = crop_end_type
-        if isinstance(self._sitedata, MultiCropDataProvider):
+        if isinstance(self._sitedata, MultiSiteDataProvider):
             # we have a MultiCropDataProvider, so set the active crop and variety
             self._sitedata.set_active_site(site_name, variation_name)
         else:
             # we do not have a MultiCropDataProvider, this means that crop rotations are not supported
             # At the first call this is OK. However issue a warning with subsequent calls
             # to set_crop_type() are done because we cannot change the set of crop parameters
-            if self._ncsites_activated == 0:
+            if self._nsites_activated == 0:
                 pass
             else:
                 # has been called multiple times
@@ -319,4 +316,20 @@ class MultiCropDataProvider(dict):
         msg = "'set_crop_type' method should be implemented specifically for each" \
               "subclass of MultiCropDataProvider."
         raise NotImplementedError(msg)
+    
+class MultiSiteDataProvider(dict):
+
+    def __init__(self):
+        dict.__init__(self)
+        self._store = {}
+
+    def set_active_crop(self, site_name, variation_name):
+        """Sets the crop parameters for the crop identified by site_name and variation_name.
+
+        Needs to be implemented by each subclass of MultiSiteDataProvider
+        """
+        msg = "'set_crop_type' method should be implemented specifically for each" \
+              "subclass of MultiSiteDataProvider."
+        raise NotImplementedError(msg)
+
 

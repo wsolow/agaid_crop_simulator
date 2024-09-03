@@ -103,6 +103,9 @@ class Engine(BaseEngine):
     flag_crop_finish = Bool(False)
     flag_crop_start = Bool(False)
     flag_crop_delete = Bool(False)
+    flag_site_finish = Bool(False)
+    flag_site_start = Bool(False)
+    flag_site_delete = Bool(False)
     flag_output = Bool(False)
     flag_summary_output = Bool(False)
     
@@ -131,11 +134,15 @@ class Engine(BaseEngine):
         # handling output and terminating the system
         self._connect_signal(self._on_CROP_START, signal=signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+        self._connect_signal(self._on_SITE_START, signal=signals.site_start)
+        self._connect_signal(self._on_SITE_FINISH, signal=signals.site_finish)
         self._connect_signal(self._on_OUTPUT, signal=signals.output)
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
         # Component for agromanagement
+        # Initializes the Agromanager in agromanager.py as specified by the .conf file
         self.agromanager = self.mconf.AGROMANAGEMENT(self.kiosk, agromanagement)
+
         start_date = self.agromanager.start_date
         end_date = self.agromanager.end_date
 
@@ -169,6 +176,9 @@ class Engine(BaseEngine):
         # Check if flag is present to finish crop simulation
         if self.flag_crop_finish:
             self._finish_cropsimulation(day)
+        
+        if self.flag_site_delete:
+            self._finish_sitesimulation(day)
 
     def integrate(self, day, delt):
 
@@ -258,7 +268,7 @@ class Engine(BaseEngine):
         self.flag_crop_delete = crop_delete
 
     def _on_CROP_START(self, day, crop_name=None, variety_name=None,
-                       crop_start_type=None, site_name=None, variation_name=None, crop_end_type=None):
+                       crop_start_type=None, crop_end_type=None):
         """Starts the crop
         """
         self.logger.debug("Received signal 'CROP_START' on day %s" % day)
@@ -272,13 +282,43 @@ class Engine(BaseEngine):
 
         self.parameterprovider.set_active_crop(crop_name, variety_name, crop_start_type,
                                                crop_end_type)  
+                  
+        self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
+
+    
+    def _on_SITE_START(self, day, site_name=None, variation_name=None):
+        """Starts the site
+        """
+        self.logger.debug("Received signal 'SITE_START' on day %s" % day)
+
+        if self.soil is not None:
+            msg = ("A SITE_START signal was received while self.sitesimulation "
+                   "still holds a valid sitesimulation object. It looks like "
+                   "you forgot to send a SITE_FINISH signal with option "
+                   "site_delete=True")
+            raise exc.PCSEError(msg)
 
         # Component for simulation of soil processes
-        self.parameterprovider.set_active_site(site_name, variation_name, crop_start_type,
-                                               crop_end_type)  
+        self.parameterprovider.set_active_site(site_name, variation_name)  
 
-        self.soil = self.mconf.SOIL(self.day, self.kiosk, self.parameterprovider)                        
-        self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
+        self.soil = self.mconf.SOIL(self.day, self.kiosk, self.parameterprovider)       
+
+    def _on_SITE_FINISH(self, day, site_delete=False):
+        """Sets the variable 'flag_crop_finish' to True when the signal
+        CROP_FINISH is received.
+        
+        The flag is needed because finishing the crop simulation is deferred to
+        the correct place in the processing loop and is done by the routine
+        _finish_cropsimulation().
+        
+        If crop_delete=True the CropSimulation object will be deleted from the
+        hierarchy in _finish_cropsimulation().
+
+        Finally, summary output will be generated depending on
+        conf.SUMMARY_OUTPUT_VARS
+        """
+        self.flag_site_finish = True
+        self.flag_site_delete = site_delete                 
 
 
     def _on_TERMINATE(self):
@@ -314,13 +354,28 @@ class Engine(BaseEngine):
         # is finished, when explicitly asked to do so.
         if self.flag_crop_delete:
             self.flag_crop_delete = False
-            #self.crop._delete()
-            #self.crop = None
-            # Run a dedicated garbage collection, because it was demonstrated
-            # that the standard python GC did not garbage collect the crop
-            # simulation object. This caused signals to be received by crop simulation
-            # objects that were supposed to be garbage collected already.
-            #gc.collect()
+
+    def _finish_sitesimulation(self, day):
+        """Finishes the SiteSimulation object when variable 'flag_site_finish'
+        has been set to True based on the signal 'SITE_FINISH' being
+        received.
+        """
+        self.flag_site_finish = False
+
+        # Run the finalize section of the cropsimulation and sub-components
+        self.soil.finalize(day)
+
+        # Generate summary output after finalize() has been run.
+        self._save_summary_output()
+
+        # Clear any override parameters in the ParameterProvider to avoid
+        # lagging parameters for the next crop
+        self.parameterprovider.clear_override()
+
+        # Only remove the crop simulation object from the system when the crop
+        # is finished, when explicitly asked to do so.
+        if self.flag_site_delete:
+            self.flag_crop_delete = False
 
     def _terminate_simulation(self, day):
         """Terminates the entire simulation.

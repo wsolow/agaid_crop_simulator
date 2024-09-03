@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 import sys
 
-from utils import GenData_Args
+from utils import NPK_Args
 import tyro
 import utils
 import policies
@@ -65,7 +65,6 @@ def gen_data(env, args, pol):
             action = pol(obs)
             next_obs, reward, done, trunc, info = env.step(action)
 
-            print(reward)
             # Append data/location, observation and reward
             obs_arr.append(np.concatenate(([pair[1], pair[0][0], pair[0][1], env.date.strftime('%m/%d/%Y')],obs, [reward])))
 
@@ -77,13 +76,13 @@ def gen_data(env, args, pol):
 
     # Save all data as dataframe
     df = pd.DataFrame(data=obs_arr, columns=["Year", "Latitude", "Longitude", "Date"]+args.output_vars+args.weather_vars+["Days Elapsed", "Rewards"])
-    df.to_csv(f'{args.save_path}')
+    df.to_csv(f'{args.save_folder}')
     
     return df
         
 if __name__ == "__main__":
 
-    args = tyro.cli(GenData_Args)
+    args = tyro.cli(NPK_Args)
 
     env_kwargs = {'args':args}
     env_id = args.env_id
@@ -113,11 +112,9 @@ if __name__ == "__main__":
                 policy = sac(envs)
             elif args.agent_type == 'DQN':
                 policy = dqn(envs)
-            try:
-                device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
-                policy.load_state_dict(torch.load(args.agent_path, map_location=device, weights_only=True))
-            except:
-                print(f'No Agent found at {args.agent_path}')
+            device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
+            policy.load_state_dict(torch.load(args.agent_path, map_location=device, weights_only=True))
+
     else:
         try:
             env = gym.make(args.env_id, **{'args':args})
@@ -127,11 +124,10 @@ if __name__ == "__main__":
         except:
             print(f'No policy {args.policy_name} found in policies.py')
 
-    
-    #df = gen_data(env, args, policy)
+    df = gen_data(env, args, policy)
 
-
-    df = pd.read_csv(args.save_path, index_col=0)
+    sys.exit(0)
+    df = pd.read_csv(args.save_folder, index_col=0)
     np_arr = df.to_numpy()
 
     sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
@@ -147,7 +143,8 @@ if __name__ == "__main__":
     plt.title('Cumulative Rewards')
     for j in range(len(arr)):
         curr_arr = [arr[j][k][-1] for k in range(len(arr[j]))]
-        plt.plot(np.cumsum(curr_arr))
+        plt.plot(np.clip(np.cumsum(curr_arr),a_min=0,a_max=None))
+        plt.xlabel('Days')
     plt.show()
 
     
@@ -157,4 +154,5 @@ if __name__ == "__main__":
         plt.title(all_vars[i])
         for j in range(len(arr)):
             plt.plot(np.array(arr[j])[:,i+4])  
+            plt.xlabel('Days')
         plt.show()

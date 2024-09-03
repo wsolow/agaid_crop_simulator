@@ -79,16 +79,14 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     and there is a risk that parameters are loaded from an outdated cache file. In that
     case use `force_reload=True` to force loading the parameters from the URL.
     """
-    default_repository = "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master/"
 
-    HTTP_OK = 200
     current_crop_name = None
     current_variety_name = None
 
     # Compatibility of data provider with YAML parameter file version
     compatible_version = "1.0.0"
 
-    def __init__(self, fpath=None, repository=None, force_reload=False):
+    def __init__(self, fpath=None, force_reload=False):
         MultiCropDataProvider.__init__(self)
 
         if force_reload is True or self._load_cache(fpath) is False:  # either force a reload or load cache fails
@@ -98,15 +96,10 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
             if fpath is not None:
                 self.read_local_repository(fpath)
-
-            elif repository is not None:
-                self.read_remote_repository(repository)
-
             else:
-                msg = f"No path or URL specified where to find YAML crop parameter files, " \
-                      f"using default at {self.default_repository}"
+                msg = f"No path or URL specified where to find YAML crop parameter files" 
                 self.logger.info(msg)
-                self.read_remote_repository(self.default_repository)
+                exc.PCSEError(msg)
 
             with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
@@ -121,36 +114,6 @@ class YAMLCropDataProvider(MultiCropDataProvider):
             with open(yaml_fname) as fp:
                 parameters = yaml.safe_load(fp)
             self._check_version(parameters, crop_fname=yaml_fname)
-            self._add_crop(crop_name, parameters)
-
-    def read_remote_repository(self, repository):
-        """Reads the crop files from a remote git repository
-
-        :param repository: The url of the repository pointing to the URL where the raw inputs can be obtained.
-            E.g. for github this is https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master
-        :return:
-        """
-
-        if not repository.endswith("/"):
-            repository += "/"
-        self.repository = repository
-        try:
-            url = self.repository + "crops.yaml"
-            response = urlopen(url)
-            self.crop_types = yaml.safe_load(response)["available_crops"]
-        except URLError as e:
-            msg = "Unable to find crops.yaml at '%s' due to: %s" % (url, e)
-            raise exc.PCSEError(msg)
-
-        for crop_name in self.crop_types:
-            url = self.repository + crop_name + ".yaml"
-            try:
-                response = urlopen(url)
-            except URLError as e:
-                msg = "Unable to open '%s' due to: %s" % (url, e)
-                raise exc.PCSEError(msg)
-            parameters = yaml.safe_load(response)
-            self._check_version(parameters, crop_name)
             self._add_crop(crop_name, parameters)
 
     def _get_cache_fname(self, fpath):
@@ -238,7 +201,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     def set_active_crop(self, crop_name, variety_name):
         """Sets the parameters in the internal dict for given crop_name and variety_name
 
-        It first clears the active set of crop parameter sin the internal dict.
+        It first clears the active set of crop parameters in the internal dict.
 
         :param crop_name: the name of the crop
         :param variety_name: the variety for the given crop

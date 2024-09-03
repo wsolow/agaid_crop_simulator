@@ -25,7 +25,7 @@ if __name__ == "__main__":
     env = utils.wrap_env_reward(env, args)
 
     obs_arr = []
-    obs, info = env.reset(**{'year':2000})
+    obs, info = env.reset()
     done = False
     obs_arr = []
     reward_arr = []
@@ -50,10 +50,13 @@ if __name__ == "__main__":
     plt.show()
     
     all_vars = args.output_vars + args.weather_vars
+
     for i in range(len(all_vars)):
         plt.figure(i+1)
         plt.title(all_vars[i])
-        plt.plot(all_obs[ :, i])  
+        plt.plot(all_obs[ :, i])
+        print(all_vars[i])
+        print(all_obs[:,i])  
         plt.show()
 
 

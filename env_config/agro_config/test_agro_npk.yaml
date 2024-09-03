@@ -8,8 +8,8 @@
         variety_name: Winter_wheat_101
         site_name: oregon
         variation_name: Oregon_1
-        crop_start_date: 1984-01-01
-        crop_start_type: emergence
+        crop_start_date: 1984-02-01
+        crop_start_type: sowing
         crop_end_date: 1984-08-01
         crop_end_type: harvest
         max_duration: 365

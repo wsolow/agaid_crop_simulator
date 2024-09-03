@@ -54,10 +54,10 @@ class RewardFertilizationCostWrapper(gym.Wrapper):
 
         obs = self.env.unwrapped._process_output(output)
         self.date = output.index[-1]
-        reward = output.iloc[-1]['WSO']
+        reward = output.iloc[-1]['GWSO']
         done = self.date >= self.env.unwrapped.crop_end_date
 
-        self.env.unwrapped._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
+        self.env.unwrapped._log(output.iloc[-1]['GWSO'], npk, irrigation, reward)
 
         #TODO Truncations and crop signals
         truncation = False
@@ -70,7 +70,7 @@ class RewardFertilizationCostWrapper(gym.Wrapper):
         p_amount = self.fert_amount * action[1] * (action[0] == P_ACT)
         k_amount = self.fert_amount * action[1] * (action[0] == K_ACT)
         irrig_amount = self.irrig_amount * action[1] * (action[0] == W_ACT)
-        reward = output.iloc[-1]['WSO'] - \
+        reward = output.iloc[-1]['GWSO'] - \
                         (np.sum(self.beta * np.array([n_amount, p_amount, k_amount])))
         return reward
     
@@ -92,7 +92,7 @@ class RewardFertilizationThresholdWrapper(gym.Wrapper):
         reward = self._get_reward(output, action)
         done = self.date >= self.env.unwrapped.crop_end_date
 
-        self.env.unwrapped._log(output.iloc[-1]['WSO'], npk, irrigation, reward)
+        self.env.unwrapped._log(output.iloc[-1]['GWSO'], npk, irrigation, reward)
 
         #TODO Truncations and crop signals
         truncation = False
@@ -101,16 +101,18 @@ class RewardFertilizationThresholdWrapper(gym.Wrapper):
     
      # Get reward from the simulation
     def _get_reward(self, output, action):
-        if output.iloc[-1]['TOTN'] > self.max_n:
-            return -1e6
-        if output.iloc[-1]['TOTP'] > self.max_p:
-            return -1e6
-        if output.iloc[-1]['TOTK'] > self.max_k:
-            return -1e6
-        if output.iloc[-1]['TOTIRRIG'] > self.max_w:
-            return -1e6
+        # Return high negative reward if we apply more nutrient after the threshold is 
+        # already passed
+        if output.iloc[-1]['TOTN'] > self.max_n and action[0] == envs.N_ACT and action[1] > 0:
+            return -1e5
+        if output.iloc[-1]['TOTP'] > self.max_p and action[0] == envs.P_ACT and action[1] > 0:
+            return -1e5
+        if output.iloc[-1]['TOTK'] > self.max_k and action[0] == envs.K_ACT and action[1] > 0:
+            return -1e5
+        if output.iloc[-1]['TOTIRRIG'] > self.max_w and action[0] == envs.W_ACT and action[1] > 0 : 
+            return -1e5
         
-        return output.iloc[-1]['WSO']
+        return output.iloc[-1]['GWSO']
     
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)

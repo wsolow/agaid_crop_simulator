@@ -19,9 +19,7 @@ model to be read by various subclasses with the send_signal() function.
 
 ** engine.py - main base class for all models. Supports running the simulation through
 the integration of state and rate variables and the handling of crop start and 
-crop finish signals. 
-
-** models.py - registry for availabe crop models.
+crop finish signals. Contains registry for crop models as well.
 
 ** /base/ - folder for abstract classes such as parameter providers and weather
 provider. No modifications here should be needed. 

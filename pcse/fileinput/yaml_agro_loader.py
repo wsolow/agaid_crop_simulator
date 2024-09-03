@@ -1,7 +1,7 @@
 __author__ = 'wit015'
 import sys, os
 import yaml
-from .. import exceptions as exc
+from ..utils import exceptions as exc
 
 class YAMLAgroManagementReader(list):
     """Reads PCSE agromanagement files in the YAML format.

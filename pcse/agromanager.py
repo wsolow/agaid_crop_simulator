@@ -40,7 +40,6 @@ def check_date_range(day, start, end):
     else:
         return start <= day < end
         
-
 def take_first(iterator):
     """Return the first item of the given iterator.
     """
@@ -117,6 +116,7 @@ class CropCalendar(HasTraits, DispatcherObject):
 
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
+        
     def validate(self, campaign_start_date, next_campaign_start_date):
         """Validate the crop calendar internally and against the interval for
         the agricultural campaign.
@@ -159,8 +159,7 @@ class CropCalendar(HasTraits, DispatcherObject):
             msg = "Starting crop (%s) with variety (%s) on day %s" % (self.crop_name, self.variety_name, day)
             self.logger.info(msg)
             self._send_signal(signal=signals.crop_start, day=day, crop_name=self.crop_name,
-                              variety_name=self.variety_name, site_name=self.site_name,
-                              variation_name=self.variation_name, crop_start_type=self.crop_start_type,
+                              variety_name=self.variety_name, crop_start_type=self.crop_start_type,
                               crop_end_type=self.crop_end_type)
 
         # end of the crop cycle
@@ -222,77 +221,6 @@ class AgroManager(AncillaryObject):
 
     Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
     state events.
-    The structure of the data needed as input for AgroManager is most easily understood with the example
-    (in YAML) below. The definition consists of three campaigns, the first starting on 1999-08-01, the second
-    starting on 2000-09-01 and the last campaign starting on 2001-03-01. The first campaign consists of a crop
-    calendar for winter-wheat starting with sowing at the given crop_start_date. During the campaign there are
-    timed events for irrigation at 2000-05-25 and 2000-06-30. Moreover, there are state events for  fertilizer
-    application (event_signal: apply_npk) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
-
-    The second campaign has no crop calendar, timed events or state events. This means that this is a period of
-    bare soil with only the water balance running. The third campaign is for fodder maize sown at 2001-04-15
-    with two series of timed events (one for irrigation and one for N/P/K application) and no state events.
-    The end date of the simulation in this case will be 2001-11-01 (2001-04-15 + 200 days).
-
-    An example of an agromanagement definition file::
-
-        AgroManagement:
-        - 1999-08-01:
-            CropCalendar:
-                crop_name: wheat
-                variety_name: winter-wheat
-                crop_start_date: 1999-09-15
-                crop_start_type: sowing
-                crop_end_date:
-                crop_end_type: maturity
-                max_duration: 300
-            TimedEvents:
-            -   event_signal: irrigate
-                name:  Timed irrigation events
-                comment: All irrigation amounts in cm
-                events_table:
-                - 2000-05-25: {irrigation_amount: 3.0}
-                - 2000-06-30: {irrigation_amount: 2.5}
-            StateEvents:
-            -   event_signal: apply_npk
-                event_state: DVS
-                zero_condition: rising
-                name: DVS-based N/P/K application table
-                comment: all fertilizer amounts in kg/ha
-                events_table:
-                - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-                - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-                - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
-        - 2000-09-01:
-            CropCalendar:
-            TimedEvents:
-            StateEvents
-        - 2001-03-01:
-            CropCalendar:
-                crop_name: maize
-                variety_name: fodder-maize
-                crop_start_date: 2001-04-15
-                crop_start_type: sowing
-                crop_end_date:
-                crop_end_type: maturity
-                max_duration: 200
-            TimedEvents:
-            -   event_signal: irrigate
-                name:  Timed irrigation events
-                comment: All irrigation amounts in cm
-                events_table:
-                - 2001-06-01: {irrigation_amount: 2.0}
-                - 2001-07-21: {irrigation_amount: 5.0}
-                - 2001-08-18: {irrigation_amount: 3.0}
-                - 2001-09-19: {irrigation_amount: 2.5}
-            -   event_signal: apply_npk
-                name:  Timed N/P/K application table
-                comment: All fertilizer amounts in kg/ha
-                events_table:
-                - 2001-05-25: {N_amount : 50, P_amount: 25, K_amount: 22}
-                - 2001-07-05: {N_amount : 70, P_amount: 35, K_amount: 32}
-            StateEvents:
-
     """
 
     # campaign start dates
@@ -314,7 +242,6 @@ class AgroManager(AncillaryObject):
         :param kiosk: A PCSE variable Kiosk
         :param agromanagement: the agromanagement definition, see the example above in YAML.
         """
-
 
         self.kiosk = kiosk
         self.crop_calendars = []
@@ -400,87 +327,10 @@ class AgroManager(AncillaryObject):
         Getting the last simulation date is more complicated because there are two options.
 
         **1. Adding an explicit trailing empty campaign**
-
-        The first option is to explicitly define the end date of the simulation by adding a
-        'trailing empty campaign' to the agromanagement definition.
-        An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
-        given below. This example will run the simulation until 2001-01-01::
-
-            Version: 1.0
-            AgroManagement:
-            - 1999-08-01:
-                CropCalendar:
-                    crop_name: winter-wheat
-                    variety_name: winter-wheat
-                    crop_start_date: 1999-09-15
-                    crop_start_type: sowing
-                    crop_end_date:
-                    crop_end_type: maturity
-                    max_duration: 300
-                TimedEvents:
-                StateEvents:
-            - 2001-01-01:
-
-        Note that in configurations where the last campaign contains a definition for state events, a trailing
-        empty campaign *must* be provided because the end date cannot be determined. The following campaign
-        definition will therefore lead to an error::
-
-            Version: 1.0
-            AgroManagement:
-            - 2001-01-01:
-                CropCalendar:
-                    crop_name: maize
-                    variety_name: fodder-maize
-                    crop_start_date: 2001-04-15
-                    crop_start_type: sowing
-                    crop_end_date:
-                    crop_end_type: maturity
-                    max_duration: 200
-                TimedEvents:
-                StateEvents:
-                -   event_signal: apply_npk
-                    event_state: DVS
-                    zero_condition: rising
-                    name: DVS-based N/P/K application table
-                    comment: all fertilizer amounts in kg/ha
-                    events_table:
-                    - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-                    - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-                    - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
-
-
         **2. Without an explicit trailing campaign**
 
-        The second option is that there is no trailing empty campaign and in that case the end date of the simulation
-        is retrieved from the crop calendar and/or the timed events that are scheduled. In the example below, the
-        end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
-        date::
-
-            Version: 1.0
-            AgroManagement:
-            - 1999-09-01:
-                CropCalendar:
-                    crop_name: wheat
-                    variety_name: winter-wheat
-                    crop_start_date: 1999-10-01
-                    crop_start_type: sowing
-                    crop_end_date: 2000-08-05
-                    crop_end_type: harvest
-                    max_duration: 330
-                TimedEvents:
-                -   event_signal: irrigate
-                    name:  Timed irrigation events
-                    comment: All irrigation amounts in cm
-                    events_table:
-                    - 2000-05-01: {irrigation_amount: 2, efficiency: 0.7}
-                    - 2000-06-21: {irrigation_amount: 5, efficiency: 0.7}
-                    - 2000-07-18: {irrigation_amount: 3, efficiency: 0.7}
-                StateEvents:
-
-        In the case that there is no harvest date provided and the crop runs till maturity, the end date from
-        the crop calendar will be estimated as the crop_start_date plus the max_duration.
-
         """
+
         if self._end_date is None:
 
             # First check if the last campaign definition is an empty trailing campaign and use that date.
@@ -534,12 +384,30 @@ class AgroManager(AncillaryObject):
         :param drv: The driving variables for the current day
         :return: None
         """
-
+        # Start soil on first day
+        if day == self.campaign_start_dates[self._icampaign]:
+            if self.crop_calendars[0] is not None:
+                self._send_signal(signal=signals.site_start, day=day, site_name=self.crop_calendars[0].site_name,
+                              variation_name=self.crop_calendars[0].variation_name)
+            else:
+                msg = "No valid crop calendar from which to read soil information"
+                raise exc.PCSEError(msg)
+            
         # Check if the agromanager should switch to a new campaign
         if day == self.campaign_start_dates[self._icampaign+1]:
             self._icampaign += 1
             # if new campaign, throw out the previous campaign definition
-            self.crop_calendars.pop(0)
+            old_crop_cal = self.crop_calendars.pop(0)
+
+            # If the site name in the old crop calendar doesn't equal the one
+            # in the new crop calendar, then we start a new site
+            if not old_crop_cal.site_name == self.crop_calendars[0].site_name or \
+                not old_crop_cal.variation_name == self.crop_calendars[0].variation_name:
+
+                # Send finish signal to engine and delete site
+                self._send_signal(signal=signals.site_finish, site_delete=True)
+
+                #TODO How should we start a new site? 
 
         # call handlers for the crop calendar, timed and state events
         if self.crop_calendars[0] is not None:

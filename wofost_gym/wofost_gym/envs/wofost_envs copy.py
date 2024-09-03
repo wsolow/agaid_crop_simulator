@@ -17,7 +17,7 @@ K_ACT = 2
 W_ACT = 3
 
 # Base model simulating growth of crop subject to NPK and water limited dynamics
-class NPK_Env(gym.Env):
+class MultiYear_NPKEnv(gym.Env):
     config = "Wofost80.conf"
     def __init__(self, args):
         self.seed(args.seed)
@@ -818,34 +818,34 @@ class NPK_Env(gym.Env):
 # Note that given how the WaterBalance (WC) and Soil Moisture (SM) are computed
 # The graph of their values will look abnormal, however this still allows for 
 # Excess water to be available in the soil 
-class PP_Env(NPK_Env):
+class PP_Env(MultiYear_NPKEnv):
     def __init__(self, args):
         self.config="Wofost80_PP.conf"
         super().__init__(args)
 
 # Simulating production under abundant water but limited NPK dynamics
-class Limited_NPK_Env(NPK_Env):
+class Limited_NPK_Env(MultiYear_NPKEnv):
 
     def __init__(self, args):
         self.config = "Wofost80_LNPK.conf"
         super().__init__(args)
 
 # Simulating production under limited Nitrogen but abundant water and P/K
-class Limited_N_Env(NPK_Env):
+class Limited_N_Env(MultiYear_NPKEnv):
 
     def __init__(self, args):
         self.config = "Wofost80_LN.conf"
         super().__init__(args)
 
 # Simulating production under limited water and Nitrogen
-class Limited_NW_Env(NPK_Env):
+class Limited_NW_Env(MultiYear_NPKEnv):
 
     def __init__(self, args):
         self.config = "Wofost80_LNW.conf"
         super().__init__(args)
 
 # Simulating production under limited water 
-class Limited_W_Env(NPK_Env):
+class Limited_W_Env(MultiYear_NPKEnv):
     def __init__(self, args):
         self.config = "Wofost80_LW.conf"
         super().__init__(args)

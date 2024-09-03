@@ -315,6 +315,7 @@ class NPK_Args:
 
     """Location of data folder which contains multiple runs"""
     save_folder: str = "data/"
+    
 
     """Environment ID"""
     env_id: str = "wofost-v0"
@@ -334,7 +335,7 @@ class NPK_Args:
 
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['DVS', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'LAI', 'RD', 'WSO','GWSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
+    output_vars: list = field(default_factory = lambda: ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'GWSO', 'DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
     """Year range, incremented by 1"""
@@ -348,9 +349,9 @@ class NPK_Args:
     intvn_interval: int = 1
     """Number of NPK Fertilization Actions"""
     """Total number of actions available will be 3*num_fert^3 + num_irrig"""
-    num_fert: int = 2
+    num_fert: int = 4
     """Number of Irrgiation Actions"""
-    num_irrig: int = 2
+    num_irrig: int = 4
 
     """Maximum N applied in kg/ha (used in reward function)"""
     max_n: float = 20

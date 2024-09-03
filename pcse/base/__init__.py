@@ -9,9 +9,8 @@ when creating PCSE simulation units.
 """
 from .variablekiosk import VariableKiosk
 from .engine import BaseEngine
-from .parameter_providers import ParameterProvider, MultiCropDataProvider
+from .parameter_providers import ParameterProvider, MultiCropDataProvider, MultiSiteDataProvider
 from .simulationobject import SimulationObject, AncillaryObject
 from .states_rates import StatesTemplate, RatesTemplate, StatesWithImplicitRatesTemplate, ParamTemplate
-#from .weather import WeatherDataContainer, WeatherDataProvider
 from .dispatcher import DispatcherObject
 from .timer import Timer

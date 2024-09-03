@@ -216,8 +216,6 @@ def main(args):
             # make sure to tune `CHECKPOINT_FREQUENCY` 
             # so models are not saved too frequently
             if iteration % CHECKPOINT_FREQUENCY == 0:
-                print(f'\n\n\nTRACKIGN SAVE \n\n\n')
-                print(f'{wandb.run.dir}')
                 torch.save(agent.state_dict(), f"{wandb.run.dir}/agent.pt")
                 wandb.save(f"{wandb.run.dir}/agent.pt", policy="now")
 
