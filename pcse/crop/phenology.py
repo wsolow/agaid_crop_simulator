@@ -10,14 +10,14 @@ Classes defined here:
 import datetime
 import numpy as np
 
-from ..traitlets import Float, Instance, Enum, Bool
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float, Instance, Enum, Bool
+from ..utils.decorators import prepare_rates, prepare_states
 
 from ..util import limit, daylength, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
-from .. import signals
-from .. import exceptions as exc
+from ..utils import signals
+from ..utils import exceptions as exc
 
 #-------------------------------------------------------------------------------
 class Vernalisation(SimulationObject):
@@ -129,27 +129,12 @@ class Vernalisation(SimulationObject):
         self.kiosk = kiosk
 
         # Define initial states
-        self.states = self.StateVariables(kiosk, VERN=0., VERNFAC=0.,
-                                          DOV=None, ISVERNALISED=False,
+        self.states = self.StateVariables(kiosk, VERN=0., DOV=None, ISVERNALISED=False,
                                           publish=["VERN", "DOV", "ISVERNALISED"])
         
         self.rates = self.RateVariables(kiosk, publish=["VERNR", "VERNFAC"])
     #---------------------------------------------------------------------------
         
-    def get_states(self):
-        return np.array([
-            self.states.VERN,            # Vernalisation state
-            self.states.DOV,  # Day when vernalisation
-                                            # requirements are fulfilled
-            self.states.ISVERNALISED  
-        ])
-    
-    def set_states(self, state_arr):
-        self.states.VERN = state_arr[0]             # Vernalisation state
-        self.states.DOV = state_arr[1]  # Day when vernalisation
-                                            # requirements are fulfilled
-        self.states.ISVERNALISED =  state_arr[2]  
-
     @prepare_rates
     def calc_rates(self, day, drv):
         rates = self.rates
@@ -350,41 +335,6 @@ class DVS_Phenology(SimulationObject):
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
             self.vernalisation = Vernalisation(day, kiosk, parvalues)
-
-    def get_states(self):
-        return np.array([
-            self.states.DVS, # Development stage
-            self.states.TSUM,  # Temperature sum state
-            self.states.TSUME,  # Temperature sum for emergence state
-            # States which register phenological events
-            self.states.DOS,  # Day of sowing
-            self.states.DOE, # Day of emergence
-            self.states.DOA,  # Day of anthesis
-            self.states.DOM,  # Day of maturity
-            self.states.DOH, # Day of harvest
-            self.states.STAGE, 
-            
-
-            # Rates
-            self.rates.DTSUME,  # increase in temperature sum for emergence
-            self.rates.DTSUM,  # increase in temperature sum
-            self.rates.DVR 
-        ],dtype='object')
-    
-    def set_states(self,state_arr):
-        self.states.DVS = state_arr[0] # Development stage
-        self.states.TSUM = state_arr[1]  # Temperature sum state
-        self.states.TSUME = state_arr[2]  # Temperature sum for emergence state
-        # States which register phenological events
-        self.states.DOS = state_arr[3] # Day of sowing
-        self.states.DOE = state_arr[4] # Day of emergence
-        self.states.DOA = state_arr[5] # Day of anthesis
-        self.states.DOM = state_arr[6] # Day of maturity
-        self.states.DOH = state_arr[7] # Day of harvest
-        self.states.STAGE = state_arr[8]
-        self.rates.DTSUME = state_arr[9] # increase in temperature sum for emergence
-        self.rates.DTSUM = state_arr[10]  # increase in temperature sum
-        self.rates.DVR = state_arr[11]
     
     #---------------------------------------------------------------------------
     def _get_initial_stage(self, day):

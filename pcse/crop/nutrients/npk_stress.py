@@ -11,10 +11,10 @@ Class to calculate various nutrient relates stress factors:
     NPKREF   assimilation reduction factor based on NPKI
 """
 
-from ...traitlets import Float
+from ...utils.traitlets import Float
 from ...util import limit, AfgenTrait
 from ...base import ParamTemplate, SimulationObject, RatesTemplate
-from ...decorators import prepare_rates
+from ...utils.decorators import prepare_rates
 
 class NPK_Stress(SimulationObject):
     """Implementation of NPK stress calculation through [NPK]nutrition index.

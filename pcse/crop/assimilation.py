@@ -7,7 +7,7 @@ from __future__ import print_function
 from math import sqrt, exp, cos, pi
 from collections import deque
 
-from ..traitlets import Instance, Float 
+from ..utils.traitlets import Instance, Float 
 
 from ..util import astro, AfgenTrait
 from ..base import ParamTemplate, SimulationObject

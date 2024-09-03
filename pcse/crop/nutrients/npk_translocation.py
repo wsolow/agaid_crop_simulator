@@ -3,8 +3,8 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 
-from ...traitlets import Float, Instance
-from ...decorators import prepare_rates, prepare_states
+from ...utils.traitlets import Float, Instance
+from ...utils.decorators import prepare_rates, prepare_states
 from ...base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 

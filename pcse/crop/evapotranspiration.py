@@ -5,8 +5,8 @@ from math import exp
 
 import array
 
-from ..traitlets import Float, Int, Instance, Bool
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float, Int, Instance, Bool
+from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
 from ..util import limit, AfgenTrait
@@ -135,7 +135,6 @@ class EvapotranspirationCO2(SimulationObject):
         EVSMX = Float(-99.)
         TRAMX = Float(-99.)
         TRA   = Float(-99.)
-        TRALY = Instance(array.array)
         IDOS  = Bool(False)
         IDWS  = Bool(False)
         RFWS = Float(-99.)
@@ -161,7 +160,7 @@ class EvapotranspirationCO2(SimulationObject):
                     publish=["IDOST", "IDWST"], IDOST=-999, IDWST=-999)
 
         self.rates = self.RateVariables(kiosk, 
-                    publish=["EVWMX", "EVSMX", "TRAMX", "TRA", "TRALY", "IDOS", 
+                    publish=["EVWMX", "EVSMX", "TRAMX", "TRA", "IDOS", 
                              "IDWS", "RFWS", "RFOS", "RFTRA"])
 
     @prepare_rates

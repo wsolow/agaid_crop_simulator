@@ -4,11 +4,10 @@
 from __future__ import print_function
 import datetime
 
-from .pydispatch import dispatcher
-from .base import AncillaryObject, VariableKiosk
-from .traitlets import HasTraits, Instance, Bool, Int, Enum
-from . import signals
-from .util import is_a_dekad, is_a_month, is_a_week
+from ..base import AncillaryObject
+from ..utils.traitlets import HasTraits, Instance, Bool, Int, Enum
+from ..utils import signals
+from ..util import is_a_dekad, is_a_month, is_a_week
 
 
 class Timer(AncillaryObject):
@@ -112,48 +111,3 @@ class Timer(AncillaryObject):
         return self.current_date, float(self.time_step.days)
 
 
-def simple_test():
-    "Only used for testing timer routine"
-
-    class Container(object):
-        pass
-
-    def on_OUTPUT():
-        print("Output generated.")
-    
-    Start = datetime.date(2000, 1, 1)
-    End = datetime.date(2000, 2, 1)
-    kiosk = VariableKiosk()
-    dispatcher.connect(on_OUTPUT, signal=signals.output,
-                       sender=dispatcher.Any)
-
-    mconf = Container()
-    mconf.OUTPUT_INTERVAL = "dekadal"
-    mconf.OUTPUT_INTERVAL_DAYS = 4
-    mconf.OUTPUT_VARS = ["dummy"]
-
-    print("-----------------------------------------")
-    print("Dekadal output")
-    print("-----------------------------------------")
-    timer = Timer(Start, kiosk, End, mconf)
-    for i in range(100):
-        today = timer()
-
-    print("-----------------------------------------")
-    print("Monthly output")
-    print("-----------------------------------------")
-    mconf.OUTPUT_INTERVAL = "monthly"
-    timer = Timer(Start, kiosk, End, mconf)
-    for i in range(150):
-        today = timer()
-
-    print("-----------------------------------------")
-    print("daily output with 4 day intervals")
-    print("-----------------------------------------")
-    mconf.OUTPUT_INTERVAL = "daily"
-    timer = Timer(Start, kiosk, End, mconf)
-    for i in range(150):
-        today = timer()
-
-if __name__ == '__main__':
-    simple_test()

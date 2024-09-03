@@ -19,11 +19,10 @@ from datetime import date, timedelta
 import logging
 
 from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
-from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
-from . import exceptions as exc
+from .utils.traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
+from .utils import exceptions as exc
 from .util import ConfigurationLoader
 from . import signals
-from . import exceptions as exc
 
 def check_date_range(day, start, end):
     """returns True if start <= day < end

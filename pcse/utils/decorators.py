@@ -67,32 +67,3 @@ def prepare_rates(f):
     '''
 
     return descript(f, "rates")
-
-def main():
-    class testclass(object):
-        class strates(object):
-            def lock(self):
-                print("Locking!")
-            def unlock(self):
-                print("Unlocking!")
-    
-        def __init__(self):
-            self.myattr = 10
-            self.rates = self.strates()
-            self.states = self.strates()
-        
-        @prepare_states
-        def integrate(self, a, b, c):
-            print("executing _integrate with parameters %s,%s,%s!" % (a, b, c))
-        @prepare_rates
-        def calc_rates(self, a, b, c):
-            print("executing _calc_rates with parameters %s,%s,%s!" % (a, b, c))
-            
-            
-    tc = testclass()
-    
-    tc.integrate(1, 2, 3)
-    tc.calc_rates(4, 5, 6)
-
-if __name__ == "__main__":
-    main()

@@ -9,7 +9,7 @@ when creating PCSE simulation units.
 import types
 import logging
 
-from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
+from ..utils.traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
 from .dispatcher import DispatcherObject
 from .simulationobject import SimulationObject
 

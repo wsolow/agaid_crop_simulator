@@ -5,13 +5,13 @@
 """This module wraps the soil components for water and nutrients so that they run jointly
 within the same model.
 """
-from pcse.base import SimulationObject
+from ..base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD
 from .classic_waterbalance import WaterbalancePP
 from .npk_soil_dynamics import NPK_Soil_Dynamics
 from .npk_soil_dynamics import NPK_Soil_Dynamics_PP
 from .npk_soil_dynamics import NPK_Soil_Dynamics_LN
-from ..traitlets import Instance
+from ..utils.traitlets import Instance
 
 
 class SoilModuleWrapper_LNPKW(SimulationObject):

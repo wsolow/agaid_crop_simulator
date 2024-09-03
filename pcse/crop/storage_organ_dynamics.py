@@ -2,8 +2,8 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 
-from ..traitlets import Float
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float
+from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 

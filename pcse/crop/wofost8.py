@@ -2,8 +2,8 @@
 
 import datetime
 
-from ..traitlets import Float, Instance, Unicode
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float, Instance, Unicode
+from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals

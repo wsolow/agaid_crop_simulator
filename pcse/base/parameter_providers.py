@@ -14,7 +14,7 @@ if sys.version_info > (3, 8):
 else:
     from collections import MutableMapping
 
-from .. import exceptions as exc
+from ..utils import exceptions as exc
 
 
 class ParameterProvider(MutableMapping):

@@ -5,8 +5,8 @@ from math import exp
 from collections import deque
 from array import array
 
-from ..traitlets import Float, Instance
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float, Instance
+from ..utils.decorators import prepare_rates, prepare_states
 from ..util import limit, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject

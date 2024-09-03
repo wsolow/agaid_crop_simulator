@@ -5,8 +5,8 @@
 from collections import namedtuple
 
 from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
-from ...decorators import prepare_rates, prepare_states
-from ...traitlets import HasTraits, Float, Int, Instance
+from ...utils.decorators import prepare_rates, prepare_states
+from ...utils.traitlets import HasTraits, Float, Int, Instance
 from ...util import AfgenTrait
 
 MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",

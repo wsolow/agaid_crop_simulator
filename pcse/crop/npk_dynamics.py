@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from .. import exceptions as exc
-from ..traitlets import Float, Instance
-from ..decorators import prepare_rates, prepare_states
+from ..utils import exceptions as exc
+from ..utils.traitlets import Float, Instance
+from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from ..util import AfgenTrait

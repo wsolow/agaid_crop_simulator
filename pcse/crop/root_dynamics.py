@@ -3,8 +3,8 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 from copy import deepcopy
 
-from ..traitlets import Float
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float
+from ..utils.decorators import prepare_rates, prepare_states
 from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject

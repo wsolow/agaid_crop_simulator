@@ -19,12 +19,12 @@ import datetime
 import gc
 import numpy as np
 
-from .traitlets import Instance, Bool, List, Dict
+from .utils.traitlets import Instance, Bool, List, Dict
 from .base import (VariableKiosk, AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
 from .nasapower import WeatherDataProvider
 from .util import ConfigurationLoader, check_date
-from .timer import Timer
+from .base.timer import Timer
 from . import signals
 from . import exceptions as exc
 

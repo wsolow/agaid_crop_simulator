@@ -14,3 +14,4 @@ from .simulationobject import SimulationObject, AncillaryObject
 from .states_rates import StatesTemplate, RatesTemplate, StatesWithImplicitRatesTemplate, ParamTemplate
 #from .weather import WeatherDataContainer, WeatherDataProvider
 from .dispatcher import DispatcherObject
+from .timer import Timer

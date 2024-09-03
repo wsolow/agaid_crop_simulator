@@ -9,13 +9,13 @@ of potential production (`WaterbalancePP`) and water-limited production
 from math import sqrt
 import numpy as np
 
-from ..traitlets import Float, Int, Instance, Bool, List
-from ..decorators import prepare_rates, prepare_states
+from ..utils.traitlets import Float, Int, Instance, Bool, List
+from ..utils.decorators import prepare_rates, prepare_states
 from ..util import limit, Afgen
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
-from .. import signals
-from .. import exceptions as exc
+from ..utils import signals
+from ..utils import exceptions as exc
 
 
 class WaterbalanceFD(SimulationObject):

@@ -20,14 +20,12 @@ class Instance(tr.Instance):
             kwargs['allow_none'] = True
         tr.Instance.__init__(self, *args, **kwargs)
 
-
 class Enum(tr.Enum):
 
     def __init__(self, *args, **kwargs):
         if 'allow_none' not in kwargs:
             kwargs['allow_none'] = True
         tr.Enum.__init__(self, *args, **kwargs)
-
 
 class Unicode(tr.Unicode):
 
@@ -36,14 +34,12 @@ class Unicode(tr.Unicode):
             kwargs['allow_none'] = True
         tr.Unicode.__init__(self, *args, **kwargs)
 
-
 class Bool(tr.Bool):
 
     def __init__(self, *args, **kwargs):
         if 'allow_none' not in kwargs:
             kwargs['allow_none'] = True
         tr.Bool.__init__(self, *args, **kwargs)
-
 
 class Float(tr.Float):
 
@@ -58,3 +54,4 @@ class Float(tr.Float):
         except:
             self.error(obj, value)
         return value
+

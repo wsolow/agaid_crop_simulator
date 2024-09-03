@@ -4,11 +4,11 @@
 from collections import namedtuple
 from math import exp
 
-from ..traitlets import Float, Instance
-from ..decorators import prepare_states
+from ..utils.traitlets import Float, Instance
+from ..utils.decorators import prepare_states
 from ..base import ParamTemplate, StatesTemplate, SimulationObject
     
-from .. import exceptions as exc
+from ..utils import exceptions as exc
 from ..util import AfgenTrait
 
 

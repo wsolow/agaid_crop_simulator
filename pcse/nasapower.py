@@ -13,8 +13,7 @@ import pickle
 
 #from .base import WeatherDataProvider, WeatherDataContainer
 from .util import ea_from_tdew, reference_ET, check_angstromAB
-from . import exceptions as exc
-from .exceptions import PCSEError
+from .utils import exceptions as exc
 
 # Define some lambdas to take care of unit conversions.
 MJ_to_J = lambda x: x * 1e6
@@ -512,7 +511,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 status = self._load_cache_file()
                 if status is not True:
                     msg = "Outdated cache file failed loading."
-                    raise PCSEError(msg)
+                    raise exc.PCSEError(msg)
 
     def _get_and_process_NASAPower(self, latitude, longitude):
         """Handles the retrieval and processing of the NASA Power data
@@ -576,7 +575,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         try:
             check_angstromAB(angstrom_a, angstrom_b)
-        except PCSEError as e:
+        except exc.PCSEError as e:
             msg = ("Angstrom A/B values (%f, %f) outside valid range: %s. " +
                    "Reverting to default values.")
             msg = msg % (angstrom_a, angstrom_b, e)
@@ -614,7 +613,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         if req.status_code != self.HTTP_OK:
             msg = ("Failed retrieving POWER data, server returned HTTP " +
                    "code: %i on following URL %s") % (req.status_code, req.url)
-            raise PCSEError(msg)
+            raise exc.PCSEError(msg)
 
         msg = "Successfully retrieved data from NASA Power"
         self.logger.debug(msg)
@@ -685,7 +684,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 msg = (("Failed to calculate reference ET values on %s. " % rec["DAY"]) +
                        ("With input values:\n %s.\n" % str(rec)) +
                        ("Due to error: %s" % e))
-                raise PCSEError(msg)
+                raise exc.PCSEError(msg)
 
             # update record with ET values value convert to cm/day
             rec.update({"E0": E0/10., "ES0": ES0/10., "ET0": ET0/10.})

@@ -7,9 +7,6 @@ import os, sys
 from pathlib import Path
 import datetime
 import copy
-import platform
-import tempfile
-import logging
 from math import log10, cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
@@ -20,8 +17,8 @@ if sys.version_info > (3,8):
 else:
     from collections import Iterable
 
-from . import exceptions as exc
-from .traitlets import TraitType
+from .utils import exceptions as exc
+from .utils.traitlets import TraitType
 
 Celsius2Kelvin = lambda x: x + 273.16
 hPa2kPa = lambda x: x/10.

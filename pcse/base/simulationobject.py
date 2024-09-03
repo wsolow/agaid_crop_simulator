@@ -6,8 +6,8 @@ import logging
 from datetime import date
 
 from .dispatcher import DispatcherObject
-from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
-from .. import exceptions as exc
+from ..utils.traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
+from ..utils import exceptions as exc
 from .variablekiosk import VariableKiosk
 from .states_rates import StatesTemplate, RatesTemplate, ParamTemplate
 
@@ -35,7 +35,6 @@ class SimulationObject(HasTraits, DispatcherObject):
 
     def __init__(self, day, kiosk, *args, **kwargs):
         HasTraits.__init__(self, *args, **kwargs)
-
         # Check that day variable is specified
         if not isinstance(day, date):
             this = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)

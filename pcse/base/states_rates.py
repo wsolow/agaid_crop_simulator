@@ -2,13 +2,12 @@
 # Copyright (c) 2004-2018 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import logging
-from datetime import date
 
-from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
+from ..utils.traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
 from ..pydispatch import dispatcher
-from ..util import Afgen
-from .. import exceptions as exc
+from ..utils import exceptions as exc
 from .variablekiosk import VariableKiosk
+from ..util import Afgen
 
 
 class ParamTemplate(HasTraits):
@@ -280,6 +279,8 @@ class StatesTemplate(StatesRatesCommon):
 
         # Check if kwargs is empty, otherwise issue a warning
         if len(kwargs) > 0:
+            print(kwargs)
+            print('WE ARE HERE')
             msg = ("Initial value given for unknown state variable(s): " +
                    "%s") % kwargs.keys()
             logging.warn(msg)
