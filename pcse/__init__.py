@@ -54,12 +54,11 @@ user_home = util.get_working_directory()
 
 # Make .pcse cache folder in the current working directory
 pcse_user_home = os.path.join(user_home, ".pcse")
-if not os.path.exists(pcse_user_home):
-        os.mkdir(pcse_user_home)
+os.mkdir(pcse_user_home,exist_ok=True)
 
+# Make folder in .pcse for weather data
 meteo_cache_dir = os.path.join(pcse_user_home, "meteo_cache")
-if not os.path.exists(meteo_cache_dir):
-    os.mkdir(meteo_cache_dir)
+os.mkdir(meteo_cache_dir,exist_ok=True)
 
 
 

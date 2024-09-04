@@ -407,7 +407,7 @@ class AgroManager(AncillaryObject):
                 # Send finish signal to engine and delete site
                 self._send_signal(signal=signals.site_finish, site_delete=True)
 
-                #TODO How should we start a new site? 
+                #TODO How should we start a new site?
 
         # call handlers for the crop calendar, timed and state events
         if self.crop_calendars[0] is not None:
