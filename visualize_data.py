@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 import sys
+import yaml
 
 from utils import NPK_Args
 import tyro
@@ -17,6 +18,15 @@ import utils
 import policies
 
 def plot_average_farms(args, filenames):
+    fname = f'env_config/units.yaml'
+    with open(fname) as fp:
+        try:
+            r = yaml.safe_load(fp)
+        except yaml.YAMLError as e:
+            msg = "Failed parsing agromanagement file %s: %s" % (fname, e)
+            print(msg)
+            
+
 
     farm_avg = []
     farm_std = []
@@ -61,18 +71,17 @@ def plot_average_farms(args, filenames):
     for j in range(len(all_vars)):
         plt.figure(j+1)
         plt.title(all_vars[j])
+        plt.xlabel('Days')
+        plt.ylabel(r[all_vars[j]])
         for i in range(len(farm_avg)):
             plt.plot(farm_avg[i,:,j],label=filenames[i])
             plt.fill_between(np.arange(clipped_length),farm_avg[i,:,j]-farm_std[i,:,j],farm_avg[i,:,j]+farm_std[i,:,j], alpha=.5, linestyle='solid')
-            plt.xlabel('Days')
         plt.legend()
         plt.show()
 
 
         
-       
 if __name__ == "__main__":
-
 
     args = tyro.cli(NPK_Args)
 
