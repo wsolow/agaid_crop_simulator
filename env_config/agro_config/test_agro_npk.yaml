@@ -1,14 +1,16 @@
-- 1984-01-01:
-    Site:
-        LATITUDE: 40
-        LONGITUDE: 120
-        YEAR: 1984
+AgroManagement:
+    SiteCalendar:
+        latitude: 40
+        longitude: 120
+        year: 1984
+        site_name: oregon
+        variation_name: Oregon_1
+        site_start_date: 1984-01-01
+        site_end_date: 1984-08-01
     CropCalendar:
         crop_name: wheat
         variety_name: Winter_wheat_101
-        site_name: oregon
-        variation_name: Oregon_1
-        crop_start_date: 1984-02-01
+        crop_start_date: 1984-01-01
         crop_start_type: sowing
         crop_end_date: 1984-08-01
         crop_end_type: harvest

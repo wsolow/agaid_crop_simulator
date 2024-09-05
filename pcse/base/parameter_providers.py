@@ -123,8 +123,6 @@ class ParameterProvider(MutableMapping):
                one site is assumed to be here.
         :param variation_name: string identifying the variety name, is ignored as only
                one variation is assumed to be here.
-        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
-        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
 
         In case of crop rotations, there is a new set of crop parameters needed when a new
         crop is started. This routine activates the crop parameters for the given crop_name and
@@ -316,6 +314,7 @@ class MultiCropDataProvider(dict):
         msg = "'set_crop_type' method should be implemented specifically for each" \
               "subclass of MultiCropDataProvider."
         raise NotImplementedError(msg)
+    
     
 class MultiSiteDataProvider(dict):
 

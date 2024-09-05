@@ -847,7 +847,7 @@ class WaterbalancePP(SimulationObject):
                                                    "WLOW", "WLOWI", "WWLOW", "WTRAT", 
                                                    "EVST", "EVWT", "TSR", "RAINT", 
                                                    "WART", "TOTINF", "TOTIRR", "PERCT", 
-                                                   "LOSST", "WBALRT", "WBALTT", "DSOS"
+                                                   "LOSST", "WBALRT", "WBALTT", "DSOS",
                                                    "TOTIRRIG"], 
                            SM=SM, SS=SS,
                            SSI=p.SSI, WC=WC, WI=WI, WLOW=WLOW, WLOWI=WLOWI,

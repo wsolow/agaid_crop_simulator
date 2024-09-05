@@ -157,20 +157,6 @@ Keyword arguments with `signals.irrigate`:
     * amount: Amount of irrigation in cm water applied on this day.
     * efficiency: efficiency of irrigation, meaning that the total amount of water that
       is added to the soil reservoir equals amount * efficiency
-
-
-**MOWING**
-
-Is used for sending mowing events used by the LINGRA/LINGRA-N models::
-
-    self._send_signal(signal=signals.mowing, biomass_remaining=<float>)
-
-Keyword arguments with `signals.mowing`:
-
-    * biomass_remaining: The amount of biomass remaining after mowing in kg/ha.
-
-
-.. _PyDispatcher: http://pydispatcher.sourceforge.net/
 """
 
 site_start = "SITE_START"
@@ -184,4 +170,3 @@ summary_output = "SUMMARY_OUTPUT"
 apply_npk = "APPLY_NPK"
 apply_n = "APPLY_N"
 irrigate = "IRRIGATE" 
-mowing = "MOWING"

@@ -304,21 +304,24 @@ class Engine(BaseEngine):
         self.soil = self.mconf.SOIL(self.day, self.kiosk, self.parameterprovider)       
 
     def _on_SITE_FINISH(self, day, site_delete=False):
-        """Sets the variable 'flag_crop_finish' to True when the signal
-        CROP_FINISH is received.
+        """Sets the variable 'flag_site_finish' to True when the signal
+        SOTE_FINISH is received.
         
-        The flag is needed because finishing the crop simulation is deferred to
+        The flag is needed because finishing the site simulation is deferred to
         the correct place in the processing loop and is done by the routine
-        _finish_cropsimulation().
+        _finish_sitesimulation().
         
-        If crop_delete=True the CropSimulation object will be deleted from the
-        hierarchy in _finish_cropsimulation().
+        If site_delete=True the SiteSimulation object will be deleted from the
+        hierarchy in _finish_sitesimulation().
 
         Finally, summary output will be generated depending on
         conf.SUMMARY_OUTPUT_VARS
         """
         self.flag_site_finish = True
-        self.flag_site_delete = site_delete                 
+        self.flag_site_delete = site_delete
+
+        if self.crop is not None:
+            self._send_signal(signals.crop_finish, day=day, crop_delete=True)                 
 
 
     def _on_TERMINATE(self):
@@ -355,6 +358,8 @@ class Engine(BaseEngine):
         if self.flag_crop_delete:
             self.flag_crop_delete = False
 
+        self.crop = None
+
     def _finish_sitesimulation(self, day):
         """Finishes the SiteSimulation object when variable 'flag_site_finish'
         has been set to True based on the signal 'SITE_FINISH' being
@@ -375,7 +380,9 @@ class Engine(BaseEngine):
         # Only remove the crop simulation object from the system when the crop
         # is finished, when explicitly asked to do so.
         if self.flag_site_delete:
-            self.flag_crop_delete = False
+            self.flag_site_delete = False
+
+        self.soil = None
 
     def _terminate_simulation(self, day):
         """Terminates the entire simulation.

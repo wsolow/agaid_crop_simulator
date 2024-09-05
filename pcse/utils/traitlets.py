@@ -55,3 +55,9 @@ class Float(tr.Float):
             self.error(obj, value)
         return value
 
+class Int(tr.Int):
+
+    def __init__(self, *args, **kwargs):
+        if 'allow_none' not in kwargs:
+            kwargs['allow_none'] = True
+        tr.Int.__init__(self, *args, **kwargs)

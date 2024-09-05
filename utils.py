@@ -335,8 +335,10 @@ class NPK_Args:
 
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'GWSO', 'DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM'])
+    # ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'GWSO', 'DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM']
+    output_vars: list = field(default_factory = lambda: ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'GWSO', 'DVS'])
     """Weather Variables"""
+    # ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND']
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
     """Year range, incremented by 1"""
     year_range: list = field(default_factory = lambda: [1984, 2000])

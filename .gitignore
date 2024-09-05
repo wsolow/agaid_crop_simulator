@@ -5,3 +5,4 @@ Wandb/
 **/__pycache__/
 .pcse/
 bash_scripts/
+Agents/

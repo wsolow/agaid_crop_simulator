@@ -18,7 +18,7 @@ W_ACT = 3
 
 # Base model simulating growth of crop subject to NPK and water limited dynamics
 class NPK_Env(gym.Env):
-    config = "Wofost80.conf"
+    config = "Wofost80_singleyear.conf"
     def __init__(self, args):
         self.seed(args.seed)
         self.log = self._init_log()
@@ -38,10 +38,15 @@ class NPK_Env(gym.Env):
 
         self.parameterprovider = pcse.base.ParameterProvider(sitedata=site, cropdata=crop)
         self.agromanagement = self._load_agromanagement_data(os.path.join(args.path, args.agro_fpath))
+
+        # Get information from the agromanagement file
         self.location, self.year = self._load_site_parameters(self.agromanagement)
-        self.crop_start_date = self.agromanagement[0][next(iter(self.agromanagement[0].keys()))]['CropCalendar']['crop_start_date']
-        self.crop_start_date = self.agromanagement[0][next(iter(self.agromanagement[0].keys()))]['CropCalendar']['crop_end_date']
-        self.campaign_start = list(self.agromanagement[0].keys())[0]        
+        self.crop_start_date = self.agromanagement['CropCalendar']['crop_start_date']
+        self.crop_end_date = self.agromanagement['CropCalendar']['crop_end_date']
+        self.site_start_date = self.agromanagement['SiteCalendar']['site_start_date']
+        self.site_end_date = self.agromanagement['SiteCalendar']['site_end_date']     
+        self.max_site_duration = self.site_end_date - self.site_start_date
+        self.max_crop_duration = self.crop_end_date - self.crop_start_date
 
         self.weatherdataprovider = self._get_weatherdataprovider()
         self.train_weather_data = self._get_train_weather_data()
@@ -52,7 +57,7 @@ class NPK_Env(gym.Env):
         # Create crop model
         self.model = pcse.engine.Wofost80(self.parameterprovider, self.weatherdataprovider,
                                          self.agromanagement, config=self.config)
-        self.date = self.crop_start_date
+        self.date = self.site_start_date
 
         
         # NPK/Irrigation action amounts
@@ -626,15 +631,17 @@ class NPK_Env(gym.Env):
     def _load_agromanagement_data(self, path):
         with open(os.path.join(path)) as file:
             agromanagement = yaml.load(file, Loader=yaml.SafeLoader)
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
         return agromanagement
     
     # Load the site parameters from agromanagement file
     def _load_site_parameters(self, agromanagement):
         try: 
-            site_params = agromanagement[0][next(iter(agromanagement[0].keys()))]['Site']
+            site_params = agromanagement['SiteCalendar']
             
-            fixed_location = (site_params['LATITUDE'], site_params['LONGITUDE'])
-            fixed_year = site_params['YEAR']
+            fixed_location = (site_params['latitude'], site_params['longitude'])
+            fixed_year = site_params['year']
         except:
             fixed_location = None
             fixed_year = None
@@ -691,23 +698,19 @@ class NPK_Env(gym.Env):
             self.year = self.np_random.choice(self.train_weather_data) 
         
         # Change the current start and end date to specified year
-        self.crop_start_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_start_date']
-        self.crop_end_date = \
-                list(self.agromanagement[0].values())[0]['CropCalendar']['crop_end_date']
         self.crop_start_date = self.crop_start_date.replace(year=self.year)
-        self.crop_end_date = self.crop_end_date.replace(year=self.year)
+        self.crop_end_date = self.crop_start_date + self.max_crop_duration
+
+        self.site_start_date = self.site_start_date.replace(year=self.year)
+        self.site_end_date = self.site_start_date + self.max_site_duration
         
         # Change to the new year specified by self.year
-        self.date = self.crop_start_date
-        old_campaign_start = self.campaign_start
-        self.campaign_start = self.campaign_start.replace(year=self.year)
-        self.agromanagement[0][self.campaign_start] = self.agromanagement[0].pop(old_campaign_start)
+        self.date = self.site_start_date
 
-        self.agromanagement[0][self.campaign_start]['CropCalendar']['crop_start_date'] = \
-            self.agromanagement[0][self.campaign_start]['CropCalendar']['crop_start_date'].replace(year=self.year)
-        self.agromanagement[0][self.campaign_start]['CropCalendar']['crop_end_date'] = \
-            self.agromanagement[0][self.campaign_start]['CropCalendar']['crop_end_date'].replace(year=self.year)
+        self.agromanagement['CropCalendar']['crop_start_date'] = self.crop_start_date
+        self.agromanagement['CropCalendar']['crop_end_date'] = self.crop_end_date
+        self.agromanagement['SiteCalendar']['site_start_date'] = self.site_start_date
+        self.agromanagement['SiteCalendar']['site_end_date'] = self.site_end_date
     
         # Reset weather 
         self.weatherdataprovider = self._get_weatherdataprovider()
@@ -733,14 +736,18 @@ class NPK_Env(gym.Env):
         observation = self._process_output(output)
         
         reward = self._get_reward(output, action) 
-        done = self.date >= self.crop_end_date
+        
+        # Terminate based on site end date
+        terminate = self.date >= self.site_end_date
+        # Truncate (in some cases) based on the crop end date
+        truncation = self.date >= self.crop_end_date
 
         self._log(output.iloc[-1]['GWSO'], npk, irrigation, reward)
 
         #TODO Truncations and crop signals
         truncation = False
 
-        return observation, reward, done, truncation, self.log
+        return observation, reward, terminate, truncation, self.log
     
     # Concatenate crop and weather observations
     def _process_output(self, output):
@@ -757,7 +764,7 @@ class NPK_Env(gym.Env):
         days_elapsed = self.date - self.crop_start_date
 
         observation = np.concatenate([crop_observation, weather_observation.flatten(), [days_elapsed.days]])
-        observation = np.nan_to_num(observation)
+        #observation = np.nan_to_num(observation)
 
         return observation.astype('float32')
 
@@ -820,32 +827,32 @@ class NPK_Env(gym.Env):
 # Excess water to be available in the soil 
 class PP_Env(NPK_Env):
     def __init__(self, args):
-        self.config="Wofost80_PP.conf"
+        self.config="Wofost80_PP_singleyear.conf"
         super().__init__(args)
 
 # Simulating production under abundant water but limited NPK dynamics
 class Limited_NPK_Env(NPK_Env):
 
     def __init__(self, args):
-        self.config = "Wofost80_LNPK.conf"
+        self.config = "Wofost80_LNPK_singleyear.conf"
         super().__init__(args)
 
 # Simulating production under limited Nitrogen but abundant water and P/K
 class Limited_N_Env(NPK_Env):
 
     def __init__(self, args):
-        self.config = "Wofost80_LN.conf"
+        self.config = "Wofost80_LN_singleyear.conf"
         super().__init__(args)
 
 # Simulating production under limited water and Nitrogen
 class Limited_NW_Env(NPK_Env):
 
     def __init__(self, args):
-        self.config = "Wofost80_LNW.conf"
+        self.config = "Wofost80_LNW_singleyear.conf"
         super().__init__(args)
 
 # Simulating production under limited water 
 class Limited_W_Env(NPK_Env):
     def __init__(self, args):
-        self.config = "Wofost80_LW.conf"
+        self.config = "Wofost80_LW_singleyear.conf"
         super().__init__(args)

@@ -1,6 +1,6 @@
 import gymnasium as gym
 import numpy as np
-import wofost_gym.envs.wofost_envs as envs
+import wofost_gym.envs.wofost as envs
 
 # Action Enums
 N_ACT = 0

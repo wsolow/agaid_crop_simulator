@@ -17,6 +17,7 @@ Available classes:
 
 from datetime import date, timedelta
 import logging
+import sys
 
 from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
 from .utils.traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
@@ -46,6 +47,104 @@ def take_first(iterator):
     for item in iterator:
         return item
 
+class SiteCalendar(HasTraits, DispatcherObject):
+    """A site calendar for managing the site cycle.
+
+    A `SiteCalendar` object is responsible for storing, checking, starting and ending
+    the soil cycle. The site calendar is initialized by providing the parameters needed
+    for defining the site cycle. At each time step the instance of `SiteCalendar` is called
+    and at dates defined by its parameters it initiates the appropriate actions:
+
+    param: latitude        - longitude of site to draw weather from
+    param: longitude       - latitude of site to draw weather from
+    param: year            - year to draw weather from
+    param: site_name       - string identifying the site
+    param: variation_name  - string identifying the site variation
+    param: site_start_date - date identifying site start
+    param: site_end_date   - date identifying site end
+
+    :return: A SiteCalendar Instance
+    """
+
+    # Characteristics of the site cycle
+    latitude = Float()
+    longitude = Float()
+    year = Int()
+    site_name = Unicode()
+    variation_name = Unicode()
+    site_start_date = Instance(date)
+    site_end_date = Instance(date)
+
+    # system parameters
+    kiosk = Instance(VariableKiosk)
+    parameterprovider = Instance(ParameterProvider)
+    mconf = Instance(ConfigurationLoader)
+    logger = Instance(logging.Logger)
+
+    # Counter for duration of the site cycle
+    duration = Int(0)
+    in_site_cycle = Bool(False)
+
+    def __init__(self, kiosk, site_name=None, variation_name=None, site_start_date=None,
+              site_end_date=None, latitude=None, longitude=None, year=None):
+
+        # set up logging
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+
+        self.logger = logging.getLogger(loggername)
+        self.kiosk = kiosk
+        self.site_name = site_name
+        self.variation_name = variation_name
+        self.site_start_date = site_start_date
+        self.site_end_date = site_end_date
+        self.latitude = latitude
+        self.longitude = longitude
+        self.year = year
+
+        self._connect_signal(self._on_SITE_FINISH, signal=signals.site_finish)
+
+        
+    def validate(self):
+        """Validate the crop calendar internally and against the interval for
+        the agricultural campaign.
+
+        :param campaign_start_date: start date of this campaign
+        :param next_campaign_start_date: start date of the next campaign
+        """
+
+        # Check that crop_start_date is before crop_end_date
+        if self.site_start_date >= self.site_end_date:
+            msg = "site_end_date before or equal to site_start_date for crop '%s'!"
+            raise exc.PCSEError(msg % (self.sitestart_date, self.site_end_date))
+
+    def __call__(self, day):
+        """Runs the crop calendar to determine if any actions are needed.
+
+        :param day:  a date object for the current simulation day
+        :param drv: the driving variables at this day
+        :return: None
+        """
+
+        if self.in_site_cycle:
+            self.duration += 1
+        
+        # Start of the site cycle
+        if day == self.site_start_date:
+            msg = "Starting crop (%s) with variety (%s) on day %s" % (self.site_name, self.variation_name, day)
+            self.logger.info(msg)
+            self._send_signal(signal=signals.site_start, day=day, site_name=self.site_name,
+                              variation_name=self.variation_name) 
+
+        if day == self.site_end_date:
+            self._send_signal(signal=signals.site_finish, day=day, site_delete=True)
+
+    def _on_SITE_FINISH(self):
+        """Register that crop has reached the end of its cycle.
+        """
+        self.in_site_cycle = False
+
+
 class CropCalendar(HasTraits, DispatcherObject):
     """A crop calendar for managing the crop cycle.
 
@@ -62,8 +161,6 @@ class CropCalendar(HasTraits, DispatcherObject):
     :param kiosk: The PCSE VariableKiosk instance
     :param crop_name: String identifying the crop
     :param variety_name: String identifying the variety
-    :param site_name: String identifying the site
-    :param variation_name: String identifying the site variation
     :param crop_start_date: Start date of the crop simulation
     :param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
     :param crop_end_date: End date of the crop simulation
@@ -94,8 +191,7 @@ class CropCalendar(HasTraits, DispatcherObject):
     duration = Int(0)
     in_crop_cycle = Bool(False)
 
-    def __init__(self, kiosk, crop_name=None, variety_name=None, site_name=None, 
-                 variation_name= None, crop_start_date=None,
+    def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
                  crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
 
         # set up logging
@@ -106,8 +202,6 @@ class CropCalendar(HasTraits, DispatcherObject):
         self.kiosk = kiosk
         self.crop_name = crop_name
         self.variety_name = variety_name
-        self.site_name = site_name
-        self.variation_name = variation_name
         self.crop_start_date = crop_start_date
         self.crop_start_type = crop_start_type
         self.crop_end_date = crop_end_date
@@ -205,6 +299,90 @@ class CropCalendar(HasTraits, DispatcherObject):
         """
         return self.crop_start_date
 
+class AgroManagerSingleYear(AncillaryObject):
+    """Class for continuous AgroManagement actions including crop rotations and events.
+
+    See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
+
+    The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
+    fields including planting and harvesting of the crop, as well as management actions such as fertilizer
+    application, irrigation and spraying.
+
+    The agromanagement during the simulation is implemented as a sequence of campaigns. Campaigns start on a
+    prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
+    provided a trailing empty campaign or by deriving the end date from the crop calendar and timed events in the
+    last campaign. See also the section below on `end_date` property.
+
+    Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
+    state events.
+    """
+
+    # Overall engine start date and end date
+    _site_calendar = Instance(SiteCalendar)
+    _crop_calendar = Instance(CropCalendar)
+
+    start_date = Instance(date)
+    end_date = Instance(date)
+
+    def initialize(self, kiosk, agromanagement):
+        """Initialize the AgroManager.
+
+        :param kiosk: A PCSE variable Kiosk
+        :param agromanagement: the agromanagement definition, see the example above in YAML.
+        """
+        self.kiosk = kiosk
+
+        # Connect CROP_FINISH signal with handler
+        self._connect_signal(self._on_SITE_FINISH, signals.site_finish)
+
+        # If there is an "AgroManagement" item defined then we first need to get
+        # the contents defined within that item
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
+
+        # Validate that a site calendar and crop calendar are present
+        sc_def = agromanagement['SiteCalendar']
+        if sc_def is not None:
+            sc = SiteCalendar(kiosk, **sc_def)
+            sc.validate()
+            self._site_calendar = sc
+
+            self.start_date = self._site_calendar.site_start_date
+            self.end_date = self._site_calendar.site_end_date
+        
+        # Get and validate the crop calendar
+        cc_def = agromanagement['CropCalendar']
+        if cc_def is not None and sc_def is not None:
+            cc = CropCalendar(kiosk, **cc_def)
+            cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
+            self._crop_calendar = cc
+
+    def __call__(self, day, drv):
+        """Calls the AgroManager to execute and crop calendar actions, timed or state events.
+
+        :param day: The current simulation date
+        :param drv: The driving variables for the current day
+        :return: None
+        """
+        if self._site_calendar is not None:
+            self._site_calendar(day)
+
+        # call handlers for the crop calendar, timed and state events
+        if self._crop_calendar is not None:
+            self._crop_calendar(day)
+
+
+    def _on_SITE_FINISH(self, day):
+        """Send signal to terminate after the crop cycle finishes.
+
+        The simulation will be terminated when the following conditions are met:
+        1. There are no campaigns defined after the current campaign
+        2. There are no StateEvents active
+        3. There are no TimedEvents scheduled after the current date.
+        """
+        self._send_signal(signal=signals.terminate)
+
+
 class AgroManager(AncillaryObject):
     """Class for continuous AgroManagement actions including crop rotations and events.
 
@@ -212,7 +390,7 @@ class AgroManager(AncillaryObject):
 
     The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
     fields including planting and harvesting of the crop, as well as management actions such as fertilizer
-    application, irrigation, mowing and spraying.
+    application, irrigation and spraying.
 
     The agromanagement during the simulation is implemented as a sequence of campaigns. Campaigns start on a
     prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
@@ -427,17 +605,4 @@ class AgroManager(AncillaryObject):
         if self.campaign_start_dates[self._icampaign+1] is not None:
             return  #  e.g. There is a next campaign defined
 
-        self._send_signal(signal=signals.terminate)
-
-
-    @property
-    def ndays_in_crop_cycle(self):
-        """Returns the number of days of the current cropping cycle.
-
-        Returns zero if no crop cycle is active.
-        """
-
-        if self.crop_calendars[0] is None:
-            return 0
-        else:
-            return self.crop_calendars[0].duration
+        #self._send_signal(signal=signals.terminate)

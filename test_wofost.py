@@ -12,6 +12,10 @@ import tyro
 import utils
 from policies import default_policy as pol
 
+def norm(x):
+    print(x.shape)
+    return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
+
 
 if __name__ == "__main__":
 
@@ -51,13 +55,22 @@ if __name__ == "__main__":
     
     all_vars = args.output_vars + args.weather_vars
 
-    for i in range(len(all_vars)):
+    '''for i in range(len(all_vars)):
         plt.figure(i+1)
         plt.title(all_vars[i])
         plt.plot(all_obs[ :, i])
-        print(all_vars[i])
-        print(all_obs[:,i])  
-        plt.show()
+        plt.xlim(0-10, all_obs.shape[0]+10) 
+    plt.show()'''
+
+
+    for i in range(len(all_vars)):
+        plt.plot(norm(all_obs[ :, i]), label=all_vars[i])
+        plt.xlim(0-10, all_obs.shape[0]+10) 
+
+    plt.legend()
+    plt.show()
+
+
 
 
 
