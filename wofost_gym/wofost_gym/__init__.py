@@ -1,4 +1,5 @@
 from gymnasium.envs.registration import register
+from . import utils
 
 register(
     id='wofost-v0',

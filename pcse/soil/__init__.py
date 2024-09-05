@@ -12,5 +12,5 @@ from .soil_wrappers import SoilModuleWrapper_LNPKW
 from .soil_wrappers import SoilModuleWrapper_LN
 from .soil_wrappers import SoilModuleWrapper_LNPK
 from .soil_wrappers import SoilModuleWrapper_PP
-from .soil_wrappers import SoilModuleWrapper_LN
+from .soil_wrappers import SoilModuleWrapper_LW
 from .soil_wrappers import SoilModuleWrapper_LNW

@@ -4,6 +4,7 @@
 
 import gymnasium as gym
 import numpy as np
+import sys
 import wofost_gym
 import matplotlib.pyplot as plt
 
@@ -13,7 +14,6 @@ import utils
 from policies import default_policy as pol
 
 def norm(x):
-    print(x.shape)
     return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
 
 
@@ -55,14 +55,14 @@ if __name__ == "__main__":
     
     all_vars = args.output_vars + args.weather_vars
 
-    '''for i in range(len(all_vars)):
+    for i in range(len(all_vars)):
         plt.figure(i+1)
         plt.title(all_vars[i])
         plt.plot(all_obs[ :, i])
         plt.xlim(0-10, all_obs.shape[0]+10) 
-    plt.show()'''
+    plt.show()
 
-
+    sys.exit(0)
     for i in range(len(all_vars)):
         plt.plot(norm(all_obs[ :, i]), label=all_vars[i])
         plt.xlim(0-10, all_obs.shape[0]+10) 

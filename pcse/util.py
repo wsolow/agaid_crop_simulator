@@ -38,50 +38,57 @@ class ConfigurationLoader(object):
 
     def __init__(self, config):
 
-        if not isinstance(config, (str, Path)):
+        if isinstance(config, (str, Path)):
+            # check if model configuration file is an absolute or relative path. If
+            # not assume that it is located in the 'conf/' folder in the PCSE
+            # distribution
+            config = str(config)
+            if os.path.isabs(config):
+                mconf = config
+            elif config.startswith("."):
+                mconf = os.path.normpath(config)
+            else:
+                pcse_dir = os.path.dirname(__file__)
+                mconf = os.path.join(pcse_dir, "conf", config)
+            model_config_file = os.path.abspath(mconf)
+
+            # check that configuration file exists
+            if not os.path.exists(model_config_file):
+                msg = "PCSE model configuration file does not exist: %s" % model_config_file
+                raise exc.PCSEError(msg)
+            # store for later use
+            self.model_config_file = model_config_file
+
+            # Load file using execfile
+            try:
+                loc = {}
+                bytecode = compile(open(model_config_file).read(), model_config_file, 'exec')
+                exec(bytecode, {}, loc)
+            except Exception as e:
+                msg = "Failed to load configuration from file '%s' due to: %s"
+                msg = msg % (model_config_file, e)
+                raise exc.PCSEError(msg)
+
+            # Add the descriptive header for later use
+            if "__doc__" in loc:
+                desc = loc.pop("__doc__")
+                if len(desc) > 0:
+                    self.description = desc
+                    if self.description[-1] != "\n":
+                        self.description += "\n"
+
+        # Assume that the configuration is a dictionary with all params
+        elif isinstance(config, dict):
+            loc = config
+
+        else: 
             msg = ("Keyword 'config' should provide the name of the file (string or pathlib.Path)" +
-                   "storing the configuration of the model PCSE should run.")
+                   "storing the configuration of the model PCSE should run." +
+                   "Or, should be a dictionary storing the configuration of the model PCSE should run.")
             raise exc.PCSEError(msg)
-
-        # check if model configuration file is an absolute or relative path. If
-        # not assume that it is located in the 'conf/' folder in the PCSE
-        # distribution
-        config = str(config)
-        if os.path.isabs(config):
-            mconf = config
-        elif config.startswith("."):
-            mconf = os.path.normpath(config)
-        else:
-            pcse_dir = os.path.dirname(__file__)
-            mconf = os.path.join(pcse_dir, "conf", config)
-        model_config_file = os.path.abspath(mconf)
-
-        # check that configuration file exists
-        if not os.path.exists(model_config_file):
-            msg = "PCSE model configuration file does not exist: %s" % model_config_file
-            raise exc.PCSEError(msg)
-        # store for later use
-        self.model_config_file = model_config_file
-
-        # Load file using execfile
-        try:
-            loc = {}
-            bytecode = compile(open(model_config_file).read(), model_config_file, 'exec')
-            exec(bytecode, {}, loc)
-        except Exception as e:
-            msg = "Failed to load configuration from file '%s' due to: %s"
-            msg = msg % (model_config_file, e)
-            raise exc.PCSEError(msg)
-
-        # Add the descriptive header for later use
-        if "__doc__" in loc:
-            desc = loc.pop("__doc__")
-            if len(desc) > 0:
-                self.description = desc
-                if self.description[-1] != "\n":
-                    self.description += "\n"
 
         # Loop through the attributes in the configuration file
+        #print(loc.items())
         for key, value in list(loc.items()):
             if key.isupper():
                 self.defined_attr.append(key)
