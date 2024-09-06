@@ -334,8 +334,8 @@
   PSOIL:    '[kg ha-1]'      # total mineral soil P available at start of growth period
   KSOIL:    '[kg ha-1]'      # total mineral soil K available at start of growth period
   NAVAIL:   '|kg ha-1|'      # Total mineral N from soil and fertiliser          
-  PAVAIL:   '|kg ha-1|'      # Total mineral N from soil and fertiliser           
-  KAVAIL:   '|kg ha-1|'      # Total mineral N from soil and fertiliser          
+  PAVAIL:   '|kg ha-1|'      # Total mineral P from soil and fertiliser           
+  KAVAIL:   '|kg ha-1|'      # Total mineral K from soil and fertiliser          
   TOTN:     '|kg ha-1|'      # Total mineral N applied by fertilization         
   TOTP:     '|kg ha-1|'      # Total mineral P applied by fertilization          
   TOTK:     '|kg ha-1|'      # Total mineral K applied by fertilization         

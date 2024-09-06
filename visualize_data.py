@@ -22,19 +22,26 @@ def norm(x):
     return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
 
 def plot_average_farms(args, filenames):
-    fname = f'env_config/units.yaml'
-    with open(fname) as fp:
+    unit_fname = f'env_config/param_units.yaml'
+    title_fname = f'env_config/param_names.yaml'
+    with open(unit_fname) as fp:
         try:
             r = yaml.safe_load(fp)
         except yaml.YAMLError as e:
-            msg = "Failed parsing agromanagement file %s: %s" % (fname, e)
+            msg = "Failed parsing agromanagement file %s: %s" % (unit_fname, e)
             print(msg)
-            
+    with open(title_fname) as jp:
+        try:
+            y = yaml.safe_load(jp)
+        except yaml.YAMLError as e:
+            msg = "Failed parsing agromanagement file %s: %s" % (title_fname, e)
+            print(msg)
+    
 
     farm_avg = []
     farm_std = []
     for f in filenames:
-        df = pd.read_csv(f'{args.save_folder}{f}.csv', index_col=0)
+        df = pd.read_csv(f'{args.save_folder}ppo_{f}.csv', index_col=0)
         np_arr = df.to_numpy()
 
         sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
@@ -73,7 +80,7 @@ def plot_average_farms(args, filenames):
     all_vars = args.output_vars + args.weather_vars
     for j in range(len(all_vars)):
         plt.figure(j+1)
-        plt.title(all_vars[j])
+        plt.title(y[all_vars[j]])
         plt.xlabel('Days')
         plt.ylabel(r[all_vars[j]])
         for i in range(len(farm_avg)):
@@ -90,7 +97,7 @@ def plot_matrix(args, data_files, agents):
         farm_std = []
         for i in range(len(data_files)):
             print(f'[{j},{i}], {agents[j]}, {data_files[i]}' )
-            df = pd.read_csv(f'{args.save_folder}tot_growth_ppo_{agents[j]}_{data_files[i]}.csv', index_col=0)
+            df = pd.read_csv(f'{args.save_folder}ppo_{agents[j]}_{data_files[i]}.csv', index_col=0)
             np_arr = df.to_numpy()
 
             sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
@@ -139,6 +146,14 @@ if __name__ == "__main__":
     env_kwargs = {'args':args}
     env_id = args.env_id
 
+    # Farm
+    output_vars = ['TOTN', 'TOTP', 'TOTK', 'GWSO', 'TOTIRRIG', 'DVS', 'LAI','RD', 'WSO','NAVAIL','PAVAIL','KAVAIL','WC','SM']
+    # PPO
+    output_vars = ['TOTN',	'TOTP',	'TOTK',	'TOTIRRIG',	'NAVAIL', 'PAVAIL',	'KAVAIL',	'SM',	'GWSO',	'DVS']
+    # PPO Farm
+    output_vars = ['TOTN','TOTP',	'TOTK',	'TOTIRRIG',	'GWSO',	'DVS',	'LAI',	'RD',	'WSO',	'NAVAIL',	'PAVAIL',	'KAVAIL',	'WC',	'SM']
+    args.output_vars = output_vars
+
     # Make the gym environment - should be as a SyncVectorEnv to support
     # Easy loading from PPO/SAC/DQN agentzs
 
@@ -147,8 +162,8 @@ if __name__ == "__main__":
     
     agents = ['default', 'ksub_.7', 'co2_100', 'co2_450', 'rdmsol_50', 'rdmsol_200', 'ssi_2', 'smlim_.4']
 
-    #plot_average_farms(args, data_files)
-    plot_matrix(args, data_files, agents)
+    plot_average_farms(args, data_files)
+    #plot_matrix(args, data_files, agents)
 
     sys.exit(0)
     plt.figure(0)
