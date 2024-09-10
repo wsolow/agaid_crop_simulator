@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from utils import NPK_Args
 import tyro
 import utils
-from policies import default_policy as pol
+import policies
 
 def norm(x):
     return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
@@ -27,7 +27,8 @@ if __name__ == "__main__":
     # Make the gym environment
     env = gym.make(env_id, **env_kwargs)
     env = wofost_gym.wrappers.NPKDictActionWrapper(env)
-    print(env.action_space.sample)
+
+    #print(env.action_space.sample)
     #env = utils.wrap_env_reward(env, args)
 
     obs_arr = []
@@ -36,14 +37,11 @@ if __name__ == "__main__":
     obs_arr = []
     reward_arr = []
     k = 0
+    policy = policies.No_Action_Harvest()
 
+    action = {'plant':0, 'harvest':0, 'n':0, 'p':0, 'k':0, 'irrig':0}
     while not done:
-        if k == 30:
-            action = 0
-        elif k == 225:
-            action = 1
-        else:
-            action = 3
+        action = policy(obs)
         next_obs, rewards, done, trunc, info = env.step(action)
         obs_arr.append(obs)
         reward_arr.append(rewards)

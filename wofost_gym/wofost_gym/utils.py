@@ -12,6 +12,15 @@ from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
 from pcse.crop.wofost8 import Wofost80
 from pcse.agromanager import AgroManagerSingleYear
 
+class WOFOSTGymError(Exception):
+    """Top Level WOFOST Gym Exception"""
+
+class PolicyException(WOFOSTGymError):
+    """Raised when there is an issue with the policy"""
+
+class ActionException(WOFOSTGymError):
+    """Raised when there is an issue with the inputted action"""
+
 def make_config():
 
     # Module to be used for water balance

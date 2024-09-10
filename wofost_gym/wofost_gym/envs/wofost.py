@@ -12,11 +12,11 @@ import pcse.engine
 from .. import utils
 
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LN
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_PP
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LW
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LN
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
+from pcse.soil.soil_wrappers import SoilModuleWrapper_PP
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LW
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
 from pcse.crop.wofost8 import Wofost80
 from pcse.agromanager import AgroManagerSingleYear
 
@@ -92,7 +92,7 @@ class NPK_Env(gym.Env):
         self.max_w = args.max_w
 
         # Create action and observation spaces
-        self.action_space = gym.spaces.Discrete(3*self.num_fert + self.num_irrig)
+        self.action_space = gym.spaces.Discrete(1+3*self.num_fert + self.num_irrig)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, \
                                 shape=(1+len(self.output_vars)+len(self.weather_vars)*self.forecast_length,))
 
@@ -207,6 +207,7 @@ class NPK_Env(gym.Env):
 
     # Step through the environment
     def step(self, action):
+        
         act_tuple = self._take_action(action)
         output = self._run_simulation()
 
@@ -238,7 +239,7 @@ class NPK_Env(gym.Env):
 
         # Count the number of days elapsed - useful to have in observation space
         # for time based policies
-        days_elapsed = self.date - self.crop_start_date
+        days_elapsed = self.date - self.site_start_date
 
         observation = np.concatenate([crop_observation, weather_observation.flatten(), [days_elapsed.days]])
         #observation = np.nan_to_num(observation)
@@ -262,27 +263,32 @@ class NPK_Env(gym.Env):
         k_amount = 0
         irrig_amount = 0
 
+        # Null action
+        if action == 0: 
+            return (n_amount, p_amount, k_amount, irrig_amount)
+        
         # Irrigation action
-        if action >= 3 * self.num_fert:
-            irrig_amount -= (3 * self.num_fert) 
-            self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
+        if action >= 3 * self.num_fert+1:
+            i_amount = action - (3 * self.num_fert)
+            i_amount *= self.irrig_amount
+            self.model._send_signal(signal=pcse.signals.irrigate, amount=i_amount, \
                                     efficiency=self.irrig_effec)
-
-        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
-        # Nitrogen fertilization
-        if action // self.num_fert == 0:
-            n_amount = self.fert_amount * (action % self.num_fert) 
+            return (n_amount, p_amount, k_amount, irrig_amount)
+        
+        # Fertilizaiton action, correct for null action
+        if (action-1) // self.num_fert == 0:
+            n_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                     N_amount=n_amount, N_recovery=self.n_recovery)
-        elif action // self.num_fert == 1:
-            p_amount = self.fert_amount * (action % self.num_fert) 
+        elif (action-1) // self.num_fert == 1:
+            p_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                     P_amount=p_amount, P_recovery=self.p_recovery)
-        elif action // self.num_fert == 2:
-            k_amount = self.fert_amount * (action % self.num_fert) 
+        elif (action-1) // self.num_fert == 2:
+            k_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                         K_amount=k_amount, K_recovery=self.k_recovery)
-
+            
         return (n_amount, p_amount, k_amount, irrig_amount)
 
     # Get reward from the simulation
@@ -324,6 +330,7 @@ class PP_Env(NPK_Env):
 
     # Send action to the model
     def _take_action(self, action):
+        # Null action
         return (0, 0, 0, 0)
 
 
@@ -337,7 +344,7 @@ class Limited_NPK_Env(NPK_Env):
     def __init__(self, args):
         super().__init__(args)
 
-        self.action_space = gym.spaces.discrete(3*self.num_fert)
+        self.action_space = gym.spaces.Discrete(1+3*self.num_fert)
 
         # Send action to the model
     def _take_action(self, action):
@@ -345,21 +352,24 @@ class Limited_NPK_Env(NPK_Env):
         p_amount = 0
         k_amount = 0
 
-        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
-        # Nitrogen fertilization
-        if action // self.num_fert == 0:
-            n_amount = self.fert_amount * (action % self.num_fert) 
+        # Null action
+        if action == 0: 
+            return (n_amount, p_amount, k_amount, 0)
+        
+        # Fertilizaiton action, correct for null action
+        if (action-1) // self.num_fert == 0:
+            n_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                     N_amount=n_amount, N_recovery=self.n_recovery)
-        elif action // self.num_fert == 1:
-            p_amount = self.fert_amount * (action % self.num_fert) 
+        elif (action-1) // self.num_fert == 1:
+            p_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                     P_amount=p_amount, P_recovery=self.p_recovery)
-        elif action // self.num_fert == 2:
-            k_amount = self.fert_amount * (action % self.num_fert) 
+        elif (action-1) // self.num_fert == 2:
+            k_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                         K_amount=k_amount, K_recovery=self.k_recovery)
-
+            
         return (n_amount, p_amount, k_amount, 0)
 
 # Simulating production under limited Nitrogen but abundant water and P/K
@@ -371,18 +381,24 @@ class Limited_N_Env(NPK_Env):
     def __init__(self, args):
         super().__init__(args)
 
-        self.action_space = gym.spaces.Discrete(self.num_fert)
+        self.action_space = gym.spaces.Discrete(1+self.num_fert)
 
 
     def _take_action(self, action):
         n_amount = 0
-        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
-        # Nitrogen fertilization
-        n_amount = self.fert_amount * action
-        self.model._send_signal(signal=pcse.signals.apply_npk, \
-                                    N_amount=n_amount, N_recovery=self.n_recovery)
 
+        # Null action
+        if action == 0: 
+            return (n_amount, 0, 0, 0)
+        
+        # Fertilizaiton action, correct for null action
+        if (action-1) // self.num_fert == 0:
+            n_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    N_amount=n_amount, N_recovery=self.n_recovery)
+            
         return (n_amount, 0, 0, 0)
+
 
 # Simulating production under limited water and Nitrogen
 class Limited_NW_Env(NPK_Env):
@@ -392,25 +408,30 @@ class Limited_NW_Env(NPK_Env):
     config['AGROMANAGEMENT'] = AgroManagerSingleYear
     def __init__(self, args):
         super().__init__(args)
-        self.action_space = gym.spaces.Discrete(self.num_fert + self.num_irrig)
+        self.action_space = gym.spaces.Discrete(1+self.num_fert + self.num_irrig)
 
     def _take_action(self, action):
         n_amount = 0
         irrig_amount = 0
 
+        # Null action
+        if action == 0: 
+            return (n_amount, 0, 0, irrig_amount)
+        
         # Irrigation action
-        if action >= self.num_fert:
-            irrig_amount -= self.num_fert
-            self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
+        if action >= self.num_fert+1:
+            i_amount = action - (self.num_fert)
+            i_amount *= self.irrig_amount
+            self.model._send_signal(signal=pcse.signals.irrigate, amount=i_amount, \
                                     efficiency=self.irrig_effec)
-
-        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
-        # Nitrogen fertilization
-        else:
-            n_amount = self.fert_amount * action
+            return (n_amount, 0, 0, irrig_amount)
+        
+        # Fertilizaiton action, correct for null action
+        if (action-1) // self.num_fert == 0:
+            n_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
                                     N_amount=n_amount, N_recovery=self.n_recovery)
-
+            
         return (n_amount, 0, 0, irrig_amount)
 
 
@@ -423,12 +444,19 @@ class Limited_W_Env(NPK_Env):
     def __init__(self, args):
         super().__init__(args)
 
-        self.action_space = gym.spaces.Discrete(self.num_irrig)
+        self.action_space = gym.spaces.Discrete(1+self.num_irrig)
 
     def _take_action(self, action):
-
         irrig_amount = action
-        self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
-                                efficiency=self.irrig_effec)
+        # Null action
+        if action == 0: 
+            return (0, 0, 0, irrig_amount)
+        
+        # Irrigation action
+        if action >= 0 * self.num_fert+1:
+            i_amount = action - (0 * self.num_fert)
+            i_amount *= self.irrig_amount
+            self.model._send_signal(signal=pcse.signals.irrigate, amount=i_amount, \
+                                    efficiency=self.irrig_effec)
 
         return (0, 0, 0, irrig_amount)

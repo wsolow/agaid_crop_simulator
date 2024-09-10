@@ -16,6 +16,8 @@ from wofost_gym.envs.wofost_harvest import Harvest_Limited_N_Env
 from wofost_gym.envs.wofost_harvest import Harvest_Limited_NW_Env
 from wofost_gym.envs.wofost_harvest import Harvest_Limited_W_Env
 
+from wofost_gym.utils import ActionException
+
 
 
 
@@ -28,7 +30,7 @@ W_ACT = 3
 
 # Wrapper class to output a dictionary instead of a flat space
 # Useful for handcrafted human-readable policies
-class NPKDictWrapper(gym.ObservationWrapper):
+class NPKDictObservationWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
         self.env = env
@@ -58,28 +60,35 @@ class NPKDictActionWrapper(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
         self.env = env
-
+        self.num_fert = env.unwrapped.num_fert
+        self.num_irrig = env.unwrapped.num_irrig
         # harvesting environments
-        if isinstance(env, Harvest_NPK_Env):
+        if isinstance(env.unwrapped, Harvest_NPK_Env):
             if isinstance(env, Harvest_PP_Env):
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1)})
-            elif isinstance(env, Harvest_Limited_NPK_Env):
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1)})
+            elif isinstance(env.unwrapped, Harvest_Limited_NPK_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
                                  "n": Discrete(env.unwrapped.num_fert),\
                                  "p": Discrete(env.unwrapped.num_fert),\
                                  "k": Discrete(env.unwrapped.num_fert)})
-            elif isinstance(env, Harvest_Limited_N_Env):
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+            elif isinstance(env.unwrapped, Harvest_Limited_N_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
                                  "n": Discrete(env.unwrapped.num_fert)})
-            elif isinstance(env, Harvest_Limited_NW_Env):
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+            elif isinstance(env.unwrapped, Harvest_Limited_NW_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
                                  "n": Discrete(env.unwrapped.num_fert),\
                                  "irrig": Discrete(env.unwrapped.num_irrig)})
-            elif isinstance(env, Harvest_Limited_W_Env):
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+            elif isinstance(env.unwrapped, Harvest_Limited_W_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
                                  "irrig": Discrete(env.unwrapped.num_irrig)})
             else: 
-                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
                                  "n": Discrete(env.unwrapped.num_fert),\
                                  "p": Discrete(env.unwrapped.num_fert),\
                                  "k": Discrete(env.unwrapped.num_fert),\
@@ -87,28 +96,119 @@ class NPKDictActionWrapper(gym.ActionWrapper):
 
         # Default environments
         else: 
-            if isinstance(env, PP_Env):
-                self.action_space = gym.spaces.Dict({"n": Discrete(1)})
-            elif isinstance(env, Limited_NPK_Env):
-                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+            if isinstance(env.unwrapped, PP_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), "n": Discrete(1)})
+            elif isinstance(env.unwrapped, Limited_NPK_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1),\
+                                 "n": Discrete(env.unwrapped.num_fert),\
                                  "p": Discrete(env.unwrapped.num_fert),\
                                  "k": Discrete(env.unwrapped.num_fert)})
-            elif isinstance(env, Limited_N_Env):
-                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert)})
-            elif isinstance(env, Limited_NW_Env):
-                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+            elif isinstance(env.unwrapped, Limited_N_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1),\
+                                 "n": Discrete(env.unwrapped.num_fert)})
+            elif isinstance(env.unwrapped, Limited_NW_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1),\
+                                 "n": Discrete(env.unwrapped.num_fert),\
                                  "irrig": Discrete(env.unwrapped.num_irrig)})
-            elif isinstance(env, Limited_W_Env):
-                self.action_space = gym.spaces.Dict({"irrig": Discrete(env.unwrapped.num_irrig)})
+            elif isinstance(env.unwrapped, Limited_W_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1),\
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
             else: 
-                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+                self.action_space = gym.spaces.Dict({"null": Discrete(1),\
+                                 "n": Discrete(env.unwrapped.num_fert),\
                                  "p": Discrete(env.unwrapped.num_fert),\
                                  "k": Discrete(env.unwrapped.num_fert),\
                                  "irrig": Discrete(env.unwrapped.num_irrig)})
 
     def action(self, act):
-        print(act)
-        return act
+        if not isinstance(act, dict):
+            msg = "Action must be of dictionary type. See README for more information"
+            raise ActionException(msg)
+        else: 
+            act_vals = list(act.values())
+            for v in act_vals:
+                if not isinstance(v, int):
+                    msg = "Action value must be of type int"
+                    raise ActionException(msg)
+            if len(np.nonzero(act_vals)[0]) > 1:
+                msg = "More than one non-zero action value for policy"
+                raise ActionException(msg)
+            # If no actions specified, assume that we mean the null action
+            if len(np.nonzero(act_vals)[0]) == 0:
+                return 0
+        
+        if not "n" in act.keys():
+            msg = "Nitrogen action \'n\' not included in action dictionary keys"
+            raise ActionException(msg)
+        if not "p" in act.keys():
+            msg = "Phosphorous action \'p\' not included in action dictionary keys"
+            raise ActionException(msg)
+        if not "k" in act.keys():
+            msg = "Potassium action \'k\' not included in action dictionary keys"
+            raise ActionException(msg)
+        if not "irrig" in act.keys():
+            msg = "Irrigation action \'irrig\' not included in action dictionary keys"
+            raise ActionException(msg)
+
+        # harvesting environments
+        if isinstance(self.env.unwrapped, Harvest_NPK_Env):
+            # Check for planting and harvesting actions
+            if not "plant" in act.keys():
+                msg = "\'plant\' not included in action dictionary keys"
+                raise ActionException(msg)
+            if not "harvest" in act.keys():
+                msg = "\'harvest\' not included in action dictionary keys"
+                raise ActionException(msg)
+            if len(act.keys()) != 6:
+                msg = "Incorrect action dictionary specification"
+                raise ActionException(msg)
+            
+            # Set the offsets to support converting to the correct action
+            offsets = [1,1,self.num_fert,self.num_fert,self.num_fert,self.num_irrig]
+            act_values = [act["plant"],act["harvest"],act["n"],act["p"],act["k"],act["irrig"]]
+            offset_flags = np.zeros(6)
+            offset_flags[:np.nonzero(act_values)[0][0]] = 1
+        
+            if isinstance(self.env.unwrapped, Harvest_PP_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Harvest_Limited_NPK_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Harvest_Limited_N_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Harvest_Limited_NW_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Harvest_Limited_W_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            else: 
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            
+        # Default environments
+        else: 
+            if len(act.keys()) != 4:
+                msg = "Incorrect action dictionary specification"
+                raise ActionException(msg)
+            # Set the offsets to support converting to the correct action
+            offsets = [self.num_fert,self.num_fert,self.num_fert,self.num_irrig]
+            act_values = [act["n"],act["p"],act["k"],act["irrig"]]
+            offset_flags = np.zeros(4)
+            offset_flags[:np.nonzero(act_values)[0][0]] = 1
+
+            if isinstance(self.env.unwrapped, PP_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Limited_NPK_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Limited_N_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Limited_NW_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            elif isinstance(self.env.unwrapped, Limited_W_Env):
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+            else: 
+                return np.sum(offsets*offset_flags) + act_values[np.nonzero(act_values)[0][0]] 
+
+        
+ 
+
  
 # TODO: Fix this wrapper
 class RewardFertilizationCostWrapper(gym.Wrapper):
