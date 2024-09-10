@@ -375,7 +375,7 @@ class NPK_Args:
     """See env_config/README.md for more information"""
     # ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'GWSO', 'DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM']
     output_vars: list = field(default_factory = lambda: [ 
-        "DVS",
+        "DVS", "LAI",
         ])
                               
                               

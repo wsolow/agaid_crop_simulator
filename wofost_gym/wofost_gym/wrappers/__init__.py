@@ -1,3 +1,4 @@
-from wofost_gym.wrappers.wrappers import NPKDiscreteWrapper
+from wofost_gym.wrappers.wrappers import NPKDictActionWrapper
 from wofost_gym.wrappers.wrappers import RewardFertilizationThresholdWrapper
 from wofost_gym.wrappers.wrappers import RewardFertilizationCostWrapper
+from wofost_gym.wrappers.wrappers import NPKDictWrapper

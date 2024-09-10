@@ -1,6 +1,23 @@
 import gymnasium as gym
 import numpy as np
-import wofost_gym.envs.wofost as envs
+from gymnasium.spaces import Dict, Discrete, Box
+
+from wofost_gym.envs.wofost import NPK_Env
+from wofost_gym.envs.wofost import PP_Env
+from wofost_gym.envs.wofost import Limited_NPK_Env
+from wofost_gym.envs.wofost import Limited_N_Env
+from wofost_gym.envs.wofost import Limited_NW_Env
+from wofost_gym.envs.wofost import Limited_W_Env
+
+from wofost_gym.envs.wofost_harvest import Harvest_NPK_Env
+from wofost_gym.envs.wofost_harvest import Harvest_PP_Env
+from wofost_gym.envs.wofost_harvest import Harvest_Limited_NPK_Env
+from wofost_gym.envs.wofost_harvest import Harvest_Limited_N_Env
+from wofost_gym.envs.wofost_harvest import Harvest_Limited_NW_Env
+from wofost_gym.envs.wofost_harvest import Harvest_Limited_W_Env
+
+
+
 
 # Action Enums
 N_ACT = 0
@@ -9,40 +26,91 @@ K_ACT = 2
 W_ACT = 3
 
 
-# Wrapper class to turn a MultiDiscrete NPK Env to a Discrete Action Env
-class NPKDiscreteWrapper(gym.ActionWrapper):
+# Wrapper class to output a dictionary instead of a flat space
+# Useful for handcrafted human-readable policies
+class NPKDictWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
         self.env = env
-        self.num_n = env.unwrapped.num_n
-        self.num_p = env.unwrapped.num_p
-        self.num_k = env.unwrapped.num_k
-        self.num_irrig = env.unwrapped.num_irrig
-        self.num_actions = env.unwrapped.num_actions
-        self.action_space = gym.spaces.Discrete(4 * self.num_actions)
-    
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
-    
+        self.output_vars = env.unwrapped.args.output_vars
+
+        self.weather_vars = env.unwrapped.args.weather_vars
+        if env.unwrapped.forecast_length > 1:
+            self.forecast_vars = []
+            for i in range(1, env.unwrapped.forecast_length):
+                self.forecast_vars += [s + f"_{i+1}" for s in self.weather_vars]
+        self.forecast_vars += self.weather_vars 
+
+        output_dict = [(ov, Box(low=-np.inf, high=np.inf,shape=(1,))) for ov in self.output_vars]
+        weather_dict = [(wv, Box(low=-np.inf, high=np.inf,shape=(1,))) for wv in self.output_vars]
+
+        self.observation_space = Dict(dict(output_dict+weather_dict+\
+                                           [("DAYS", Box(low=-np.inf, high=np.inf,shape=(1,)))]))
+
+    def observation(self, obs):
+        keys = self.output_vars + self.forecast_vars + ["DAYS"]
+        return dict([(keys[i], obs[i]) for i in range(len(keys))])
+
+
+# Wrapper class to turn a MultiDiscrete NPK Env to a Discrete Action Env
+# TODO: Fix this wrapper
+class NPKDictActionWrapper(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.env = env
+
+        # harvesting environments
+        if isinstance(env, Harvest_NPK_Env):
+            if isinstance(env, Harvest_PP_Env):
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1)})
+            elif isinstance(env, Harvest_Limited_NPK_Env):
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(env.unwrapped.num_fert),\
+                                 "p": Discrete(env.unwrapped.num_fert),\
+                                 "k": Discrete(env.unwrapped.num_fert)})
+            elif isinstance(env, Harvest_Limited_N_Env):
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(env.unwrapped.num_fert)})
+            elif isinstance(env, Harvest_Limited_NW_Env):
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(env.unwrapped.num_fert),\
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
+            elif isinstance(env, Harvest_Limited_W_Env):
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
+            else: 
+                self.action_space = gym.spaces.Dict({"plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(env.unwrapped.num_fert),\
+                                 "p": Discrete(env.unwrapped.num_fert),\
+                                 "k": Discrete(env.unwrapped.num_fert),\
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
+
+        # Default environments
+        else: 
+            if isinstance(env, PP_Env):
+                self.action_space = gym.spaces.Dict({"n": Discrete(1)})
+            elif isinstance(env, Limited_NPK_Env):
+                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+                                 "p": Discrete(env.unwrapped.num_fert),\
+                                 "k": Discrete(env.unwrapped.num_fert)})
+            elif isinstance(env, Limited_N_Env):
+                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert)})
+            elif isinstance(env, Limited_NW_Env):
+                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
+            elif isinstance(env, Limited_W_Env):
+                self.action_space = gym.spaces.Dict({"irrig": Discrete(env.unwrapped.num_irrig)})
+            else: 
+                self.action_space = gym.spaces.Dict({"n": Discrete(env.unwrapped.num_fert),\
+                                 "p": Discrete(env.unwrapped.num_fert),\
+                                 "k": Discrete(env.unwrapped.num_fert),\
+                                 "irrig": Discrete(env.unwrapped.num_irrig)})
 
     def action(self, act):
-        action = np.array([0,0])
-        action[0] = act // self.num_actions
-        action[1] = act % self.num_actions
-
-        # Clip actions if larger than specified
-        if action[0] == envs.N_ACT:
-            action[1] = np.minimum(action[1], self.num_n-1)
-        elif action[0] == envs.P_ACT:
-            action[1] = np.minimum(action[1], self.num_p-1)
-        elif action[0] == envs.K_ACT:
-            action[1] = np.minimum(action[1], self.num_k-1)
-        elif action[0] == envs.W_ACT:
-            action[1] = np.minimum(action[1], self.num_irrig-1)
-
-        return action
+        print(act)
+        return act
  
-
+# TODO: Fix this wrapper
 class RewardFertilizationCostWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
@@ -77,7 +145,7 @@ class RewardFertilizationCostWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
     
-        
+# TODO: Fix this wrapper     
 class RewardFertilizationThresholdWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)

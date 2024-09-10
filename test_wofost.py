@@ -26,6 +26,8 @@ if __name__ == "__main__":
 
     # Make the gym environment
     env = gym.make(env_id, **env_kwargs)
+    env = wofost_gym.wrappers.NPKDictActionWrapper(env)
+    print(env.action_space.sample)
     #env = utils.wrap_env_reward(env, args)
 
     obs_arr = []
@@ -43,7 +45,6 @@ if __name__ == "__main__":
         else:
             action = 3
         next_obs, rewards, done, trunc, info = env.step(action)
-
         obs_arr.append(obs)
         reward_arr.append(rewards)
 

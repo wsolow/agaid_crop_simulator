@@ -94,7 +94,7 @@ class NPK_Env(gym.Env):
         # Create action and observation spaces
         self.action_space = gym.spaces.Discrete(3*self.num_fert + self.num_irrig)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, \
-                                shape=(1+len(self.output_vars)+len(self.weather_vars)*args.intvn_interval,))
+                                shape=(1+len(self.output_vars)+len(self.weather_vars)*self.forecast_length,))
 
     # Load the agromanagement file 
     def _load_agromanagement_data(self, path):

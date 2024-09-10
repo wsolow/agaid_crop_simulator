@@ -50,8 +50,6 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
              (during juvenile phase).
     NSLA     Coefficient for the effect of nutrient NPK     TCr         -
              stress on SLA reduction
-    RDRNS    Max. relative death rate of leaves due to      TCr         -
-             nutrient NPK stress
     =======  ============================================= =======  ============
 
     *State variables*
