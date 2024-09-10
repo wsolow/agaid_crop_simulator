@@ -267,7 +267,7 @@ class DVS_Phenology(SimulationObject):
     **Signals sent or handled**
     
     `DVS_Phenology` sends the `crop_finish` signal when maturity is
-    reached and the `end_type` is 'maturity' or 'earliest'.
+    reached and the `end_type` is 'maturity'.
     
     """
     # Placeholder for start/stop types and vernalisation module
@@ -283,11 +283,12 @@ class DVS_Phenology(SimulationObject):
         DLO    = Float(-99.)  # Optimal day length for phenol. development
         DLC    = Float(-99.)  # Critical day length for phenol. development
         DVSI   = Float(-99.)  # Initial development stage
+        DVSM   = Float(-99.)  # Mature development stage
         DVSEND = Float(-99.)  # Final development stage
         DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
         CROP_START_TYPE = Enum(["sowing", "emergence"])
-        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
+        CROP_END_TYPE = Enum(["emergence", "maturity", "harvest", "death", "max_duration"])
 
     #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
@@ -305,8 +306,9 @@ class DVS_Phenology(SimulationObject):
         DOE = Instance(datetime.date) # Day of emergence
         DOA = Instance(datetime.date) # Day of anthesis
         DOM = Instance(datetime.date) # Day of maturity
+        DOD = Instance(datetime.date) # Day of crop death
         DOH = Instance(datetime.date) # Day of harvest
-        STAGE = Enum(["emerging", "vegetative", "reproductive", "mature"])
+        STAGE = Enum(["emerging", "vegetative", "reproductive", "mature", "dead"])
 
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):
@@ -326,11 +328,11 @@ class DVS_Phenology(SimulationObject):
         DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, 
                                           publish=["DVS", "TSUM", "TSUME", "DOS", 
-                                                   "DOE", "DOA", "DOM", "DOH", 
+                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
                                                    "STAGE", ],
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, STAGE=STAGE)
+                                          DOH=None, DOD=None, STAGE=STAGE)
         
         self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
 
@@ -398,12 +400,15 @@ class DVS_Phenology(SimulationObject):
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
-
         elif s.STAGE == 'reproductive':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM2
         elif s.STAGE == 'mature':
+            r.DTSUME = 0.
+            r.DTSUM = p.DTSMTB(drv.TEMP)
+            r.DVR = r.DTSUM/p.TSUM2
+        elif s.STAGE == 'dead':
             r.DTSUME = 0.
             r.DTSUM = 0.
             r.DVR = 0.
@@ -446,11 +451,15 @@ class DVS_Phenology(SimulationObject):
                 self._next_stage(day)
                 s.DVS = 1.0
         elif s.STAGE == 'reproductive':
+            if s.DVS >= p.DVSM:
+                self._next_stage(day)
+                s.DVS = p.DVSM
+        elif s.STAGE == 'mature':
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
                 s.DVS = p.DVSEND
-        elif s.STAGE == 'mature':
-            pass
+        elif s.STAGE == 'dead':
+            pass 
         else: # Problem no stage defined
             msg = "No STAGE defined in phenology submodule"
             raise exc.PCSEError(msg)
@@ -470,19 +479,30 @@ class DVS_Phenology(SimulationObject):
             s.DOE = day
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
-            
+
+            if p.CROP_END_TYPE in ["emergence"]:
+                self._send_signal(signal=signals.crop_finish,
+                                  day=day, finish_type="emergence",
+                                  crop_delete=True)
         elif s.STAGE == "vegetative":
             s.STAGE = "reproductive"
             s.DOA = day
-                        
+                
         elif s.STAGE == "reproductive":
             s.STAGE = "mature"
             s.DOM = day
-            if p.CROP_END_TYPE in ["maturity","earliest"]:
+            if p.CROP_END_TYPE in ["maturity"]:
                 self._send_signal(signal=signals.crop_finish,
                                   day=day, finish_type="maturity",
                                   crop_delete=True)
         elif s.STAGE == "mature":
+            s.STAGE = "dead"
+            s.DOD = day
+            if p.CROP_END_TYPE in ["death"]:
+                self._send_signal(signal=signals.crop_finish,
+                                    day=day, finish_type="death",
+                                    crop_delete=True)
+        elif s.STAGE == "dead":
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)
 
@@ -493,12 +513,19 @@ class DVS_Phenology(SimulationObject):
         msg = "Changed phenological stage '%s' to '%s' on %s"
         self.logger.info(msg % (current_STAGE, s.STAGE, day))
 
+
+    def _on_CROP_HARVEST(self, day):
+        self.states.DOH = day
+        if self.params.CROP_END_TYPE in ["harvest"]:
+            self._send_signal(signal=signals.crop_finish,day=day,finish_type="harvest",
+                              crop_delete=True)
+
     #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of harvest (DOH). Although DOH is not
         strictly related to phenology (but to management) this is the most
         logical place to put it.
         """
-        if finish_type in ['harvest', 'earliest']:
+        if finish_type in ['harvest']:
             self._for_finalize["DOH"] = day
 

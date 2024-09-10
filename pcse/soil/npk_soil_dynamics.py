@@ -249,14 +249,16 @@ class NPK_Soil_Dynamics(SimulationObject):
 
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):
-
-        self._FERT_N_SUPPLY = N_amount * N_recovery
-        self._FERT_P_SUPPLY = P_amount * P_recovery
-        self._FERT_K_SUPPLY = K_amount * K_recovery
-
-        self.states.TOTN += N_amount
-        self.states.TOTP += P_amount
-        self.states.TOTK += K_amount
+        
+        if N_amount is not None:
+            self._FERT_N_SUPPLY = N_amount * N_recovery
+            self.states.TOTN += N_amount
+        if P_amount is not None:
+            self._FERT_P_SUPPLY = P_amount * P_recovery
+            self.states.TOTP += P_amount
+        if K_amount is not None:
+            self._FERT_K_SUPPLY = K_amount * K_recovery
+            self.states.TOTK += K_amount
 
 
 class NPK_Soil_Dynamics_PP(SimulationObject):
@@ -504,14 +506,15 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):
 
-        self._FERT_N_SUPPLY = N_amount * N_recovery
-        self._FERT_P_SUPPLY = P_amount * P_recovery
-        self._FERT_K_SUPPLY = K_amount * K_recovery
-
-        self.states.TOTN += N_amount
-        self.states.TOTP += P_amount
-        self.states.TOTK += K_amount
-
+        if N_amount is not None:
+            self._FERT_N_SUPPLY = N_amount * N_recovery
+            self.states.TOTN += N_amount
+        if P_amount is not None:
+            self._FERT_P_SUPPLY = P_amount * P_recovery
+            self.states.TOTP += P_amount
+        if K_amount is not None:
+            self._FERT_K_SUPPLY = K_amount * K_recovery
+            self.states.TOTK += K_amount
 
 class NPK_Soil_Dynamics_LN(SimulationObject):
 
@@ -758,10 +761,12 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):
 
-        self._FERT_N_SUPPLY = N_amount * N_recovery
-        self._FERT_P_SUPPLY = P_amount * P_recovery
-        self._FERT_K_SUPPLY = K_amount * K_recovery
-
-        self.states.TOTN += N_amount
-        self.states.TOTP += P_amount
-        self.states.TOTK += K_amount
+        if N_amount is not None:
+            self._FERT_N_SUPPLY = N_amount * N_recovery
+            self.states.TOTN += N_amount
+        if P_amount is not None:
+            self._FERT_P_SUPPLY = P_amount * P_recovery
+            self.states.TOTP += P_amount
+        if K_amount is not None:
+            self._FERT_K_SUPPLY = K_amount * K_recovery
+            self.states.TOTK += K_amount

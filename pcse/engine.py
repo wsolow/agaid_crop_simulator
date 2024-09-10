@@ -134,8 +134,10 @@ class Engine(BaseEngine):
         # handling output and terminating the system
         self._connect_signal(self._on_CROP_START, signal=signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+        self._connect_signal(self._on_CROP_HARVEST, signal=signals.crop_harvest)
         self._connect_signal(self._on_SITE_START, signal=signals.site_start)
         self._connect_signal(self._on_SITE_FINISH, signal=signals.site_finish)
+        self._connect_signal(self._on_CROP_HARVEST, signal=signals.crop_harvest)
         self._connect_signal(self._on_OUTPUT, signal=signals.output)
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
@@ -226,29 +228,8 @@ class Engine(BaseEngine):
             days_done += 1
             self._run()
 
-    def run_till_terminate(self):
-        """Runs the system until a terminate signal is sent."""
-
-        while self.flag_terminate is False:
-            self._run()
-
-    def run_till(self, rday):
-        """Runs the system until rday is reached."""
-
-        try:
-            rday = check_date(rday)
-        except KeyError as e:
-            msg = "run_till() function needs a date object as input"
-            print(msg)
-            return
-
-        if rday <= self.day:
-            msg = "date argument for run_till() function before current model date."
-            print(msg)
-            return
-
-        while self.flag_terminate is False and self.day < rday:
-            self._run()
+    def _on_CROP_HARVEST(self, day):
+        return 
 
     def _on_CROP_FINISH(self, day, crop_delete=False):
         """Sets the variable 'flag_crop_finish' to True when the signal

@@ -1,37 +1,34 @@
 # Crop parameter file for use with the PCSE/WISS implementations of the WOFOST
 # crop simulation model
 #
-# Creation date: 2017-07-06
+# Creation date: 2024-09-06
 #
-# Contact: Allard de Wit (allard.dewit@wur.nl)
-#          Wageningen University and Research Centre
-#          PO Box 47, 6700 AA Wageningen, The Netherlands
+# Contact: Will Solow (soloww@oregon state.edu)
+# Based on parameters from Chengkun Wang
 #
-# More information: - http://pcse.readthedocs.io
-#                   - http://www.wageningenur.nl/wofost
-#                   - https://github.com/ajwdewit/WOFOST_crop_parameters
-#
+# More information: - https://media.proquest.com/media/hms/PFT/1/EmaaP?_s=Hz7OOlVc5LrEFMhkxC5VL5dH8PQ%3D
+#                   
 Version: 1.0.0
 Metadata: &meta
-    Creator: Allard de Wit
-    Contributor: E.R. Boons-Prins, G.H.J. de Koning, CA. van Diepen, F.W.T. Penning de Vries
-    Contact: allard.dewit@wur.nl
-    Publisher: Wageningen Environmental Research
-    Title: Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating sugar beet
+    Creator: Will SOlow
+    Contributor: Chengkun Wang
+    Contact: soloww@oregonstate.edu
+    Publisher: Oregon State University
+    Title: Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating pear
     Date: 2022-02-13
     Language: EN
     Format: YAML
-    Subject: WOFOST parameters for sugar beet
-    Description: This file provides parameters for several sugarbeet varieties calibrated on
-        local experimental data or regional cropping calendars
+    Subject: WOFOST parameters for pear
+    Description: This file provides parameters for one or more pear tree varieties calibrated on
+        local experimental data in China
     Identifier:
     Relation:
-    Source: https://edepot.wur.nl/308997
+    Source:
     Type: Report
     Coverage:
-       Region: Europe
+       Region: China, global
     Rights: European Union Public License (EUPL)
-    Keyword: sugar beet; beta vulgaris
+    Keyword: pear; Zizyphus jujuba
 CropParameters:
     GenericC3: &GenericC3
         CO2EFFTB:
@@ -84,55 +81,55 @@ CropParameters:
          - multiplication factor for AMAX to account for an increasing CO2 concentration
          - ['PPM', '-']
     EcoTypes:
-        sugarbeet: &sugarbeet
+        jujebe: &jujube
             <<: *GenericC3
             #
             # EMERGENCE
             #
             TBASEM:
-            -  3.0
+            -  10.0
             - Lower threshold temperature for emergence
             - ['C']
             TEFFMX:
-            - 20.0
+            - 30.0
             - maximum effective temperature for emergence
             - ['C']
             TSUMEM:
-            -   90
+            -  100
             - temperature sum from sowing to emergence
             - ['C.d']
             #
             # PHENOLOGICAL DEVELOPMENT
             #
-            IDSL:
+            IDSL: #NOT MODIFIED
             -  0
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0
+            - -99.0 #NOT MODIFIED
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0
+            - -99.0 # NOT MODIFIED
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
-            -  650
+            -  140
             - temperature sum from emergence to anthesis
             - ['C.d']
             TSUM2:
-            - 1400
+            -  1880
             - temperature sum from anthesis to maturity
             - ['C.d']
             DTSMTB:
             - [ 0.0,  0.0,
-                3.0,  0.0,
-               21.0, 18.0,
-               35.0, 18.0]
+               10.0,  0.0,
+               35.5, 25.5,
+               40.0, 25.5]
             - daily increase in temperature sum as function of daily average temperature
             - ['C', 'C']
-            DVSI:
-            -  0.0
+            DVSI: 
+            -  0.0 # NOT MODIFIED
             - Initial development stage
             - ['-']
             DVSM:
@@ -140,22 +137,22 @@ CropParameters:
             - Development stage of maturity
             - ['-']
             DVSEND:
-            -  3.0
+            -  3.0 # NOT MODIFIED
             - development stage at harvest (= 2.0 at maturity)
             - ['-']
-            VERNBASE:
+            VERNBASE: #NOT MODIFIED
             - 14.0
             - Base vernalization requirement
             - ['d']
-            VERNSAT:
+            VERNSAT: #NOT MODIFIED
             - 70.0
             - Saturated vernalization requirement
             - ['d']
-            VERNDVS:
+            VERNDVS:  #NOT MODIFIED
             - 0.30
             - Critical DVS for vernalization to switch off
             - ['-']
-            VERNRTB:
+            VERNRTB: #NOT MODIFIED
             - [-8.0,  0.0,
                -4.0,  0.0,
                 3.0,  1.0,
@@ -168,22 +165,28 @@ CropParameters:
             # INITIAL STATES
             #
             TDWI:
-            -   0.51
+            -  41.9
             - initial total crop dry weight
             - ['kg.ha-1']
             RGRLAI:
-            - 0.0160
+            - 0.060
             - maximum relative increase in LAI
             - ['d-1']
+            LAIEM:
+            - 0.0007
+            - 'leaf area index at emergence'
+            - ['ha ha-1']
             #
             # CROP GREEN AREA
             #
             SLATB:
-            - [0.00, 0.00200,
-               2.00, 0.00200]
+            - [0.00, 0.0020,
+               0.55, 0.0018,
+               1.00, 0.0016,
+               2.00, 0.0016]
             - specific leaf area as a function of DVS
             - ['-', 'ha.kg-1']
-            SPA:
+            SPA: #NOT MODIFIED
             - 0.0000
             - specific pod area
             - ['ha.kg-1']
@@ -194,58 +197,52 @@ CropParameters:
                2.50, 0.020,
                2.75, 0.050,
                3.00, 0.500]
-            - Relative death rate of storage organs as a function of DVS
-            - ['-', 'kg.kg-1.d-1']
-            SSATB:
-            - [0.00, 0.0000,
+            SSATB: #NOT MODIFIED
+            - [0.00, 0.0000, 
                2.00, 0.0000]
             - specific stem area as function of DVS
             - ['-', 'ha.kg-1']
             SPAN:
-            - 35.0
+            - 85
             - life span of leaves growing at 35 Celsius
             - ['d']
             TBASE:
-            -  3.0
+            -  10.0
             - lower threshold temperature for ageing of leaves
             - ['C']
             #
             # CO2 ASSIMILATION
             #
             KDIFTB:
-            - [0.00, 0.690,
-               2.00, 0.690]
+            - [0.00, 0.46,
+               1.260, 0.83,
+               1.261, 0.69,
+               2.00, 0.79]
             - extinction coefficient for diffuse visible light as function of DVS
             - ['-', '-']
             EFFTB:
-            - [ 0.0, 0.450,
-               40.0, 0.450]
+            - [19.5, 0.530,
+               36.0, 0.530]
             - initial light-use efficiency single leaf as function of daily mean temperature
             - ['C', 'kg.ha-1.hr-1.J-1.m2.s1']
             AMAXTB:
-            - [0.00, 22.50,
-               1.00, 45.00,
-               1.13, 45.00,
-               1.80, 36.00,
-               2.00, 36.00]
+            - [0.00, 39.00,
+               1.60, 43.00,
+               2.00, 24.00]
             - maximum leaf CO2 assimilation rate as function of DVS
             - ['-', 'kg.ha-1.hr-1']
-            REFCO2L:
+            REFCO2L: #NOT MODIFIED
             - 360
             - CO2 level at which AMAX and EFF were measured
             - ['PPM']
-            TMPFTB:
-            - [ 0.0, 0.010,
-                3.0, 0.010,
-               10.0, 0.800,
-               15.0, 1.000,
-               20.0, 1.000,
-               30.0, 0.950,
-               35.0, 0.830,
-               40.0, 0.600]
+            TMPFTB: 
+            - [10.0, 0.000,
+               19.5, 1.000,
+               35.5, 1.000,
+               40.0, 0.000]
             - reduction factor of AMAX as function of average daytime (*not* daily)  temperature
             - ['C', '-']
-            TMNFTB:
+            TMNFTB: #NOT MODIFIED
             - [ 0.0, 0.000,
                 3.0, 1.000]
             - reduction factor of gross assimilation rate as function of low minimum temperature
@@ -254,19 +251,19 @@ CropParameters:
             # CONVERSION EFFICIENCY OF ASSIMILATES
             #
             CVL:
-            - 0.720
+            - 0.730
             - efficiency of conversion into leaves
             - ['mass.mass-1']
             CVO:
-            - 0.820
+            - 0.720
             - efficiency of conversion into storage organs
             - ['mass.mass-1']
             CVR:
-            - 0.720
+            - 0.690
             - efficiency of conversion into roots
             - ['mass.mass-1']
             CVS:
-            - 0.690
+            - 0.650
             - efficiency of conversion into stems
             - ['mass.mass-1']
             #
@@ -277,19 +274,19 @@ CropParameters:
             - relative increase in respiration rate per 10 degrees Celsius temperature increase
             - ['-']
             RML:
-            - 0.0300
+            - 0.0350
             - relative maintenance respiration rate of leaves
             - ['d-1']
             RMO:
-            - 0.0030
+            - 0.0130
             - relative maintenance respiration rate of storage organs
             - ['d-1']
             RMR:
-            - 0.0150
+            - 0.0120
             - relative maintenance respiration rate of roots
             - ['d-1']
             RMS:
-            - 0.0150
+            - 0.0100
             - relative maintenance respiration rate of stems
             - ['d-1']
             RFSETB:
@@ -301,80 +298,79 @@ CropParameters:
             # PARTITIONING
             #
             FRTB:
-            - [0.000, 0.200,
-               0.910, 0.290,
-               1.000, 0.300,
-               1.150, 0.150,
-               1.290, 0.090,
-               1.300, 0.090,
-               1.570, 0.080,
-               1.920, 0.010,
-               2.000, 0.020]
+            - [0.000, 0.300,
+               1.570, 0.000,
+               2.000, 0.000]
             - fraction of total dry matter to roots as a function of DVS
             - ['-', 'mass.mass-1']
             FLTB:
-            - [0.000, 0.850,
-               1.000, 0.500,
-               1.300, 0.050,
-               1.570, 0.050,
-               2.000, 0.050]
+            - [0.000, 0.950,
+               0.340, 0.900,
+               0.510, 0.850,
+               0.970, 0.600,
+               1.000, 0.200,
+               1.500, 0.000,
+               1.800, 0.000,
+               2.000, 0.000]
             - fraction of total dry matter to leaves as a function of DVS
             - ['-', 'mass.mass-1']
             FSTB:
-            - [0.000, 0.150,
-               1.000, 0.500,
-               1.300, 0.100,
-               1.570, 0.100,
-               1.920, 0.050,
-               2.000, 0.050]
+            - [0.000, 0.050,
+               0.340, 0.100,
+               0.510, 0.150,
+               0.970, 0.400,
+               1.000, 0.700,
+               1.500, 0.750,
+               1.800, 0.100,
+               2.000, 0.000]
             - fraction of total dry matter to stems as a function of DVS
             - ['-', 'mass.mass-1']
             FOTB:
             - [0.000, 0.000,
-               1.000, 0.000,
-               1.300, 0.850,
-               1.570, 0.850,
-               1.920, 0.900,
-               2.000, 0.900]
+               0.340, 0.000,
+               0.510, 0.000,
+               0.970, 0.000,
+               1.000, 0.100,
+               1.500, 0.250,
+               1.800, 0.900,
+               2.000, 0.100]
             - fraction of total dry matter to storage organs as a function of DVS
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
             #
-            PERDL:
-            - 0.030
+            PERDL: 
+            - 0.030 #NOT MODIFIED
             - maximum relative death rate of leaves due to water stress
             - ['-']
-            RDRRTB:
+            RDRRTB: # TODO: Check if this should be modifed
             - [0.00, 0.000,
-               1.50, 0.000,
-               1.51, 0.020,
-               2.00, 0.020]
-            - Relative death rate of stems as a function of DVS
+               2.00, 0.000]
+            - Relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
             RDRSTB:
             - [0.00, 0.000,
-               1.50, 0.000,
-               1.51, 0.020,
+               0.00, 0.000,
+               1.50, 0.020,
                2.00, 0.020]
-            - relative death rate of roots as a function of DVS
+            - relative death rate of stems as a function of DVS
             - ['-', 'kg.kg-1.d-1']
             #
             # WATER USE
             #
             CFET:
-            - 1.00
+            - 1.02
             - correction factor transpiration rate
             - ['-']
             DEPNR:
-            - 2.00
+            - 1.50
             - crop group number for soil water depletion
             - ['-']
-            IAIRDU:
+            IAIRDU: #NOT MODIFIED
             -  0
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
-            IOX:
+            IOX: #NOT MODIFIED
             -  0
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
@@ -386,7 +382,7 @@ CropParameters:
             - initial rooting depth
             - ['cm']
             RRI:
-            - 1.20
+            - 1.2
             - maximum daily increase in rooting depth
             - ['cm.d-1']
             RDMCR:
@@ -395,14 +391,14 @@ CropParameters:
             - ['cm']
             #
             # MAXIMUM, CRITICAL AND RESIDUAL NITROGEN CONCENTRATION IN DIFFERENT ORGANS
-            #
+            # Borrowed from maize.yaml
             NMAXLV_TB:
             - [0.00, 0.0600,
-               0.40, 0.0500,
-               0.70, 0.0450,
-               1.00, 0.0400,
-               2.00, 0.0373,
-               2.10, 0.0373]
+               0.40, 0.0400,
+               0.70, 0.0300,
+               1.00, 0.0200,
+               2.00, 0.0167,
+               2.10, 0.0167]
             - maximum N concentration in leaves as function of development stage in kg N kg-1 dry biomass
             - ['-', 'mass.mass-1']
             NMAXRT_FR:
@@ -414,7 +410,7 @@ CropParameters:
             - maximum N concentration in stems as fraction of maximum N concentration in leaves
             - ['-']
             NMAXSO:
-            - 0.0096
+            - 0.0220
             - maximum P concentration in storage organs [kg N kg-1 dry biomass]
             - ['mass.mass-1']
             NCRIT_FR:
@@ -422,15 +418,15 @@ CropParameters:
             - Critical N concentration as fraction of maximum N concentration
             - ['-']
             NRESIDLV:
-            - 0.0240
+            - 0.0053
             - residual N fraction in leaves [kg N kg-1 dry biomass]
             - ['mass.mass-1']
             NRESIDST:
-            - 0.0120
+            - 0.0027
             - residual N fraction in stems [kg N kg-1 dry biomass]
             - ['mass.mass-1']
             NRESIDRT:
-            - 0.0120
+            - 0.0027
             - residual N fraction in roots [kg N kg-1 dry biomass]
             - ['mass.mass-1']
             TCNT:
@@ -443,14 +439,14 @@ CropParameters:
             - ['-']
             #
             # MAXIMUM, CRITICAL AND RESIDUAL PHOSPHORUS CONCENTRATION IN DIFFERENT ORGANS
-            #
+            # Borrowed from maize.yaml
             PMAXLV_TB:
-            - [0.00, 0.0069,
-               0.40, 0.0057,
-               0.70, 0.0051,
-               1.00, 0.0046,
-               2.00, 0.0043,
-               2.10, 0.0043]
+            - [0.00, 0.0144,
+               0.40, 0.0096,
+               0.70, 0.0072,
+               1.00, 0.0048,
+               2.00, 0.0040,
+               2.10, 0.0040]
             - maximum P concentration in leaves as function of development stage in kg P kg-1 dry biomass
             - ['-', 'mass.mass-1']
             PMAXRT_FR:
@@ -462,7 +458,7 @@ CropParameters:
             - maximum P concentration in stems as fraction of maximum P concentration in leaves
             - ['-']
             PMAXSO:
-            - 0.0013
+            - 0.0075
             - maximum P concentration in storage organs [kg P kg-1 dry biomass]
             - ['mass.mass-1']
             PCRIT_FR:
@@ -470,15 +466,15 @@ CropParameters:
             - Critical P concentration as fraction of maximum P concentration
             - ['-']
             PRESIDLV:
-            - 0.0020
+            - 0.0005
             - residual P fraction in leaves [kg P kg-1 dry biomass]
             - ['mass.mass-1']
             PRESIDST:
-            - 0.0010
+            - 0.0003
             - residual P fraction in stems [kg P kg-1 dry biomass]
             - ['mass.mass-1']
             PRESIDRT:
-            - 0.0010
+            - 0.0003
             - residual P fraction in roots [kg P kg-1 dry biomass]
             - ['mass.mass-1']
             TCPT:
@@ -487,14 +483,14 @@ CropParameters:
             - ['d']
             #
             # MAXIMUM, CRITICAL AND RESIDUAL POTASSIUM CONCENTRATION IN DIFFERENT ORGANS
-            #
+            # Borrowed from maize.yaml
             KMAXLV_TB:
-            - [0.00, 0.0770,
+            - [0.00, 0.0960,
                0.40, 0.0640,
-               0.70, 0.0580,
-               1.00, 0.0510,
-               2.00, 0.0480,
-               2.10, 0.0480]
+               0.70, 0.0480,
+               1.00, 0.0320,
+               2.00, 0.0270,
+               2.10, 0.0270]
             - maximum K concentration in leaves as function of development stage in kg K kg-1 dry biomass
             - ['-', 'mass.mass-1']
             KMAXRT_FR:
@@ -506,7 +502,7 @@ CropParameters:
             - maximum K concentration in stems as fraction of maximum K concentration in leaves
             - ['-']
             KMAXSO:
-            - 0.0096
+            - 0.0060
             - maximum K concentration in storage organs [kg K kg-1 dry biomass]
             - ['mass.mass-1']
             KCRIT_FR:
@@ -514,158 +510,81 @@ CropParameters:
             - Critical K concentration as fraction of maximum K concentration
             - ['-']
             KRESIDLV:
-            - 0.0240
+            - 0.0067
             - residual K fraction in leaves [kg K kg-1 dry biomass]
             - ['mass.mass-1']
             KRESIDST:
-            - 0.0120
+            - 0.0033
             - residual K fraction in stems [kg K kg-1 dry biomass]
             - ['mass.mass-1']
             KRESIDRT:
-            - 0.0120
+            - 0.0033
             - residual K fraction in roots [kg K kg-1 dry biomass]
             - ['mass.mass-1']
             TCKT:
             -  10
             - time coefficient for K translocation to storage organs
             - ['d']
-            #
             # IMPORT DVS RELATED TO N/P/K UPTAKE AND TRANSLOCATION
             #
-            DVS_NPK_STOP:
-            - 1.50
+            DVS_NPK_STOP: # DEFAULT
+            - 1.30
             - development stage above which no crop N/P/K uptake occurs
             - ['-']
-            DVS_NPK_TRANSL:
+            DVS_NPK_TRANSL: # DEFAULT
             - 0.80
             - development stage above which N/P/K translocation to storage organs does occur
             - ['-']
             #
             # IMPACT OF N/P/K STRESS ON PROCESSES
             #
-            NLAI_NPK:
+            NLAI_NPK: # DEFAULT
             - 1.00
             - coefficient for the reduction due to nutrient NPK stress of the LAI increase (during juvenile phase)
             - ['-']
-            NSLA_NPK:
+            NSLA_NPK: # DEFAULT
             - 0.50
             - coefficient for the effect of nutrient NPK stress on SLA reduction
             - ['-']
-            NPART:
+            NPART: # DEFAULT 
             - 1.00
             - coefficient for the effect of nutrient N stress on leaf allocation
             - ['-']
-            NLUE_NPK:
+            NLUE_NPK: # DEFAULT 
             - 1.10
             - coefficient for the reduction of gross CO2 assimilation rate due to nutrient (N-P-K) stress
             - ['-']
-            NPK_TRANSLRT_FR:
+            NPK_TRANSLRT_FR: # DEFAULT
             - 0.50
             - NPK translocation from roots as a fraction of total NPK amounts translocated from leaves and stems
             - ['-']
-            RDRLV_NPK:
+            RDRLV_NPK: # DEFAULT 
             - 0.05
             - maximum relative death rate of leaves due to nutrient NPK stress
             - ['-']
             #
             # Maximum N/P/K uptake rates, see changelog.txt
             #
-            RNUPTAKEMAX:
+            RNUPTAKEMAX: # DEFAULT
              - 7.2
              - Maximum rate of daily nitrogen uptake
              - ['kg.ha-1.d-1']
-            RPUPTAKEMAX:
+            RPUPTAKEMAX: # DEFAULT 
              - 0.8
              - Maximum rate of daily phosphorus uptake
              - ['kg..ha-1.d-1']
-            RKUPTAKEMAX:
+            RKUPTAKEMAX: # DEFAULT
              - 7.4
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Sugarbeet_601:
-            <<: *sugarbeet
+        Jujube_1:
+            <<: *jujube
             Metadata:
                 <<: *meta
-                Description: Sugar beet variety calibrated for Germany, Northern and Central France,
-                    Netherlands, Belgium, Luxembourg, UK, Ireland, Denmark with sowing date between 1 and 10 April
-                    and a date of harvest between 17 and 27 October
-                Coverage:
-                   Region: Germany, Northern and Central France, Netherlands, Belgium, Luxembourg, UK, Ireland, Denmark
+                Description: Default parameter for Jujube
             TSUM1:
-            -  650
+            -  967
             - temperature sum from emergence to anthesis
             - ['C.d']
-            TSUM2:
-            - 1400
-            - temperature sum from anthesis to maturity
-            - ['C.d']
-        Sugarbeet_602:
-            <<: *sugarbeet
-            Metadata:
-                <<: *meta
-                Description: Sugar beet variety calibrated for Southern France, Northern and Central Italy, Spain and
-                    Portugal with a sowing date between 26 March and 5 April and a harvest date between 27 September
-                    and 27 October.
-                Coverage:
-                   Region: Southern France, Northern and Central Italy, Spain and Portugal
-            TSUM1:
-            -  700
-            - temperature sum from emergence to anthesis
-            - ['C.d']
-            TSUM2:
-            - 1400
-            - temperature sum from anthesis to maturity
-            - ['C.d']
-            DVSEND:
-            -  3.0
-            - development stage at harvest (= 2.0 at maturity)
-            - ['-']
-        Sugarbeet_603:
-            <<: *sugarbeet
-            Metadata:
-                <<: *meta
-                Description: Sugar beet variety calibrated for Southern Spain and Southern Italy with a sowing
-                    date around 26 March and a harvest date between 17 September to 27 October.
-                Coverage:
-                   Region: Southern Spain and Southern Italy
-            TSUM1:
-            -  800
-            - temperature sum from emergence to anthesis
-            - ['C.d']
-            TSUM2:
-            - 1400
-            - temperature sum from anthesis to maturity
-            - ['C.d']
-            DVSEND:
-            -  3.0
-            - development stage at harvest (= 2.0 at maturity)
-            - ['-']
-            SPAN:
-            - 37.0
-            - life span of leaves growing at 35 Celsius
-            - ['d']
-        Sugarbeet_604:
-            <<: *sugarbeet
-            Metadata:
-                <<: *meta
-                Description: Sugar beet variety calibrated for Greece with a sowing date around 26 March and
-                    harvest date around 27 October
-                Coverage:
-                   Region: Greece
-            TSUM1:
-            -  850
-            - temperature sum from emergence to anthesis
-            - ['C.d']
-            TSUM2:
-            - 1400
-            - temperature sum from anthesis to maturity
-            - ['C.d']
-            DVSEND:
-            -  3.0
-            - development stage at harvest (= 2.0 at maturity)
-            - ['-']
-            SPAN:
-            - 36.0
-            - life span of leaves growing at 35 Celsius
-            - ['d']
+

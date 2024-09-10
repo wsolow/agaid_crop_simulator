@@ -28,7 +28,7 @@ python test_wofost.py --agro_fpath <filename>.yaml
         crop_start_date: <yyyy-mm-dd>
         crop_start_type: <sowing, emergence>
         crop_end_date: <yyyy-mm-dd>
-        crop_end_type: <harvest, earliest, maturity>
+        crop_end_type: <harvest, maturity, death>
         max_duration: <int>
     StateEvents:
     TimedEvents:

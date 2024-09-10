@@ -193,6 +193,7 @@ DVSI     Initial development stage at emergence.        SCr        -
             Usually this is zero, but it can be higher
             for crops that are transplanted (e.g. paddy
             rice)
+DVSM     Mature development stage, usually 2.0          Scr        - 
 DVSEND   Final development stage                        SCr        -
 DTSMTB   Daily increase in temperature sum as a         TCr        |C|
             function of daily mean temperature.
@@ -258,6 +259,8 @@ SSATB    Specific Stem Area as a function of            TCr       |ha kg-1|
  Name     Description                                   Type     Unit
 =======  ============================================= =======  ============
 TDWI     Initial total crop dry weight                  SCr      |kg ha-1|
+RDRSOB   Relative Death rate of storage organs as a     Scr      |kg ha-1|
+            function of development stage               
 SPA      Specific Pod Area                              SCr      |ha kg-1|
 =======  ============================================= =======  ============    
 

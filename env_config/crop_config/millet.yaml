@@ -136,10 +136,23 @@ CropParameters:
             -  0.0
             - Initial development stage
             - ['-']
+            DVSM:
+            - 2.0
+            - Development stage of maturity
+            - ['-']
             DVSEND:
-            -  2.0
+            -  3.0
             - development stage at harvest (= 2.0 at maturity)
             - ['-']
+            RDRSOB:
+            - [0.00, 0.000,
+               2.00, 0.000,
+               2.01, 0.010,
+               2.50, 0.020,
+               2.75, 0.050,
+               3.00, 0.500]
+            - Relative death rate of storage organs as a function of DVS
+            - ['-', 'kg.kg-1.d-1']
             VERNBASE:
             - 14.0
             - Base vernalization requirement

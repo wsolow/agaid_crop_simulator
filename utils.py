@@ -5,6 +5,7 @@ import typing
 import gymnasium as gym
 import warnings
 from inspect import getmembers, isfunction
+import datetime
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -219,6 +220,8 @@ class WOFOST_Args:
     """Initial development stage at emergence. Usually this is zero, but it can 
     be higher or crops that are transplanted (e.g. paddy rice)"""
     DVSI: float = None
+    """Mature development stage"""
+    DVSM: float = None
     """Final development stage"""
     DVSEND: float = None      
     """Daily increase in temperature sum as a function of daily mean temperature (C)"""               
@@ -259,6 +262,8 @@ class WOFOST_Args:
     # Storage Organs Dynamics Parameters
     """Initial total crop dry weight (kg/ha)"""
     TDWI: float = None    
+    """Relative death rate of storage organs as a function of development stage"""
+    RDRSOB: float = None
     """Specific Pod Area (ha / kg)""" 
     SPA: float = None    
     
@@ -307,18 +312,51 @@ class WOFOST_Args:
     # NPK Translocation Parameters
     NPK_TRANSLRT_FR: float = None 
 
+@dataclass 
+class Agro_Args:
+    """Latitude for Weather Data"""
+    latitude: float = None
+    """Longitude for Weather Data"""
+    longitude: float = None
+    """Year for Weather Data"""
+    year: int = None
+    """Site Name"""
+    site_name: str = None
+    """Site Variation Name"""
+    variation_name: str = None
+    "Site Start Date in YYYY-MM-DD"
+    site_start_date: str = None
+    """Site End Date in YYYY-MM-DD"""
+    site_end_date: str = None
+    """Crop Name"""
+    crop_name: str = None
+    "Crop Variety Name"
+    variety_name: str = None
+    """Crop Start Date in YYYY-MM-DD"""
+    crop_start_date: str = None
+    """Crop Start type (emergence/sowing)"""
+    crop_start_type: str = None
+    """Crop End Date in YYYY-MM-DD"""
+    crop_end_date: str = None
+    """Crop end type (harvest/maturity)"""
+    crop_end_type: str = None
+    """Max duration of crop growth"""
+    max_duration: str = None
+
 @dataclass
 class NPK_Args:
     """Parameters for the WOFOST8 model"""
     """Best if modified in /env_config/ but can be modified here for small changes"""
     wf_args: WOFOST_Args
 
+    """Parameters for Agromanangement file"""
+    ag_args: Agro_Args
+
     """Location of data folder which contains multiple runs"""
     save_folder: str = "data/"
-    
 
     """Environment ID"""
-    env_id: str = "wofost-v0"
+    env_id: str = "npk-v0"
     """Env Reward Function"""
     env_reward: str = "default"
     """Environment seed"""
@@ -336,10 +374,15 @@ class NPK_Args:
     """Output Variables"""
     """See env_config/README.md for more information"""
     # ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'GWSO', 'DVS', 'LAI', 'RD', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'WC', 'SM']
-    output_vars: list = field(default_factory = lambda: ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'GWSO', 'DVS'])
+    output_vars: list = field(default_factory = lambda: [ 
+        "DVS",
+        ])
+                              
+                              
+                              #['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'GWSO', 'DVS'])
     """Weather Variables"""
     # ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND']
-    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND',])
     """Year range, incremented by 1"""
     year_range: list = field(default_factory = lambda: [1984, 2000])
     """Latitude Range, incremented by .5"""
@@ -349,11 +392,18 @@ class NPK_Args:
 
     """Intervention Interval"""
     intvn_interval: int = 1
+    """Weather Forecast length in days (min 1)"""
+    forecast_length: int = 1
+    forecast_noise: list = field(default_factory = lambda: [0, 0.2])
     """Number of NPK Fertilization Actions"""
     """Total number of actions available will be 3*num_fert^3 + num_irrig"""
     num_fert: int = 4
     """Number of Irrgiation Actions"""
     num_irrig: int = 4
+    """Harvest Effiency in range (0,1)"""
+    harvest_effec: float = 1.0
+    """Irrigation Effiency in range (0,1)"""
+    irrig_effec: float = 0.7
 
     """Maximum N applied in kg/ha (used in reward function)"""
     max_n: float = 20
@@ -374,8 +424,6 @@ class NPK_Args:
     fert_amount: float = 2
     """Amount of water coefficient in cm/water"""
     irrig_amount: float  = 0.5
-    """Coefficient for cost of fertilization"""
-    beta: float = 10.0
 
     """Relative path to agromanagement configuration file"""
     agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"

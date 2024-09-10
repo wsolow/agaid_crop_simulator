@@ -307,6 +307,8 @@ PAI      Pod Area Index                                     Y     -
 WSO      Weight of living storage organs                    Y     |kg ha-1|
 DWSO     Weight of dead storage organs                      N     |kg ha-1|
 TWSO     Total weight of storage organs                     Y     |kg ha-1|
+HWSO     Harvestable weight of storage organs               Y     |kg ha-1|
+LHW      Last harvest weight of storage organs              Y     |kg ha-1|
 =======  ================================================= ==== ============
 **Rate variables** (For output to observation space):
 =======  ================================================= ==== ============
@@ -314,6 +316,7 @@ TWSO     Total weight of storage organs                     Y     |kg ha-1|
 =======  ================================================= ==== ============
 GRSO     Growth rate storage organs                         N   |kg ha-1 d-1|
 DRSO     Death rate storage organs                          N   |kg ha-1 d-1|
+DHSO     Death rate of harvestable storage organs           N   |kg ha-1 d-1|
 GWSO     Net change in storage organ biomass                N   |kg ha-1 d-1|
 =======  ================================================= ==== ============
 

@@ -88,7 +88,7 @@ keywords.
     * crop_name: a string identifying the crop
     * variety_name: a string identifying the crop variety
     * crop_start_type: either 'sowing' or 'emergence'
-    * crop_end_type: either 'maturity', 'harvest' or 'earliest'
+    * crop_end_type: either 'maturity' or 'harvest'
 
 **CROP_FINISH**
 
@@ -164,6 +164,7 @@ site_finish = "SITE_FINISH"
 crop_start = "CROP_START"
 crop_emerged = "CROP_EMERGED"
 crop_finish = "CROP_FINISH"
+crop_harvest = "CROP_HARVEST"
 terminate = "TERMINATE"
 output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"

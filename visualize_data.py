@@ -84,8 +84,10 @@ def plot_average_farms(args, filenames):
         plt.xlabel('Days')
         plt.ylabel(r[all_vars[j]])
         for i in range(len(farm_avg)):
-            plt.plot(farm_avg[i,:,j],label=filenames[i])
+            #plt.plot(farm_avg[i,:,j],label=filenames[i])
+            plt.plot(farm_avg[i,:,j])
             plt.fill_between(np.arange(clipped_length),farm_avg[i,:,j]-farm_std[i,:,j],farm_avg[i,:,j]+farm_std[i,:,j], alpha=.5, linestyle='solid')
+        plt.plot(np.arange(len(farm_avg[i,:,j])), np.tile([15],len(farm_avg[i,:,j])), c='k', linestyle='dashed', label='Threshold')
         plt.legend()
         plt.show()
 

@@ -20,11 +20,6 @@ from  pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
 from pcse.crop.wofost8 import Wofost80
 from pcse.agromanager import AgroManagerSingleYear
 
-# Action Enums
-N_ACT = 0
-P_ACT = 1
-K_ACT = 2
-W_ACT = 3
 
 # Base model simulating growth of crop subject to NPK and water limited dynamics
 class NPK_Env(gym.Env):
@@ -38,8 +33,11 @@ class NPK_Env(gym.Env):
         self.log = self._init_log()
         self.args = args
         self.wofost_params = args.wf_args
+        self.agro_params = args.ag_args
 
         self.intervention_interval = args.intvn_interval
+        self.forecast_length = args.forecast_length
+        self.forecast_noise = args.forecast_noise
         self.random_reset = args.random_reset
 
         # Get the weather and output variables
@@ -58,7 +56,8 @@ class NPK_Env(gym.Env):
         self.crop_start_date = self.agromanagement['CropCalendar']['crop_start_date']
         self.crop_end_date = self.agromanagement['CropCalendar']['crop_end_date']
         self.site_start_date = self.agromanagement['SiteCalendar']['site_start_date']
-        self.site_end_date = self.agromanagement['SiteCalendar']['site_end_date']     
+        self.site_end_date = self.agromanagement['SiteCalendar']['site_end_date'] 
+        self.year_difference = self.crop_start_date.year - self.site_start_date.year     
         self.max_site_duration = self.site_end_date - self.site_start_date
         self.max_crop_duration = self.crop_end_date - self.crop_start_date
 
@@ -75,17 +74,16 @@ class NPK_Env(gym.Env):
 
         
         # NPK/Irrigation action amounts
-        self.num_n = args.num_fert
-        self.num_p = args.num_fert
-        self.num_k = args.num_fert
+        self.num_fert = args.num_fert
         self.num_irrig = args.num_irrig
-        self.num_actions = np.max([self.num_n, self.num_p, self.num_k, self.num_irrig])
-
         self.fert_amount = args.fert_amount
         self.irrig_amount = args.irrig_amount
+
         self.n_recovery = args.n_recovery
         self.p_recovery = args.p_recovery
         self.k_recovery = args.k_recovery
+        self.harvest_effec = args.harvest_effec
+        self.irrig_effec = args.irrig_effec
 
         # Thresholds for nutrient application
         self.max_n = args.max_n
@@ -93,11 +91,8 @@ class NPK_Env(gym.Env):
         self.max_k = args.max_k
         self.max_w = args.max_w
 
-        # Penalty term for fertilization cost
-        self.beta = args.beta
-
         # Create action and observation spaces
-        self.action_space = gym.spaces.MultiDiscrete(nvec=[4, self.num_actions], dtype=int)
+        self.action_space = gym.spaces.Discrete(3*self.num_fert + self.num_irrig)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, \
                                 shape=(1+len(self.output_vars)+len(self.weather_vars)*args.intvn_interval,))
 
@@ -107,7 +102,8 @@ class NPK_Env(gym.Env):
             agromanagement = yaml.load(file, Loader=yaml.SafeLoader)
         if "AgroManagement" in agromanagement:
             agromanagement = agromanagement["AgroManagement"]
-        return agromanagement
+        
+        return utils.set_agro_params(agromanagement, self.agro_params)
     
     # Load the site parameters from agromanagement file
     def _load_site_parameters(self, agromanagement):
@@ -138,10 +134,17 @@ class NPK_Env(gym.Env):
         return train_weather_data
     
     # Get the weather for a range of days
-    def _get_weather(self, weatherdataprovider, date, days):
-        dates = [date + datetime.timedelta(i) for i in range(0, days)]
-        weather = [self._get_weather_day(weatherdataprovider, day) for day in dates]
-        return np.array(weather)
+    def _get_weather(self, weatherdataprovider, date, forecast):
+        weather_vars = []
+        noise_scale = np.linspace(start=self.forecast_noise[0], \
+                                  stop=self.forecast_noise[1], num=self.forecast_length)
+        for i in range(0, forecast):
+            weather = self._get_weather_day(weatherdataprovider, date + datetime.timedelta(i) )
+
+            # Add random noise to weather prediction
+            weather += np.random.normal(size=len(weather)) * weather * noise_scale[i] 
+            weather_vars.append(weather)
+        return np.array(weather_vars)
 
     # Get the weather for specific date
     def _get_weather_day(self, weatherdataprovider, date):
@@ -170,13 +173,13 @@ class NPK_Env(gym.Env):
         # Reset to random year if flag
         if self.random_reset:
             self.year = self.np_random.choice(self.train_weather_data) 
-        
         # Change the current start and end date to specified year
-        self.crop_start_date = self.crop_start_date.replace(year=self.year)
-        self.crop_end_date = self.crop_start_date + self.max_crop_duration
-
         self.site_start_date = self.site_start_date.replace(year=self.year)
         self.site_end_date = self.site_start_date + self.max_site_duration
+
+        # Correct for if crop start date is in a different year
+        self.crop_start_date = self.crop_start_date.replace(year=self.year+self.year_difference)
+        self.crop_end_date = self.crop_start_date + self.max_crop_duration
         
         # Change to the new year specified by self.year
         self.date = self.site_start_date
@@ -204,7 +207,7 @@ class NPK_Env(gym.Env):
 
     # Step through the environment
     def step(self, action):
-        npk, irrigation = self._take_action(action)
+        act_tuple = self._take_action(action)
         output = self._run_simulation()
 
         observation = self._process_output(output)
@@ -216,7 +219,7 @@ class NPK_Env(gym.Env):
         # Truncate (in some cases) based on the crop end date
         truncation = self.date >= self.crop_end_date
 
-        self._log(output.iloc[-1]['GWSO'], npk, irrigation, reward)
+        self._log(output.iloc[-1]['GWSO'], act_tuple, reward)
 
         #TODO Truncations and crop signals
         truncation = False
@@ -231,7 +234,7 @@ class NPK_Env(gym.Env):
 
         # Observed weather until next intervention time
         weather_observation = self._get_weather(self.weatherdataprovider, self.date,
-                                             self.intervention_interval)
+                                             self.forecast_length)
 
         # Count the number of days elapsed - useful to have in observation space
         # for time based policies
@@ -254,24 +257,36 @@ class NPK_Env(gym.Env):
 
     # Send action to the model
     def _take_action(self, action):
-        n_amount = self.fert_amount * action[1] * (action[0] == N_ACT)
-        p_amount = self.fert_amount * action[1] * (action[0] == P_ACT)
-        k_amount = self.fert_amount * action[1] * (action[0] == K_ACT)
-        irrig_amount = self.irrig_amount * action[1] * (action[0] == W_ACT)
+        n_amount = 0
+        p_amount = 0
+        k_amount = 0
+        irrig_amount = 0
 
-        self.model._send_signal(signal=pcse.signals.apply_npk, N_amount=n_amount, \
-                                P_amount=p_amount, K_amount=k_amount, N_recovery=self.n_recovery,\
-                                P_recovery=self.p_recovery, K_recovery=self.k_recovery)
-        
-        self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, efficiency=0.7)
-        return (n_amount, p_amount, k_amount), irrig_amount
+        # Irrigation action
+        if action >= 3 * self.num_fert:
+            irrig_amount -= (3 * self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
+                                    efficiency=self.irrig_effec)
+
+        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
+        # Nitrogen fertilization
+        if action // self.num_fert == 0:
+            n_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    N_amount=n_amount, N_recovery=self.n_recovery)
+        elif action // self.num_fert == 1:
+            p_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    P_amount=p_amount, P_recovery=self.p_recovery)
+        elif action // self.num_fert == 2:
+            k_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                        K_amount=k_amount, K_recovery=self.k_recovery)
+
+        return (n_amount, p_amount, k_amount, irrig_amount)
 
     # Get reward from the simulation
     def _get_reward(self, output, action):
-        n_amount = self.fert_amount * action[1] * (action[0] == N_ACT)
-        p_amount = self.fert_amount * action[1] * (action[0] == P_ACT)
-        k_amount = self.fert_amount * action[1] * (action[0] == K_ACT)
-        irrig_amount = self.irrig_amount * action[1] * (action[0] == W_ACT)
         '''reward = output.iloc[-1]['WSO'] - \
                         (np.sum(self.beta * np.array([n_amount, p_amount, k_amount])) \
                         - .25 * self.beta * irrig_amount)'''
@@ -281,24 +296,21 @@ class NPK_Env(gym.Env):
     def _init_log(self):
         return {'growth': dict(), 'nitrogen': dict(), 'phosphorous': dict(), 'potassium': dict(), 'irrigation':dict(), 'reward': dict(), 'day':dict()}
     
-    def _log(self, growth, npk, irrigation, reward):
+    def _log(self, growth, action, reward):
         self.log['growth'][self.date] = growth
         self.log['nitrogen'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            npk[0]
+            action[0]
         self.log['phosphorous'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            npk[1]
+            action[1]
         self.log['potassium'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            npk[2]
+            action[2]
         self.log['irrigation'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            irrigation
+            action[3]
         self.log['reward'][self.date] = reward
         self.log['day'][self.date] = self.date  
 
 # Simulating Potential Production - useful for seeing how much the crop
 # could grow without water limiting conditions
-# Note that given how the WaterBalance (WC) and Soil Moisture (SM) are computed
-# The graph of their values will look abnormal, however this still allows for 
-# Excess water to be available in the soil 
 class PP_Env(NPK_Env):
     # Set config
     config = utils.make_config()
@@ -308,14 +320,47 @@ class PP_Env(NPK_Env):
     def __init__(self, args):
         super().__init__(args)
 
+        self.action_space = gym.spaces.Discrete(1)
+
+    # Send action to the model
+    def _take_action(self, action):
+        return (0, 0, 0, 0)
+
+
 # Simulating production under abundant water but limited NPK dynamics
 class Limited_NPK_Env(NPK_Env):
     config = utils.make_config()
     config['SOIL'] = SoilModuleWrapper_LNPK
     config['CROP'] = Wofost80
     config['AGROMANAGEMENT'] = AgroManagerSingleYear
+
     def __init__(self, args):
         super().__init__(args)
+
+        self.action_space = gym.spaces.discrete(3*self.num_fert)
+
+        # Send action to the model
+    def _take_action(self, action):
+        n_amount = 0
+        p_amount = 0
+        k_amount = 0
+
+        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
+        # Nitrogen fertilization
+        if action // self.num_fert == 0:
+            n_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    N_amount=n_amount, N_recovery=self.n_recovery)
+        elif action // self.num_fert == 1:
+            p_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    P_amount=p_amount, P_recovery=self.p_recovery)
+        elif action // self.num_fert == 2:
+            k_amount = self.fert_amount * (action % self.num_fert) 
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                        K_amount=k_amount, K_recovery=self.k_recovery)
+
+        return (n_amount, p_amount, k_amount, 0)
 
 # Simulating production under limited Nitrogen but abundant water and P/K
 class Limited_N_Env(NPK_Env):
@@ -326,6 +371,19 @@ class Limited_N_Env(NPK_Env):
     def __init__(self, args):
         super().__init__(args)
 
+        self.action_space = gym.spaces.Discrete(self.num_fert)
+
+
+    def _take_action(self, action):
+        n_amount = 0
+        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
+        # Nitrogen fertilization
+        n_amount = self.fert_amount * action
+        self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    N_amount=n_amount, N_recovery=self.n_recovery)
+
+        return (n_amount, 0, 0, 0)
+
 # Simulating production under limited water and Nitrogen
 class Limited_NW_Env(NPK_Env):
     config = utils.make_config()
@@ -334,6 +392,27 @@ class Limited_NW_Env(NPK_Env):
     config['AGROMANAGEMENT'] = AgroManagerSingleYear
     def __init__(self, args):
         super().__init__(args)
+        self.action_space = gym.spaces.Discrete(self.num_fert + self.num_irrig)
+
+    def _take_action(self, action):
+        n_amount = 0
+        irrig_amount = 0
+
+        # Irrigation action
+        if action >= self.num_fert:
+            irrig_amount -= self.num_fert
+            self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
+                                    efficiency=self.irrig_effec)
+
+        # Fertilizaiton action, correct for 2 crop specific actions (harvest/plant)
+        # Nitrogen fertilization
+        else:
+            n_amount = self.fert_amount * action
+            self.model._send_signal(signal=pcse.signals.apply_npk, \
+                                    N_amount=n_amount, N_recovery=self.n_recovery)
+
+        return (n_amount, 0, 0, irrig_amount)
+
 
 # Simulating production under limited water 
 class Limited_W_Env(NPK_Env):
@@ -343,3 +422,13 @@ class Limited_W_Env(NPK_Env):
     config['AGROMANAGEMENT'] = AgroManagerSingleYear
     def __init__(self, args):
         super().__init__(args)
+
+        self.action_space = gym.spaces.Discrete(self.num_irrig)
+
+    def _take_action(self, action):
+
+        irrig_amount = action
+        self.model._send_signal(signal=pcse.signals.irrigate, amount=irrig_amount, \
+                                efficiency=self.irrig_effec)
+
+        return (0, 0, 0, irrig_amount)

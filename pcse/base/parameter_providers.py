@@ -77,7 +77,7 @@ class ParameterProvider(MutableMapping):
         :param variety_name: string identifying the variety name, is ignored as only
                one crop is assumed to be here.
         :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
-        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'
 
         In case of crop rotations, there is a new set of crop parameters needed when a new
         crop is started. This routine activates the crop parameters for the given crop_name and

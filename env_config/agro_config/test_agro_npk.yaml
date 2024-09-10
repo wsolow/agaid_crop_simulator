@@ -5,13 +5,13 @@ AgroManagement:
         year: 1984
         site_name: oregon
         variation_name: Oregon_1
-        site_start_date: 1984-01-01
-        site_end_date: 1984-08-01
+        site_start_date: 1984-12-01
+        site_end_date: 1985-12-01
     CropCalendar:
         crop_name: wheat
         variety_name: Winter_wheat_101
-        crop_start_date: 1984-01-01
+        crop_start_date: 1985-01-01
         crop_start_type: sowing
-        crop_end_date: 1984-08-01
-        crop_end_type: harvest
+        crop_end_date: 1985-08-01
+        crop_end_type: max_duration
         max_duration: 365

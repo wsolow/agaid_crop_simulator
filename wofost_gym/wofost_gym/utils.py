@@ -6,6 +6,8 @@
 simulation for freely draining soils
 """
 
+from datetime import datetime
+
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
 from pcse.crop.wofost8 import Wofost80
 from pcse.agromanager import AgroManagerSingleYear
@@ -84,9 +86,9 @@ def make_config():
         # STEM DYNAMICS RATES
         "GRST", "DRST", "GWST",
         # STORAGE ORGAN DYNAMICS STATES
-        "WSO", "DWSO", "TWSO", "PAI",
+        "WSO", "DWSO", "TWSO", "HWSO", "PAI","LHW",
         # STORAGE ORGAN DYNAMICS RATES
-        "GRSO", "DRSO", "GWSO",
+        "GRSO", "DRSO", "GWSO", "DHSO",
         # NPK NUTRIENT DEMAND UPTAKE STATES
             # NONE
         # NPK NUTRIENT DEMAND UPTAKE RATES
@@ -174,9 +176,9 @@ def make_config():
         # STEM DYNAMICS RATES
         "GRST", "DRST", "GWST",
         # STORAGE ORGAN DYNAMICS STATES
-        "WSO", "DWSO", "TWSO", "PAI",
+        "WSO", "DWSO", "TWSO", "HWSO", "PAI", "LHW",
         # STORAGE ORGAN DYNAMICS RATES
-        "GRSO", "DRSO", "GWSO",
+        "GRSO", "DRSO", "GWSO", "DHSO",
         # NPK NUTRIENT DEMAND UPTAKE STATES
             # NONE
         # NPK NUTRIENT DEMAND UPTAKE RATES
@@ -264,9 +266,9 @@ def make_config():
         # STEM DYNAMICS RATES
         "GRST", "DRST", "GWST",
         # STORAGE ORGAN DYNAMICS STATES
-        "WSO", "DWSO", "TWSO", "PAI",
+        "WSO", "DWSO", "TWSO", "HWSO", "PAI", "LHW",
         # STORAGE ORGAN DYNAMICS RATES
-        "GRSO", "DRSO", "GWSO",
+        "GRSO", "DRSO", "GWSO", "DHSO",
         # NPK NUTRIENT DEMAND UPTAKE STATES
             # NONE
         # NPK NUTRIENT DEMAND UPTAKE RATES
@@ -623,6 +625,9 @@ def set_params(env, args):
     be higher or crops that are transplanted (e.g. paddy rice)"""
     if args.DVSI is not None:
         env.parameterprovider.set_override("DVSI", args.DVSI, check=False)
+    """Mature Development Stage"""
+    if args.DVSM is not None:
+        env.parameterprovider.set_override("DVSM", args.DVSM, check=False)
     """Final development stage"""
     if args.DVSEND is not None:
         env.parameterprovider.set_override("DVSEND", args.DVSEND, check=False)
@@ -684,7 +689,10 @@ def set_params(env, args):
     # Storage Organs Dynamics Parameters
     """Initial total crop dry weight (kg/ha)"""
     if args.TDWI is not None:
-        env.parameterprovider.set_override("TDWI", args.TDWI, check=False) 
+        env.parameterprovider.set_override("TDWI", args.TDWI, check=False)
+    """Relative death rate of storage organs as a function of development stage"""
+    if args.RDRSOB is not None:
+        env.parameterprovider.set_override("RDRSOB", args.RDRSOB, check=False) 
     """Specific Pod Area (ha / kg)""" 
     if args.SPA is not None:
         env.parameterprovider.set_override("SPA", args.SPA, check=False)
@@ -846,3 +854,35 @@ def set_params(env, args):
                         from leaves and stems"""
     if args.NPK_TRANSLRT_FR is not None:
         env.parameterprovider.set_override("NPK_TRANSLRT_FR", args.NPK_TRANSLRT_FR, check=False)
+
+def set_agro_params(agromanagement, args):
+    if args.latitude is not None:
+        agromanagement['SiteCalendar']['latitude'] = args.latitude
+    if args.longitude is not None: 
+        agromanagement['SiteCalendar']['longitude'] = args.longitude
+    if args.year is not None:
+        agromanagement['SiteCalendar']['year'] = args.year
+    if args.site_name is not None:
+        agromanagement['SiteCalendar']['site_name'] = args.site_name
+    if args.variation_name is not None:
+        agromanagement['SiteCalendar']['variation_name'] = args.variation_name
+    if args.site_start_date is not None:
+        agromanagement['SiteCalendar']['site_start_date'] = datetime.strptime(args.site_start_date, '%Y-%m-%d').date()
+    if args.site_end_date is not None:
+        agromanagement['SiteCalendar']['site_end_date'] = datetime.strptime(args.site_end_date, '%Y-%m-%d').date()
+    if args.crop_name is not None:
+        agromanagement['CropCalendar']['crop_name'] = args.crop_name
+    if args.variety_name is not None:
+        agromanagement['CropCalendar']['variety_name'] = args.variety_name
+    if args.crop_start_date is not None:
+        agromanagement['CropCalendar']['crop_start_date'] = datetime.strptime(args.crop_start_date, '%Y-%m-%d').date()
+    if args.crop_start_type is not None:
+        agromanagement['CropCalendar']['crop_start_type'] = args.crop_start_type
+    if args.crop_end_date is not None:
+        agromanagement['CropCalendar']['crop_end_date'] = datetime.strptime(args.crop_end_date, '%Y-%m-%d').date()
+    if args.crop_end_type is not None:
+        agromanagement['CropCalendar']['crop_end_type'] = args.crop_end_type
+    if args.max_duration is not None:
+        agromanagement['CropCalendar']['max_duration'] = args.max_duration
+
+    return agromanagement
