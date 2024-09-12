@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), July 2018
-# Modified 2024, Will Solow
+"""NASA POWER weather provider class. Provides global historical weather
+data for the past ~40 years
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 import os
 import datetime as dt
 
@@ -11,10 +13,16 @@ import requests
 import logging
 import pickle
 
-#from .base import WeatherDataProvider, WeatherDataContainer
 from .util import reference_ET, check_angstromAB
 from .utils import exceptions as exc
 from math import exp
+
+# Define some lambdas to take care of unit conversions.
+MJ_to_J = lambda x: x * 1e6
+mm_to_cm = lambda x: x / 10.
+tdew_to_hpa = lambda x: ea_from_tdew(x) * 10.
+to_date = lambda d: d.date()
+
 
 def ea_from_tdew(tdew):
     """
@@ -45,13 +53,6 @@ def ea_from_tdew(tdew):
     ea = 0.6108 * exp(tmp)
     return ea
  
-# Define some lambdas to take care of unit conversions.
-MJ_to_J = lambda x: x * 1e6
-mm_to_cm = lambda x: x / 10.
-tdew_to_hpa = lambda x: ea_from_tdew(x) * 10.
-to_date = lambda d: d.date()
-
-
 class SlotPickleMixin(object):
     """This mixin makes it possible to pickle/unpickle objects with __slots__ defined.
 

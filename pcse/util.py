@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2016 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), October 2016
 """Miscellaneous utilities for PCSE
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
-import os, sys
+import os
 from pathlib import Path
 import datetime
-import copy
-from math import log10, cos, sin, asin, sqrt, exp, pi, radians
+from math import cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
 import textwrap
-import sqlite3
-if sys.version_info > (3,8):
-    from collections.abc import Iterable
-else:
-    from collections import Iterable
+from collections.abc import Iterable
+import datetime as dt
 
 from .utils import exceptions as exc
 from .utils.traitlets import TraitType
@@ -115,21 +111,6 @@ class ConfigurationLoader(object):
              msg += (textwrap.fill(r, subsequent_indent="  ") + "\n")
         return msg
 
-def limit(vmin, vmax, v):
-    """limits the range of v between min and max
-    """
-
-    if vmin > vmax:
-        raise RuntimeError("Min value (%f) larger than max (%f)" % (vmin, vmax))
-    
-    if v < vmin:       # V below range: return min
-        return vmin
-    elif v < vmax:     # v within range: return v
-        return v
-    else:             # v above range: return max
-        return vmax
-
-
 class Afgen(object):
     """Emulates the AFGEN function in WOFOST.
     
@@ -221,6 +202,20 @@ class AfgenTrait(TraitType):
            return Afgen(value)
         self.error(obj, value)
 
+def limit(vmin:float, vmax:float, v:float):
+    """limits the range of v between min and max
+    """
+
+    if vmin > vmax:
+        raise RuntimeError("Min value (%f) larger than max (%f)" % (vmin, vmax))
+    
+    if v < vmin:       # V below range: return min
+        return vmin
+    elif v < vmax:     # v within range: return v
+        return v
+    else:             # v above range: return max
+        return vmax
+
 def check_date(indate):
         """Check representations of date and try to force into a datetime.date
 
@@ -232,8 +227,6 @@ def check_date(indate):
         4. a string of the format YYYYDDD
         5. a string of the format YYYY-MM-DD
         """
-
-        import datetime as dt
         if isinstance(indate, dt.datetime):
             return indate.date()
         elif isinstance(indate, dt.date):

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), Juli 2015
-# Modified by Will Solow, 2024
 """Implementation of AgroManager and related classes for agromanagement actions in PCSE.
 
 Available classes:
@@ -9,14 +5,15 @@ Available classes:
   * CropCalendar: A class for handling cropping calendars
   * AgroManager: A class for handling all agromanagement events which encapsulates
     the CropCalendar and Timed/State events.
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
 
 from datetime import date, timedelta
 import logging
-import sys
 
-from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
-from .utils.traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
+from .base import DispatcherObject, VariableKiosk, ParameterProvider, AncillaryObject
+from .utils.traitlets import HasTraits, Float, Int, Instance, Enum, Bool, Unicode
 from .utils import exceptions as exc
 from .util import ConfigurationLoader
 from . import signals
@@ -44,6 +41,19 @@ def take_first(iterator):
         return item
 
 class BaseSiteCalendar(HasTraits, DispatcherObject):
+    """Placeholder class for the site calendar. All SiteCalendar objects inherit
+    from this class
+    """
+    # System parameters
+    kiosk = Instance(VariableKiosk)
+    parameterprovider = Instance(ParameterProvider)
+    mconf = Instance(ConfigurationLoader)
+    logger = Instance(logging.Logger)
+
+class BaseCropCalendar(HasTraits, DispatcherObject):
+    """Placeholder class for the crop calendar. All CropCalendar objects inherit
+    from this class
+    """
     # system parameters
     kiosk = Instance(VariableKiosk)
     parameterprovider = Instance(ParameterProvider)
@@ -57,14 +67,6 @@ class SiteCalendar(BaseSiteCalendar):
     the soil cycle. The site calendar is initialized by providing the parameters needed
     for defining the site cycle. At each time step the instance of `SiteCalendar` is called
     and at dates defined by its parameters it initiates the appropriate actions:
-
-    param: latitude        - longitude of site to draw weather from
-    param: longitude       - latitude of site to draw weather from
-    param: year            - year to draw weather from
-    param: site_name       - string identifying the site
-    param: variation_name  - string identifying the site variation
-    param: site_start_date - date identifying site start
-    param: site_end_date   - date identifying site end
 
     :return: A SiteCalendar Instance
     """
@@ -82,9 +84,20 @@ class SiteCalendar(BaseSiteCalendar):
     duration = Int(0)
     in_site_cycle = Bool(False)
 
-    def __init__(self, kiosk, site_name=None, variation_name=None, site_start_date=None,
-              site_end_date=None, latitude=None, longitude=None, year=None):
-
+    def __init__(self, kiosk, site_name: str=None, variation_name: str=None, \
+                 site_start_date: date=None, site_end_date: date=None, \
+                 latitude:float=None, longitude:float=None, year:int=None):
+        """Initialize the SiteCalendar Instance
+          
+        Args:
+            param: latitude        - longitude of site to draw weather from
+            param: longitude       - latitude of site to draw weather from
+            param: year            - year to draw weather from
+            param: site_name       - string identifying the site
+            param: variation_name  - string identifying the site variation
+            param: site_start_date - date identifying site start
+            param: site_end_date   - date identifying site end 
+        """
         # set up logging
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
@@ -115,7 +128,7 @@ class SiteCalendar(BaseSiteCalendar):
             msg = "site_end_date before or equal to site_start_date for crop '%s'!"
             raise exc.PCSEError(msg % (self.sitestart_date, self.site_end_date))
 
-    def __call__(self, day):
+    def __call__(self, day:date):
         """Runs the crop calendar to determine if any actions are needed.
 
         :param day:  a date object for the current simulation day
@@ -141,14 +154,6 @@ class SiteCalendar(BaseSiteCalendar):
         """
         self.in_site_cycle = False
 
-
-class BaseCropCalendar(HasTraits, DispatcherObject):
-    # system parameters
-    kiosk = Instance(VariableKiosk)
-    parameterprovider = Instance(ParameterProvider)
-    mconf = Instance(ConfigurationLoader)
-    logger = Instance(logging.Logger)
-
 class CropCalendar(BaseCropCalendar):
     """A crop calendar for managing the crop cycle.
 
@@ -162,15 +167,7 @@ class CropCalendar(BaseCropCalendar):
     - maturity/harvest: the crop cycle is ended by dispatching a `crop_finish` signal with the
       appropriate parameters.
 
-    :param kiosk: The PCSE VariableKiosk instance
-    :param crop_name: String identifying the crop
-    :param variety_name: String identifying the variety
-    :param crop_start_date: Start date of the crop simulation
-    :param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
-    :param crop_end_date: End date of the crop simulation
-    :param crop_end_type: End type of the crop simulation ('harvest', 'maturity', 'death')
-    :param max_duration: Integer describing the maximum duration of the crop cycle
-
+    
     :return: A CropCalendar Instance
     """
 
@@ -195,9 +192,21 @@ class CropCalendar(BaseCropCalendar):
     duration = Int(0)
     in_crop_cycle = Bool(False)
 
-    def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
-                 crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
+    def __init__(self, kiosk, crop_name: str=None, variety_name: str=None, \
+                 crop_start_date: date=None, crop_start_type: date=None, 
+                 crop_end_date: date=None, crop_end_type: date=None, max_duration: int=None):
+        """Initialize Crop Calendar Class
 
+        Args:
+            param kiosk: The PCSE VariableKiosk instance
+            param crop_name: String identifying the crop
+            param variety_name: String identifying the variety
+            param crop_start_date: Start date of the crop simulation
+            param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
+            param crop_end_date: End date of the crop simulation
+            param crop_end_type: End type of the crop simulation ('harvest', 'maturity', 'death')
+            param max_duration: Integer describing the maximum duration of the crop cycle
+        """
         # set up logging
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
@@ -216,7 +225,7 @@ class CropCalendar(BaseCropCalendar):
         self._connect_signal(self._on_CROP_START, signal=signals.crop_start)
 
         
-    def validate(self, campaign_start_date, next_campaign_start_date):
+    def validate(self, campaign_start_date:date, next_campaign_start_date:date):
         """Validate the crop calendar internally and against the interval for
         the agricultural campaign.
 
@@ -240,7 +249,7 @@ class CropCalendar(BaseCropCalendar):
                    campaign_start_date, next_campaign_start_date)
             raise exc.PCSEError(msg)
 
-    def __call__(self, day):
+    def __call__(self, day:date):
         """Runs the crop calendar to determine if any actions are needed.
 
         :param day:  a date object for the current simulation day
@@ -287,11 +296,23 @@ class CropCalendar(BaseCropCalendar):
         self.in_crop_cycle = True
         self.duration = 0
 
-
 class CropCalendarHarvest(CropCalendar):
 
-    def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
-                 crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
+    def __init__(self, kiosk, crop_name: str=None, variety_name: str=None, \
+                 crop_start_date: date=None, crop_start_type: str=None, \
+                    crop_end_date: date=None, crop_end_type: str=None, max_duration: int=None):
+        """Initialize Crop Calendar Harvest Class inherits from CropCalendar
+
+        Args:
+            param kiosk: The PCSE VariableKiosk instance
+            param crop_name: String identifying the crop
+            param variety_name: String identifying the variety
+            param crop_start_date: Start date of the crop simulation
+            param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
+            param crop_end_date: End date of the crop simulation
+            param crop_end_type: End type of the crop simulation ('harvest', 'maturity', 'death')
+            param max_duration: Integer describing the maximum duration of the crop cycle
+        """
         super().__init__(kiosk, crop_name=crop_name, variety_name=variety_name, 
                        crop_start_date=crop_start_date, crop_start_type=crop_start_type, 
                        crop_end_date=crop_end_date, crop_end_type=crop_end_type, 
@@ -322,6 +343,9 @@ class CropCalendarHarvest(CropCalendar):
                               finish_type=finish_type, crop_delete=True)
 
 class BaseAgroManager(AncillaryObject):
+    """Base class for Agromangement
+    Defines shared parameters
+    """
     # Overall engine start date and end date
     _site_calendar = Instance(BaseSiteCalendar)
     _crop_calendar = Instance(BaseCropCalendar)
@@ -329,14 +353,16 @@ class BaseAgroManager(AncillaryObject):
     start_date = Instance(date)
     end_date = Instance(date)
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
+        """Initilize method
+        Args:
+            day   - current date
+            kiosk - VariableKiosk Object storing global parameters"""
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
         raise NotImplementedError(msg)
     
 class AgroManagerSingleYear(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
-
-    See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
 
     The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
     fields including planting and harvesting of the crop, as well as management actions such as fertilizer
@@ -351,7 +377,7 @@ class AgroManagerSingleYear(BaseAgroManager):
     state events.
     """
 
-    def initialize(self, kiosk, agromanagement):
+    def initialize(self, kiosk:VariableKiosk, agromanagement:dict):
         """Initialize the AgroManager.
 
         :param kiosk: A PCSE variable Kiosk
@@ -384,7 +410,7 @@ class AgroManagerSingleYear(BaseAgroManager):
             cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
             self._crop_calendar = cc
 
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv):
         """Calls the AgroManager to execute and crop calendar actions, timed or state events.
 
         :param day: The current simulation date
@@ -399,7 +425,7 @@ class AgroManagerSingleYear(BaseAgroManager):
             self._crop_calendar(day)
 
 
-    def _on_SITE_FINISH(self, day):
+    def _on_SITE_FINISH(self, day:date):
         """Send signal to terminate after the crop cycle finishes.
 
         The simulation will be terminated when the following conditions are met:
@@ -411,8 +437,9 @@ class AgroManagerSingleYear(BaseAgroManager):
 
 class AgroManagerHarvest(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
-
-    See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
+    The Harvesting Agromanagement class differs slightly in that it does not specify
+    crop planting and ending dates, instead requires signals to be sent from the 
+    engine to start the CropCalendar
 
     The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
     fields including planting and harvesting of the crop, as well as management actions such as fertilizer
@@ -427,10 +454,8 @@ class AgroManagerHarvest(BaseAgroManager):
     state events.
     """
 
-    
-
-    def initialize(self, kiosk, agromanagement):
-        """Initialize the AgroManager.
+    def initialize(self, kiosk:VariableKiosk, agromanagement:dict):
+        """Initialize the AgroManagerHarvest.
 
         :param kiosk: A PCSE variable Kiosk
         :param agromanagement: the agromanagement definition, see the example above in YAML.
@@ -462,7 +487,7 @@ class AgroManagerHarvest(BaseAgroManager):
             cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
             self._crop_calendar = cc
 
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv):
         """Calls the AgroManager to execute and crop calendar actions, timed or state events.
 
         :param day: The current simulation date
@@ -477,7 +502,7 @@ class AgroManagerHarvest(BaseAgroManager):
             self._crop_calendar(day)
 
 
-    def _on_SITE_FINISH(self, day):
+    def _on_SITE_FINISH(self, day:date):
         """Send signal to terminate after the crop cycle finishes.
 
         The simulation will be terminated when the following conditions are met:

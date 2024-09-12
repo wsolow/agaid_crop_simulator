@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2018
-# Modified by Will Solow, 2024
+# All files in pcse directory fall under this license
+# Even if modified/created by Will Solow at OSU
 """
+Initial entry point for the PCSE package. Handles all requisite
+imports and making the Weather cache directory
+
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
 developed in Wageningen. PCSE provides a set of building blocks
@@ -26,6 +29,9 @@ See Also
 * http://www.wageningenur.nl/wofost
 * http://github.com/ajwdewit/pcse
 * http://pcse.readthedocs.org
+
+Allard de Wit (allard.dewit@wur.nl), April 2018
+Modified by Will Solow, 2024
 """
 from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
@@ -33,7 +39,7 @@ __license__ = "European Union Public License"
 __stable__ = True
 __version__ = "5.5.6"
 
-import sys, os
+import os
 
 # Import first to avoid circular imports
 from . import util
@@ -46,8 +52,6 @@ from . import fileinput
 from . import agromanager
 from . import soil
 from . import crop
-
-
 
 
 user_home = util.get_working_directory()

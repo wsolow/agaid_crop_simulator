@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2018
-# Modified by Will Solow, 2024
 """The PCSE Engine provides the environment where SimulationObjects are 'living'.
 The engine takes care of reading the model configuration, initializing model
 components (e.g. groups of SimulationObjects), driving the simulation
@@ -14,22 +10,21 @@ with the appropriate configuration file. The only difference is that
 models can have methods that deal with specific characteristics of a model.
 This kind of functionality cannot be implemented in the Engine because
 the model details are not known beforehand.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
-import os, sys
-import datetime
-import gc
-import numpy as np
+from datetime import date
 
 from .utils.traitlets import Instance, Bool, List, Dict
 from .base import (VariableKiosk, AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
-from .nasapower import WeatherDataProvider
-from .util import ConfigurationLoader, check_date
+from .nasapower import WeatherDataProvider, WeatherDataContainer
+from .agromanager import BaseAgroManager
+from .util import ConfigurationLoader
 from .base.timer import Timer
 from . import signals
 from . import exceptions as exc
-
-
 
 class Engine(BaseEngine):
     """Simulation engine for simulating the combined soil/crop system.
@@ -97,7 +92,7 @@ class Engine(BaseEngine):
     drv = None
     kiosk = Instance(VariableKiosk)
     timer = Instance(Timer)
-    day = Instance(datetime.date)
+    day = Instance(date)
 
     # flags that are being set by signals
     flag_terminate = Bool(False)
@@ -115,8 +110,17 @@ class Engine(BaseEngine):
     _saved_summary_output = List()
     _saved_terminal_output = Dict()
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
+    def __init__(self, parameterprovider: ParameterProvider, \
+                 weatherdataprovider:WeatherDataProvider, agromanagement:BaseAgroManager, \
+                    config: dict=None):
+        """Initialize the Engine Class
 
+        Args:
+            parameterprovider: A parameter provider
+            weatherdataprovider: A weather data provider
+            agromanagmenet: An agromanagement object 
+            config: model configuration dictionary
+        """
         BaseEngine.__init__(self)
 
         # Load the model configuration
@@ -163,8 +167,9 @@ class Engine(BaseEngine):
         # Calculate initial rates
         self.calc_rates(self.day, self.drv)
 
-    def calc_rates(self, day, drv):
-
+    def calc_rates(self, day:date, drv:WeatherDataContainer):
+        """Calculate the rates for computing rate of state change
+        """
         # Start rate calculation on individual components
         if self.crop is not None:
             self.crop.calc_rates(day, drv)
@@ -183,8 +188,9 @@ class Engine(BaseEngine):
         if self.flag_site_delete:
             self._finish_sitesimulation(day)
 
-    def integrate(self, day, delt):
-
+    def integrate(self, day:date, delt:float):
+        """Integrate rates with states based on time change (delta)
+        """
         # Flush state variables from the kiosk before state updates
         self.kiosk.flush_states()
 
@@ -221,7 +227,7 @@ class Engine(BaseEngine):
             self._terminate_simulation(self.day)
 
     # Return the crop states, soil states, and day
-    def run(self, days=1):
+    def run(self, days: int=1):
         """Advances the system state with given number of days"""
 
         days_done = 0
@@ -229,10 +235,12 @@ class Engine(BaseEngine):
             days_done += 1
             self._run()
 
-    def _on_CROP_HARVEST(self, day):
+    def _on_CROP_HARVEST(self, day:date):
+        """When the crop harvest signal is recieved
+        """
         return 
 
-    def _on_CROP_FINISH(self, day, crop_delete=False):
+    def _on_CROP_FINISH(self, day:date, crop_delete:bool=False):
         """Sets the variable 'flag_crop_finish' to True when the signal
         CROP_FINISH is received.
         
@@ -249,8 +257,8 @@ class Engine(BaseEngine):
         self.flag_crop_finish = True
         self.flag_crop_delete = crop_delete
 
-    def _on_CROP_START(self, day, crop_name=None, variety_name=None,
-                       crop_start_type=None, crop_end_type=None):
+    def _on_CROP_START(self, day:date, crop_name:str=None, variety_name:str=None,
+                       crop_start_type:str=None, crop_end_type:str=None):
         """Starts the crop
         """
         self.logger.debug("Received signal 'CROP_START' on day %s" % day)
@@ -266,9 +274,8 @@ class Engine(BaseEngine):
                                                crop_end_type)  
                   
         self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
-
-    
-    def _on_SITE_START(self, day, site_name=None, variation_name=None):
+ 
+    def _on_SITE_START(self, day:date, site_name:str=None, variation_name:str=None):
         """Starts the site
         """
         self.logger.debug("Received signal 'SITE_START' on day %s" % day)
@@ -285,7 +292,7 @@ class Engine(BaseEngine):
 
         self.soil = self.mconf.SOIL(self.day, self.kiosk, self.parameterprovider)       
 
-    def _on_SITE_FINISH(self, day, site_delete=False):
+    def _on_SITE_FINISH(self, day:date, site_delete:bool=False):
         """Sets the variable 'flag_site_finish' to True when the signal
         SOTE_FINISH is received.
         
@@ -305,7 +312,6 @@ class Engine(BaseEngine):
         if self.crop is not None:
             self._send_signal(signals.crop_finish, day=day, crop_delete=True)                 
 
-
     def _on_TERMINATE(self):
         """Sets the variable 'flag_terminate' to True when the signal TERMINATE
         was received.
@@ -318,7 +324,7 @@ class Engine(BaseEngine):
         """
         self.flag_output = True
         
-    def _finish_cropsimulation(self, day):
+    def _finish_cropsimulation(self, day:date):
         """Finishes the CropSimulation object when variable 'flag_crop_finish'
         has been set to True based on the signal 'CROP_FINISH' being
         received.
@@ -342,7 +348,7 @@ class Engine(BaseEngine):
 
         self.crop = None
 
-    def _finish_sitesimulation(self, day):
+    def _finish_sitesimulation(self, day:date):
         """Finishes the SiteSimulation object when variable 'flag_site_finish'
         has been set to True based on the signal 'SITE_FINISH' being
         received.
@@ -366,7 +372,7 @@ class Engine(BaseEngine):
 
         self.soil = None
 
-    def _terminate_simulation(self, day):
+    def _terminate_simulation(self, day:date):
         """Terminates the entire simulation.
 
         First the finalize() call on the soil component is executed.
@@ -377,7 +383,7 @@ class Engine(BaseEngine):
             self.soil.finalize(self.day)
         self._save_terminal_output()
 
-    def _get_driving_variables(self, day):
+    def _get_driving_variables(self, day:date):
         """Get driving variables, compute derived properties and return it.
         """
         drv = self.weatherdataprovider(day)
@@ -390,7 +396,7 @@ class Engine(BaseEngine):
 
         return drv
 
-    def _save_output(self, day):
+    def _save_output(self, day:date):
         """Appends selected model variables to self._saved_output for this day.
         """
         # Switch off the flag for generating output
@@ -418,7 +424,7 @@ class Engine(BaseEngine):
         for var in self.mconf.TERMINAL_OUTPUT_VARS:
             self._saved_terminal_output[var] = self.get_variable(var)
 
-    def set_variable(self, varname, value):
+    def set_variable(self, varname:str, value:float):
         """Sets the value of the specified state or rate variable.
 
         :param varname: Name of the variable to be updated (string).
@@ -474,7 +480,6 @@ class Engine(BaseEngine):
 
         return self._saved_terminal_output
 
-
 class Wofost8Engine(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
 
@@ -483,6 +488,10 @@ class Wofost8Engine(Engine):
     :param agromanagement: Agromanagement data
     """
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config):
+    def __init__(self, parameterprovider:ParameterProvider, \
+                 weatherdataprovider:WeatherDataProvider, agromanagement:BaseAgroManager, \
+                 config:dict):
+        """Initialize WOFOST8Engine Class
+        """
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                     config=config)
