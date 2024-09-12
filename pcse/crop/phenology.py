@@ -1,27 +1,24 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Implementation of a models for phenological development in WOFOST
+"""Implementation of  models for phenological development in WOFOST
 
 Classes defined here:
 - DVS_Phenology: Implements the algorithms for phenologic development
 - Vernalisation: 
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
 import datetime
-import numpy as np
 
 from ..utils.traitlets import Float, Instance, Enum, Bool
 from ..utils.decorators import prepare_rates, prepare_states
 
 from ..util import limit, AfgenTrait, daylength
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-     SimulationObject
+     SimulationObject, VariableKiosk
 from ..utils import signals
 from ..utils import exceptions as exc
+from ..nasapower import WeatherDataProvider
 
-from math import cos, sin, asin, pi, radians
-
-#-------------------------------------------------------------------------------
 class Vernalisation(SimulationObject):
     """ Modification of phenological development due to vernalisation.
     
@@ -119,8 +116,7 @@ class Vernalisation(SimulationObject):
         ISVERNALISED =  Bool()              # True when VERNSAT is reached and
                                             # Forced when DVS > VERNDVS
 
-    #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:datetime.date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -135,10 +131,11 @@ class Vernalisation(SimulationObject):
                                           publish=["VERN", "DOV", "ISVERNALISED"])
         
         self.rates = self.RateVariables(kiosk, publish=["VERNR", "VERNFAC"])
-    #---------------------------------------------------------------------------
         
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:datetime.date, drv:WeatherDataProvider):
+        """Compute state rates for integration
+        """
         rates = self.rates
         states = self.states
         params = self.params
@@ -156,9 +153,11 @@ class Vernalisation(SimulationObject):
         else:
             rates.VERNR = 0.
             rates.VERNFAC = 1.0
-    #---------------------------------------------------------------------------
+
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:datetime.date, delt:float=1.0):
+        """Integrate state rates
+        """
         states = self.states
         rates = self.rates
         params = self.params
@@ -186,7 +185,6 @@ class Vernalisation(SimulationObject):
         else:  # Reduction factor for phenologic development
             states.ISVERNALISED = False
 
-#-------------------------------------------------------------------------------
 class DVS_Phenology(SimulationObject):
     """Implements the algorithms for phenologic development in WOFOST.
     
@@ -290,13 +288,11 @@ class DVS_Phenology(SimulationObject):
         CROP_START_TYPE = Enum(["sowing", "emergence"])
         CROP_END_TYPE = Enum(["emergence", "maturity", "harvest", "death", "max_duration"])
 
-    #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
         DTSUME = Float(-99.)  # increase in temperature sum for emergence
         DTSUM  = Float(-99.)  # increase in temperature sum
         DVR    = Float(-99.)  # development rate
 
-    #-------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
         DVS = Float(-99.)  # Development stage
         TSUM = Float(-99.)  # Temperature sum state
@@ -310,8 +306,7 @@ class DVS_Phenology(SimulationObject):
         DOH = Instance(datetime.date) # Day of harvest
         STAGE = Enum(["emerging", "vegetative", "reproductive", "mature", "dead"])
 
-    #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:datetime.date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -340,9 +335,9 @@ class DVS_Phenology(SimulationObject):
         if self.params.IDSL >= 2:
             self.vernalisation = Vernalisation(day, kiosk, parvalues)
     
-    #---------------------------------------------------------------------------
-    def _get_initial_stage(self, day):
-        """"""
+    def _get_initial_stage(self, day:datetime.date):
+        """Set the initial state of the crop given the start type
+        """
         p = self.params
 
         # Define initial stage type (emergence/sowing) and fill the
@@ -368,7 +363,6 @@ class DVS_Phenology(SimulationObject):
             
         return DVS, DOS, DOE, STAGE
 
-    #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         """Calculates the rates for phenological development
@@ -419,7 +413,6 @@ class DVS_Phenology(SimulationObject):
         msg = "Finished rate calculation for %s"
         self.logger.debug(msg % day)
         
-    #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day, delt=1.0):
         """Updates the state variable and checks for phenologic stages
@@ -467,7 +460,6 @@ class DVS_Phenology(SimulationObject):
         msg = "Finished state integration for %s"
         self.logger.debug(msg % day)
 
-    #---------------------------------------------------------------------------
     def _next_stage(self, day):
         """Moves states.STAGE to the next phenological stage"""
         s = self.states
@@ -520,7 +512,6 @@ class DVS_Phenology(SimulationObject):
             self._send_signal(signal=signals.crop_finish,day=day,finish_type="harvest",
                               crop_delete=True)
 
-    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of harvest (DOH). Although DOH is not
         strictly related to phenology (but to management) this is the most

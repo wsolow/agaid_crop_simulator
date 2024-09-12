@@ -179,7 +179,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -433,7 +433,7 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -687,7 +687,7 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance

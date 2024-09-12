@@ -1,15 +1,19 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Handles growth of leaf dynamics in the crop
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 from math import exp
 from collections import deque
 from array import array
+from datetime import date
 
 from ..utils.traitlets import Float, Instance
 from ..utils.decorators import prepare_rates, prepare_states
 from ..util import limit, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-     SimulationObject
+     SimulationObject, VariableKiosk
+from ..nasapower import WeatherDataProvider
 
 class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
@@ -156,7 +160,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         GLAIEX = Float(-99.)
         GLASOL = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day:date, kiosk:VariableKiosk, cropdata:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -198,12 +202,15 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
                          "DALV", "DRLV", "SLAT", "FYSAGE", "GLAIEX", "GLASOL"])
 
     def _calc_LAI(self):
-        # Total leaf area Index as sum of leaf, pod and stem area
+        """Compute LAI as Total leaf area Index as sum of leaf, pod and stem area
+        """
         k = self.kiosk
         return self.states.LASUM + k.SAI + k.PAI
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate state rates
+        """
         r = self.rates
         s = self.states
         p = self.params
@@ -281,12 +288,14 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
                 r.SLAT = GLA/r.GRLV
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates to new state
+        """
         p = self.params
         r = self.rates
         s = self.states
 
-        # --------- leave death ---------
+        # Leaf Death
         tLV = array('d', s.LV)
         tSLA = array('d', s.SLA)
         tLVAGE = array('d', s.LVAGE)
@@ -312,7 +321,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         tLV = deque(tLV)
         tSLA = deque(tSLA)
 
-        # --------- leave growth ---------
+        # Compute Leaf Growth
         # new leaves in class 1
         tLV.appendleft(r.GRLV)
         tSLA.appendleft(r.SLAT)

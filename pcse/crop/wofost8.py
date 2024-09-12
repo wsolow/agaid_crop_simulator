@@ -1,14 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), Juli 2015
-# Modified by Will Solow, 2024
+"""Main crop class for handling growth of the crop. Includes the base crop model
+and WOFOST8 model for annual crop growth
 
-import datetime
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 
+from datetime import date
+
+from ..nasapower import WeatherDataProvider
 from ..utils.traitlets import Float, Instance, Unicode
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-     SimulationObject
+     SimulationObject, VariableKiosk
 from .. import signals
 from .. import exceptions as exc
 from .phenology import DVS_Phenology as Phenology
@@ -26,6 +29,27 @@ from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
 class BaseCropModel(SimulationObject):
+    """Top level object organizing the different components of the WOFOST crop
+    simulation including the implementation of N/P/K dynamics.
+            
+    The CropSimulation object organizes the different processes of the crop
+    simulation. Moreover, it contains the parameters, rate and state variables
+    which are relevant at the level of the entire crop. The processes that are
+    implemented as embedded simulation objects consist of:
+    
+        1. Phenology (self.pheno)
+        2. Partitioning (self.part)
+        3. Assimilation (self.assim)
+        4. Maintenance respiration (self.mres)
+        5. Evapotranspiration (self.evtra)
+        6. Leaf dynamics (self.lv_dynamics)
+        7. Stem dynamics (self.st_dynamics)
+        8. Root dynamics (self.ro_dynamics)
+        9. Storage organ dynamics (self.so_dynamics)
+        10. N/P/K crop dynamics (self.npk_crop_dynamics)
+        12. N/P/K stress (self.npk_stress)
+    """
+
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
     part = Instance(SimulationObject)
@@ -39,9 +63,151 @@ class BaseCropModel(SimulationObject):
     npk_crop_dynamics = Instance(SimulationObject)
     npk_stress = Instance(SimulationObject)
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
         raise NotImplementedError(msg)
+    
+    @staticmethod
+    def _check_carbon_balance(day, DMI:float, GASS:float, MRES:float, CVF:float, pf:float):
+        """Checks that the carbon balance is valid after integration
+        """
+        (FR, FL, FS, FO) = pf
+        checksum = (GASS - MRES - (FR+(FL+FS+FO)*(1.-FR)) * DMI/CVF) * \
+                    1./(max(0.0001,GASS))
+        if abs(checksum) >= 0.0001:
+            msg = "Carbon flows not balanced on day %s\n" % day
+            msg += "Checksum: %f, GASS: %f, MRES: %f\n" % (checksum, GASS, MRES)
+            msg += "FR,L,S,O: %5.3f,%5.3f,%5.3f,%5.3f, DMI: %f, CVF: %f\n" % \
+                   (FR,FL,FS,FO,DMI,CVF)
+            raise exc.CarbonBalanceError(msg)
+
+    @prepare_rates
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate state rates for integration 
+        """
+        params = self.params
+        rates  = self.rates
+        k = self.kiosk
+
+        # Phenology
+        self.pheno.calc_rates(day, drv)
+        crop_stage = self.pheno.get_variable("STAGE")
+
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        if crop_stage == "emerging":
+            return
+
+        # Potential assimilation
+        rates.PGASS = self.assim(day, drv)
+        
+        # (evapo)transpiration rates
+        self.evtra(day, drv)
+
+        # nutrient status and reduction factor
+        NNI, NPKI, RFNPK = self.npk_stress(day, drv)
+
+        # Select minimum of nutrient and water/oxygen stress
+        reduction = min(RFNPK, k.RFTRA)
+
+        rates.GASS = rates.PGASS * reduction
+
+        # Respiration
+        PMRES = self.mres(day, drv)
+        rates.MRES = min(rates.GASS, PMRES)
+
+        # Net available assimilates
+        rates.ASRC = rates.GASS - rates.MRES
+
+        # DM partitioning factors (pf), conversion factor (CVF),
+        # dry matter increase (DMI) and check on carbon balance
+        pf = self.part.calc_rates(day, drv)
+        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
+                  (1.-pf.FR) + pf.FR/params.CVR)
+        rates.DMI = CVF * rates.ASRC
+        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
+                                   CVF, pf)
+
+        # distribution over plant organ
+        # Below-ground dry matter increase and root dynamics
+        self.ro_dynamics.calc_rates(day, drv)
+        # Aboveground dry matter increase and distribution over stems,
+        # leaves, organs
+        rates.ADMI = (1. - pf.FR) * rates.DMI
+        self.st_dynamics.calc_rates(day, drv)
+        self.so_dynamics.calc_rates(day, drv)
+        self.lv_dynamics.calc_rates(day, drv)
+        
+        # Update nutrient rates in crop and soil
+        self.npk_crop_dynamics.calc_rates(day, drv)
+
+    @prepare_states
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates
+        """
+        rates = self.rates
+        states = self.states
+
+        # crop stage before integration
+        crop_stage = self.pheno.get_variable("STAGE")
+
+        # Phenology
+        self.pheno.integrate(day, delt)
+
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        # Just run a touch() to to ensure that all state variables are available
+        # in the kiosk
+        if crop_stage == "emerging":
+            self.touch()
+            return
+
+        # Partitioning
+        self.part.integrate(day, delt)
+        
+        # Integrate states on leaves, storage organs, stems and roots
+        self.ro_dynamics.integrate(day, delt)
+        self.so_dynamics.integrate(day, delt)
+        self.st_dynamics.integrate(day, delt)
+        self.lv_dynamics.integrate(day, delt)
+
+        # Update nutrient states in crop and soil
+        self.npk_crop_dynamics.integrate(day, delt)
+
+        # Integrate total (living+dead) above-ground biomass of the crop
+        states.TAGP = self.kiosk.TWLV + \
+                      self.kiosk.TWST + \
+                      self.kiosk.TWSO
+
+        # total gross assimilation and maintenance respiration 
+        states.GASST += rates.GASS
+        states.MREST += rates.MRES
+        
+        # total crop transpiration and soil evaporation
+        states.CTRAT += self.kiosk.TRA
+        states.CEVST += self.kiosk.EVS
+
+    @prepare_states
+    def finalize(self, day:date):
+        """Finalize crop parameters and output at the end of the simulation
+        """
+        # Calculate Harvest Index
+        if self.states.TAGP > 0:
+            self.states.HI = self.kiosk.TWSO/self.states.TAGP
+        else:
+            msg = "Cannot calculate Harvest Index because TAGP=0"
+            self.logger.warning(msg)
+            self.states.HI = -1.
+        
+        SimulationObject.finalize(self, day)
+
+    def _on_CROP_FINISH(self, day, finish_type=None):
+        """Handler for setting day of finish (DOF) and reason for
+        crop finishing (FINISH).
+        """
+        self._for_finalize["DOF"] = day
+        self._for_finalize["FINISH_TYPE"] = finish_type
+
 
 class Wofost80(BaseCropModel):
     
@@ -132,7 +298,7 @@ class Wofost80(BaseCropModel):
         CTRAT = Float(-99.) # Crop total transpiration
         CEVST = Float(-99.)
         HI = Float(-99.)
-        DOF = Instance(datetime.date)
+        DOF = Instance(date)
         FINISH_TYPE = Unicode("")
 
     class RateVariables(RatesTemplate):
@@ -143,7 +309,7 @@ class Wofost80(BaseCropModel):
         DMI = Float(-99.)
         ADMI = Float(-99.)
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE model instance
@@ -189,137 +355,3 @@ class Wofost80(BaseCropModel):
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
-    @staticmethod
-    def _check_carbon_balance(day, DMI, GASS, MRES, CVF, pf):
-        (FR, FL, FS, FO) = pf
-        checksum = (GASS - MRES - (FR+(FL+FS+FO)*(1.-FR)) * DMI/CVF) * \
-                    1./(max(0.0001,GASS))
-        if abs(checksum) >= 0.0001:
-            msg = "Carbon flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, GASS: %f, MRES: %f\n" % (checksum, GASS, MRES)
-            msg += "FR,L,S,O: %5.3f,%5.3f,%5.3f,%5.3f, DMI: %f, CVF: %f\n" % \
-                   (FR,FL,FS,FO,DMI,CVF)
-            raise exc.CarbonBalanceError(msg)
-
-    @prepare_rates
-    def calc_rates(self, day, drv):
-        params = self.params
-        rates  = self.rates
-        k = self.kiosk
-
-        # Phenology
-        self.pheno.calc_rates(day, drv)
-        crop_stage = self.pheno.get_variable("STAGE")
-
-        # if before emergence there is no need to continue
-        # because only the phenology is running.
-        if crop_stage == "emerging":
-            return
-
-        # Potential assimilation
-        rates.PGASS = self.assim(day, drv)
-        
-        # (evapo)transpiration rates
-        self.evtra(day, drv)
-
-        # nutrient status and reduction factor
-        NNI, NPKI, RFNPK = self.npk_stress(day, drv)
-
-        # Select minimum of nutrient and water/oxygen stress
-        reduction = min(RFNPK, k.RFTRA)
-
-        rates.GASS = rates.PGASS * reduction
-
-        # Respiration
-        PMRES = self.mres(day, drv)
-        rates.MRES = min(rates.GASS, PMRES)
-
-        # Net available assimilates
-        rates.ASRC = rates.GASS - rates.MRES
-
-        # DM partitioning factors (pf), conversion factor (CVF),
-        # dry matter increase (DMI) and check on carbon balance
-        pf = self.part.calc_rates(day, drv)
-        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
-                  (1.-pf.FR) + pf.FR/params.CVR)
-        rates.DMI = CVF * rates.ASRC
-        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
-                                   CVF, pf)
-
-        # distribution over plant organ
-
-        # Below-ground dry matter increase and root dynamics
-        self.ro_dynamics.calc_rates(day, drv)
-        # Aboveground dry matter increase and distribution over stems,
-        # leaves, organs
-        rates.ADMI = (1. - pf.FR) * rates.DMI
-        self.st_dynamics.calc_rates(day, drv)
-        self.so_dynamics.calc_rates(day, drv)
-        self.lv_dynamics.calc_rates(day, drv)
-        
-        # Update nutrient rates in crop and soil
-        self.npk_crop_dynamics.calc_rates(day, drv)
-
-    @prepare_states
-    def integrate(self, day, delt=1.0):
-        rates = self.rates
-        states = self.states
-
-        # crop stage before integration
-        crop_stage = self.pheno.get_variable("STAGE")
-
-        # Phenology
-        self.pheno.integrate(day, delt)
-
-        # if before emergence there is no need to continue
-        # because only the phenology is running.
-        # Just run a touch() to to ensure that all state variables are available
-        # in the kiosk
-        if crop_stage == "emerging":
-            self.touch()
-            return
-
-        # Partitioning
-        self.part.integrate(day, delt)
-        
-        # Integrate states on leaves, storage organs, stems and roots
-        self.ro_dynamics.integrate(day, delt)
-        self.so_dynamics.integrate(day, delt)
-        self.st_dynamics.integrate(day, delt)
-        self.lv_dynamics.integrate(day, delt)
-
-        # Update nutrient states in crop and soil
-        self.npk_crop_dynamics.integrate(day, delt)
-
-        # Integrate total (living+dead) above-ground biomass of the crop
-        states.TAGP = self.kiosk.TWLV + \
-                      self.kiosk.TWST + \
-                      self.kiosk.TWSO
-
-        # total gross assimilation and maintenance respiration 
-        states.GASST += rates.GASS
-        states.MREST += rates.MRES
-        
-        # total crop transpiration and soil evaporation
-        states.CTRAT += self.kiosk.TRA
-        states.CEVST += self.kiosk.EVS
-
-    @prepare_states
-    def finalize(self, day):
-
-        # Calculate Harvest Index
-        if self.states.TAGP > 0:
-            self.states.HI = self.kiosk.TWSO/self.states.TAGP
-        else:
-            msg = "Cannot calculate Harvest Index because TAGP=0"
-            self.logger.warning(msg)
-            self.states.HI = -1.
-        
-        SimulationObject.finalize(self, day)
-
-    def _on_CROP_FINISH(self, day, finish_type=None):
-        """Handler for setting day of finish (DOF) and reason for
-        crop finishing (FINISH).
-        """
-        self._for_finalize["DOF"] = day
-        self._for_finalize["FINISH_TYPE"] = finish_type

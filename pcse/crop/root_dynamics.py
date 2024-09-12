@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-from copy import deepcopy
+"""Class for computing root biomass dynamics and rooting depth
 
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
+from datetime import date
+
+from ..nasapower import WeatherDataProvider
 from ..utils.traitlets import Float
 from ..utils.decorators import prepare_rates, prepare_states
 from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject
+    SimulationObject, VariableKiosk
     
-
 class WOFOST_Root_Dynamics(SimulationObject):
     """Root biomass dynamics and rooting depth.
     
@@ -128,7 +131,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
         DWRT = Float(-99.)
         TWRT = Float(-99.)
         
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date , kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -158,7 +161,9 @@ class WOFOST_Root_Dynamics(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate state rates for integration
+        """
         p = self.params
         r = self.rates
         s = self.states
@@ -177,7 +182,9 @@ class WOFOST_Root_Dynamics(SimulationObject):
             r.RR = 0.
     
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate rates for new states
+        """
         rates = self.rates
         states = self.states
 
@@ -191,25 +198,4 @@ class WOFOST_Root_Dynamics(SimulationObject):
         # New root depth
         states.RD += rates.RR
 
-
-    @prepare_states
-    def _set_variable_WRT(self, nWRT):
-        """Updates the value of WRT to to the new value provided as input.
-
-        Related state variables will be updated as well and the increments
-        to all adjusted state variables will be returned as a dict.
-        """
-        states = self.states
-
-        # Store old values of states
-        oWRT = states.WRT
-        oTWRT = states.TWRT
-
-        # Apply new root weight and adjust total (dead + live) root weight
-        states.WRT = nWRT
-        states.TWRT = states.WRT + states.DWRT
-
-        increments = {"WRT": states.WRT - oWRT,
-                      "TWLRT": states.TWRT - oTWRT}
-        return increments
 

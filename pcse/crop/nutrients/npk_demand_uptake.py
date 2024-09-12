@@ -1,13 +1,16 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
+"""Calculates NPK Demand for the crop and corresponding uptake from soil
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+from datetime import date
 from collections import namedtuple
 
-from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
+from ...base import ParamTemplate, SimulationObject, RatesTemplate, VariableKiosk
 from ...utils.decorators import prepare_rates, prepare_states
-from ...utils.traitlets import HasTraits, Float, Int, Instance
+from ...utils.traitlets import Float
 from ...util import AfgenTrait
+from ...nasapower import WeatherDataProvider
 
 MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
                                        ["NMAXLV", "PMAXLV", "KMAXLV",
@@ -239,7 +242,7 @@ class NPK_Demand_Uptake(SimulationObject):
         Pdemand = Float()
         Kdemand = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -260,7 +263,9 @@ class NPK_Demand_Uptake(SimulationObject):
                      "Ndemand", "Pdemand", "Kdemand", ])
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate rates
+        """
         r = self.rates
         p = self.params
         k = self.kiosk
@@ -338,7 +343,9 @@ class NPK_Demand_Uptake(SimulationObject):
             r.RKuptakeRT = (r.KdemandRT / r.Kdemand) * r.RKuptake
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate states - no states to integrate in NPK Demand Uptake
+        """
         pass
 
     def _compute_NPK_max_concentrations(self):

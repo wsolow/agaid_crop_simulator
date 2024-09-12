@@ -353,7 +353,7 @@ class BaseAgroManager(AncillaryObject):
     start_date = Instance(date)
     end_date = Instance(date)
 
-    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """Initilize method
         Args:
             day   - current date

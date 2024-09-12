@@ -1,16 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
 """SimulationObjects implementing |CO2| Assimilation for use with PCSE.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
 from __future__ import print_function
 from math import sqrt, exp, cos, pi
 from collections import deque
+from datetime import date
 
 from ..utils.traitlets import Instance, Float 
-
 from ..util import astro, AfgenTrait
-from ..base import ParamTemplate, SimulationObject
+from ..base import ParamTemplate, SimulationObject, VariableKiosk
+from ..nasapower import WeatherDataProvider
 
 
 def totass(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
@@ -65,7 +66,6 @@ def totass(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     DTGA *= DAYL
 
     return DTGA
-
 
 def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
@@ -145,7 +145,6 @@ class WOFOST_Assimilation2(SimulationObject):
     day.
 
 
-
     *Simulation parameters* (To be provided in cropdata dictionary):
 
     =========  ============================================= =======  ============
@@ -201,7 +200,7 @@ class WOFOST_Assimilation2(SimulationObject):
         CO2EFFTB = AfgenTrait()
         CO2 = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day:date, kiosk:VariableKiosk, cropdata:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this Engine instance
@@ -213,7 +212,9 @@ class WOFOST_Assimilation2(SimulationObject):
         self.kiosk = kiosk
         self._TMNSAV = deque(maxlen=7)
 
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv:WeatherDataProvider):
+        """Computes the assimilation of CO2 into the crop
+        """
         p = self.params
         k = self.kiosk
 

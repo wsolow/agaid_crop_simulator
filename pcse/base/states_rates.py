@@ -66,7 +66,7 @@ class ParamTemplate(HasTraits):
         pcse.exceptions.ParameterError: Value for parameter C missing.
     """
 
-    def __init__(self, parvalues):
+    def __init__(self, parvalues:dict):
         """Initialize parameter template
         Args:
             parvalues - parameter values to include 

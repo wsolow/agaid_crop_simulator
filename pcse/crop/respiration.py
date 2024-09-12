@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Handles Respiration of crop 
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+from datetime import date
+
 from ..utils.traitlets import Float
-from ..base import ParamTemplate, SimulationObject, RatesTemplate
+from ..base import ParamTemplate, SimulationObject, RatesTemplate, VariableKiosk
 from ..util import AfgenTrait
+from ..nasapower import WeatherDataProvider
 
 class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST
@@ -80,7 +85,7 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
     class RateVariables(RatesTemplate):
         PMRES = Float(-99.)
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -92,7 +97,9 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish="PMRES")
         self.kiosk = kiosk
         
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv:WeatherDataProvider):
+        """Calculate the maintenence respiration of the crop
+        """
         p = self.params
         kk = self.kiosk
         

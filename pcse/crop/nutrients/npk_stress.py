@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
 """
 Class to calculate various nutrient relates stress factors:
     NNI      nitrogen nutrition index   
@@ -9,12 +5,19 @@ Class to calculate various nutrient relates stress factors:
     KNI      potassium nutrition index
     NPKI     NPK nutrition index (= minimum of N/P/K-index)
     NPKREF   assimilation reduction factor based on NPKI
+
+Written by: Allard de Wit and Iwan Supi (allard.dewit@wur.nl), July 2015
+Approach based on: LINTUL N/P/K made by Joost Wolf
+Modified by Will Solow, 2024
 """
+
+from datetime import date
 
 from ...utils.traitlets import Float
 from ...util import limit, AfgenTrait
-from ...base import ParamTemplate, SimulationObject, RatesTemplate
+from ...base import ParamTemplate, SimulationObject, RatesTemplate, VariableKiosk
 from ...utils.decorators import prepare_rates
+from ...nasapower import WeatherDataProvider
 
 class NPK_Stress(SimulationObject):
     """Implementation of NPK stress calculation through [NPK]nutrition index.
@@ -150,7 +153,7 @@ class NPK_Stress(SimulationObject):
         NPKI = Float()
         RFNPK = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: current date
         :param kiosk: variable kiosk of this PCSE instance
@@ -163,9 +166,8 @@ class NPK_Stress(SimulationObject):
                                 publish=["NNI", "PNI", "KNI", "NPKI", "RFNPK"])
 
     @prepare_rates
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv:WeatherDataProvider):
         """
-
         :param day: the current date
         :param drv: the driving variables
         :return: A tuple (NNI, NPKI, NPKREF)

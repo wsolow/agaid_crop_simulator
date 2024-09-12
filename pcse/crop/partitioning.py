@@ -3,17 +3,18 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 from collections import namedtuple
 from math import exp
+from datetime import date
 
 from ..utils.traitlets import Float, Instance
 from ..utils.decorators import prepare_states
-from ..base import ParamTemplate, StatesTemplate, SimulationObject
-    
+from ..base import ParamTemplate, StatesTemplate, SimulationObject, VariableKiosk
 from ..utils import exceptions as exc
 from ..util import AfgenTrait
+from ..nasapower import WeatherDataProvider
 
 
-# Template for namedtuple containing partitioning factors
 class PartioningFactors(namedtuple("partitioning_factors", "FR FL FS FO")):
+    """Template for namedtuple containing partitioning factors"""
     pass
 
 class DVS_Partitioning_NPK(SimulationObject):
@@ -100,7 +101,7 @@ class DVS_Partitioning_NPK(SimulationObject):
         FO = Float(-99.)
         PF = Instance(PartioningFactors)
 
-    def initialize(self, day, kiosk, parameters):
+    def initialize(self, day:date, kiosk:VariableKiosk, parameters:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -124,8 +125,8 @@ class DVS_Partitioning_NPK(SimulationObject):
         self._check_partitioning()
 
     def _check_partitioning(self):
-        """Check for partitioning errors."""
-
+        """Check for partitioning errors.
+        """
         FR = self.states.FR
         FL = self.states.FL
         FS = self.states.FS
@@ -139,12 +140,11 @@ class DVS_Partitioning_NPK(SimulationObject):
             raise exc.PartitioningError(msg)
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
         """
         Update partitioning factors based on development stage (DVS)
         and the Nitrogen nutrition Index (NNI)
         """
-
         p = self.params
         s = self.states
         k = self.kiosk
@@ -172,7 +172,7 @@ class DVS_Partitioning_NPK(SimulationObject):
 
         self._check_partitioning()
 
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
         """ Return partitioning factors based on current DVS.
         """
         # rate calculation does nothing for partitioning as it is a derived state

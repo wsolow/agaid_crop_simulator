@@ -1,10 +1,21 @@
-#!/usr/bin/env python
+"""Overall implementation for the NPK dynamics of the crop including
+subclasses to 
+    * NPK Demand Uptake
+    * NPK Stress
+    * NPK Translocation
+    
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 
+from datetime import date
+
+from ..nasapower import WeatherDataProvider
 from ..utils import exceptions as exc
 from ..utils.traitlets import Float, Instance
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject
+    SimulationObject, VariableKiosk
 from ..util import AfgenTrait
 from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
@@ -231,8 +242,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         RPloss = Float(-99.)
         RKloss = Float(-99.)
         
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
+        :param day: current day
         :param kiosk: variable kiosk of this PCSE instance
         :param parvalues: dictionary with parameters as key/value pairs
         """  
@@ -284,7 +296,9 @@ class NPK_Crop_Dynamics(SimulationObject):
                      "RPloss", "RKloss"])
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate state rates
+        """
         rates = self.rates
         params = self.params
         k = self.kiosk
@@ -334,7 +348,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         self._check_K_balance(day)
         
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates
+        """
         rates = self.rates
         states = self.states
         k = self.kiosk
@@ -370,7 +386,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.PlossesTotal += rates.RPloss
         states.KlossesTotal += rates.RKloss
 
-    def _check_N_balance(self, day):
+    def _check_N_balance(self, day:date):
+        """Check the Nitrogen balance is valid"""
         s = self.states
         checksum = abs(s.NuptakeTotal + s.NfixTotal +
                        (self.NamountLVI + self.NamountSTI + self.NamountRTI + self.NamountSOI) -
@@ -386,7 +403,8 @@ class NPK_Crop_Dynamics(SimulationObject):
             msg += "NLOSST: %f\n" % (s.NlossesTotal)
             raise exc.NutrientBalanceError(msg)
 
-    def _check_P_balance(self, day):
+    def _check_P_balance(self, day:date):
+        """Check that the Phosphorous balance is valid"""
         s = self.states
         checksum = abs(s.PuptakeTotal +
                        (self.PamountLVI + self.PamountSTI + self.PamountRTI + self.PamountSOI) -
@@ -402,7 +420,8 @@ class NPK_Crop_Dynamics(SimulationObject):
             msg += "PLOSST: %f\n" % (s.PlossesTotal)
             raise exc.NutrientBalanceError(msg)
 
-    def _check_K_balance(self, day):
+    def _check_K_balance(self, day:date):
+        """Check that the Potassium balance is valid"""
         s = self.states
         checksum = abs(s.KuptakeTotal +
                        (self.KamountLVI + self.KamountSTI + self.KamountRTI + self.KamountSOI) -

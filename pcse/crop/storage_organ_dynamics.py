@@ -1,13 +1,19 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Handles storage organ dynamics for crop. Modified from original WOFOST
+to include the death of storage organs
 
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
+from datetime import date
+
+from ..nasapower import WeatherDataProvider
 from ..utils.traitlets import Float
 from ..utils import signals
 from ..util import AfgenTrait, limit
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject
+    SimulationObject, VariableKiosk
 
 class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     """Implementation of storage organ dynamics.
@@ -93,7 +99,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         GWSO = Float(-99.)
         DHSO = Float(-99.)
         
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -127,7 +133,9 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish=[ "GRSO", "DRSO", "GWSO", "DHSO"])
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Compute rates for integration
+        """
         rates  = self.rates
         states = self.states
         params = self.params
@@ -144,12 +152,14 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         rates.GWSO = rates.GRSO - rates.DRSO
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate rates
+        """
         params = self.params
         rates = self.rates
         states = self.states
 
-        # Stem biomass (living, dead, total)
+        # Storage organ biomass (living, dead, total)
         states.WSO += rates.GWSO
         states.HWSO += rates.GRSO - rates.DHSO
         states.DWSO += rates.DRSO
@@ -159,7 +169,8 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Calculate Pod Area Index (SAI)
         states.PAI = states.WSO * params.SPA
 
-    # When the crop is harvested, reset harvestable crop dry matter
-    def _on_CROP_HARVEST(self, day, efficiency=1.0):
+    def _on_CROP_HARVEST(self, day:date, efficiency:float=1.0):
+        """Receive the on crop harvest signal and update relevant states
+        """
         self.states.LHW = (efficiency) * self.states.HWSO
         self.states.HWSO = (1-efficiency) * self.states.HWSO

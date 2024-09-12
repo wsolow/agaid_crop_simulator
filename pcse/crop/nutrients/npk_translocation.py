@@ -1,12 +1,18 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
+"""
+Performs bookkeeping for how NPK is translocated around roots, leaves, and stems
 
-from ...utils.traitlets import Float, Instance
+Written by: Allard de Wit and Iwan Supi (allard.dewit@wur.nl), July 2015
+Approach based on: LINTUL N/P/K made by Joost Wolf
+Modified by Will Solow, 2024
+"""
+
+from datetime import date
+
+from ...utils.traitlets import Float
 from ...utils.decorators import prepare_rates, prepare_states
 from ...base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject
+    SimulationObject, VariableKiosk
+from ...nasapower import WeatherDataProvider
 
 class NPK_Translocation(SimulationObject):
     """Does the bookkeeping for translocation of N/P/K from the roots, leaves
@@ -158,7 +164,7 @@ class NPK_Translocation(SimulationObject):
         Ptranslocatable = Float(-99.)  # Total P amount that can be translocated to the storage organs [kg P ha-1]
         Ktranslocatable = Float(-99.)  # Total K amount that can be translocated to the storage organs [kg K ha-1]
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -178,7 +184,9 @@ class NPK_Translocation(SimulationObject):
         self.kiosk = kiosk
         
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate rates for integration
+        """
         r = self.rates
         s = self.states
         k = self.kiosk
@@ -208,7 +216,9 @@ class NPK_Translocation(SimulationObject):
             r.RKtranslocationLV = r.RKtranslocationST = r.RKtranslocationRT = 0.
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates
+        """
         p = self.params
         s = self.states
         k = self.kiosk

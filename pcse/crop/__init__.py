@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-# Modified by Will Solow, 2024
+"""Initialization for the crop module of WOFOST
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 from . import assimilation
 from . import evapotranspiration
 from . import partitioning

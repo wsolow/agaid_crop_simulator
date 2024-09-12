@@ -1,15 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Simulation object for computing evaporation and transpiration based on CO2 effects
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 from math import exp
+from datetime import date
 
-import array
-
-from ..utils.traitlets import Float, Int, Instance, Bool
+from ..utils.traitlets import Float, Int, Bool
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-                         SimulationObject
+                         SimulationObject, VariableKiosk
 from ..util import limit, AfgenTrait
+from ..nasapower import WeatherDataProvider
 
 
 def SWEAF(ET0, DEPNR):
@@ -145,12 +147,10 @@ class EvapotranspirationCO2(SimulationObject):
         IDOST  = Int(-99)
         IDWST  = Int(-99)
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
         """
 
         self.kiosk = kiosk
@@ -164,7 +164,10 @@ class EvapotranspirationCO2(SimulationObject):
                              "IDWS", "RFWS", "RFOS", "RFTRA"])
 
     @prepare_rates
-    def __call__(self, day, drv):
+    def __call__(self, day:date, drv:WeatherDataProvider):
+        """Calls the Evapotranspiration object to compute value to be returned to 
+        model
+        """
         p = self.params
         r = self.rates
         k = self.kiosk
@@ -213,7 +216,9 @@ class EvapotranspirationCO2(SimulationObject):
         return r.TRA, r.TRAMX
 
     @prepare_states
-    def finalize(self, day):
+    def finalize(self, day:date):
+        """Finalize states at end of simulation
+        """
 
         self.states.IDWST = self._IDWST
         self.states.IDOST = self._IDOST

@@ -1,12 +1,17 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Handles stem biomass dynamics for crop model
 
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
+from datetime import date 
+
+from ..nasapower import WeatherDataProvider
 from ..utils.traitlets import Float
 from ..utils.decorators import prepare_rates, prepare_states
 from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject
+    SimulationObject, VariableKiosk
 
 class WOFOST_Stem_Dynamics(SimulationObject):
     """Implementation of stem biomass dynamics.
@@ -88,7 +93,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         DRST = Float(-99.)
         GWST = Float(-99.)
         
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
@@ -116,7 +121,9 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         self.rates  = self.RateVariables(kiosk, publish=["GRST", "DRST", "GWST"])
 
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Compute state rates before integration
+        """
         rates  = self.rates
         states = self.states
         params = self.params
@@ -131,7 +138,9 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         rates.GWST = rates.GRST - rates.DRST
 
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates
+        """
         params = self.params
         rates = self.rates
         states = self.states
@@ -144,21 +153,3 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         # Calculate Stem Area Index (SAI)
         DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)
-
-    @prepare_states
-    def _set_variable_WST(self, nWST):
-        s = self.states
-        p = self.params
-        k = self.kiosk
-
-        oWST = s.WST
-        oTWST = s.TWST
-        oSAI = s.SAI
-        s.WST = nWST
-        s.TWST = s.DWST + nWST
-        s.SAI = s.WST * p.SSATB(k.DVS)
-
-        increments = {"WST": s.WST - oWST,
-                      "SAI": s.SAI - oSAI,
-                      "TWST": s.TWST - oTWST}
-        return increments
