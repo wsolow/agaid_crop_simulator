@@ -1,21 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2022 Wageningen Environmental Research, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), August 2022
-# Modified by Will Solow, Oregon State University August 2024
+"""YAML File reader for the Site Data file (also includes soil data parameters by default)
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
 import logging
-import os, sys
-
-v = sys.version_info
-if v.major == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen
-    from urllib.error import URLError
-    import pickle
-else:
-    # Fall back to Python 2's urllib2
-    from urllib2 import urlopen, URLError
-    import cPickle as pickle
-
+import os
+import pickle
 import yaml
 
 from ..base import MultiSiteDataProvider
@@ -25,12 +16,10 @@ from ..util import version_tuple, get_working_directory
 
 class YAMLSiteDataProvider(MultiSiteDataProvider):
     """A site data provider for reading site and soil parameter sets stored in the YAML format.
-       This directly extends the crop format by allowing multiple sites to be created
+       This directly extends the site format by allowing multiple sites to be created
        with different parameters
 
         :param fpath: full path to directory containing YAML files
-        :param repository: URL to repository containg YAML files. This url should be
-         the *raw* content (e.g. starting with 'https://raw.githubusercontent.com')
         :param force_reload: If set to True, the cache file is ignored and al
          parameters are reloaded (default False).
 
@@ -45,9 +34,13 @@ class YAMLSiteDataProvider(MultiSiteDataProvider):
     compatible_version = "1.0.0"
 
     def __init__(self, fpath=None, force_reload=False):
+        """Initialize the YAMLSiteDataProivder class by first inheriting from the 
+        MultiSiteDataProvider class
+        """
         MultiSiteDataProvider.__init__(self)
 
-        if force_reload is True or self._load_cache(fpath) is False:  # either force a reload or load cache fails
+        # either force a reload or load cache fails
+        if force_reload is True or self._load_cache(fpath) is False:  
             # enforce a clear state
             self.clear()
             self._store.clear()
@@ -76,7 +69,7 @@ class YAMLSiteDataProvider(MultiSiteDataProvider):
             self._add_site(site_name, parameters)
 
     def _get_cache_fname(self, fpath):
-        """Returns the name of the cache file for the CropDataProvider.
+        """Returns the name of the cache file for the SiteDataProvider.
         """
         cache_fname = "%s.pkl" % self.__class__.__name__
         if fpath is None:

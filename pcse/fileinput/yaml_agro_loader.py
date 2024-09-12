@@ -1,5 +1,10 @@
-__author__ = 'wit015'
-import sys, os
+"""YAML File reader for the agromanagmenet file
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
+import os
 import yaml
 from ..utils import exceptions as exc
 
@@ -11,6 +16,8 @@ class YAMLAgroManagementReader(list):
     """
 
     def __init__(self, fname):
+        """Initialize class `YAMLAgroManagementReader
+        """
         fname_fp = os.path.normpath(os.path.abspath(fname))
         if not os.path.exists(fname_fp):
             msg = "Cannot find agromanagement file: %s" % fname_fp

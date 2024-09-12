@@ -1,21 +1,14 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2022 Wageningen Environmental Research, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), August 2022
-# Modified 2024, Will Solow
+"""YAML File reader for the Crop Data file
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 import logging
 import os, sys
 
-v = sys.version_info
-if v.major == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen
-    from urllib.error import URLError
-    import pickle
-else:
-    # Fall back to Python 2's urllib2
-    from urllib2 import urlopen, URLError
-    import cPickle as pickle
-
+import logging
+import os
+import pickle
 import yaml
 
 from ..base import MultiCropDataProvider
@@ -87,9 +80,13 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     compatible_version = "1.0.0"
 
     def __init__(self, fpath=None, force_reload=False):
+        """Initialize the YAMLCropDataProivder class by first inheriting from the 
+        MultiCropDataProvider class
+        """
         MultiCropDataProvider.__init__(self)
 
-        if force_reload is True or self._load_cache(fpath) is False:  # either force a reload or load cache fails
+        # either force a reload or load cache fails
+        if force_reload is True or self._load_cache(fpath) is False:  
             # enforce a clear state
             self.clear()
             self._store.clear()
