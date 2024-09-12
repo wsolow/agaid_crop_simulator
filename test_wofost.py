@@ -8,7 +8,7 @@ import sys
 import wofost_gym
 import matplotlib.pyplot as plt
 
-from utils import NPK_Args
+from wofost_gym.args import NPK_Args
 import tyro
 import utils
 import policies
@@ -26,8 +26,13 @@ if __name__ == "__main__":
 
     # Make the gym environment
     env = gym.make(env_id, **env_kwargs)
+    
+    
+    env = wofost_gym.wrappers.RewardFertilizationThresholdWrapper(env, max_n=50)
     env = wofost_gym.wrappers.NPKDictActionWrapper(env)
-
+    env = wofost_gym.wrappers.NPKDictObservationWrapper(env)
+    
+    
     #print(env.action_space.sample)
     #env = utils.wrap_env_reward(env, args)
 
@@ -37,7 +42,7 @@ if __name__ == "__main__":
     obs_arr = []
     reward_arr = []
     k = 0
-    policy = policies.No_Action_Harvest()
+    policy = policies.Weekly_N(env,amount=2)
 
     action = {'plant':0, 'harvest':0, 'n':0, 'p':0, 'k':0, 'irrig':0}
     while not done:

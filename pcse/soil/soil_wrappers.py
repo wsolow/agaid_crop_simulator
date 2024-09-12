@@ -14,12 +14,18 @@ from .npk_soil_dynamics import NPK_Soil_Dynamics_LN
 from ..utils.traitlets import Instance
 
 
-class SoilModuleWrapper_LNPKW(SimulationObject):
+class BaseSoilModuleWrapper(SimulationObject):
+    WaterbalanceFD = Instance(SimulationObject)
+    NPK_Soil_Dynamics = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, parvalues):
+        msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
+        raise NotImplementedError(msg)
+
+class SoilModuleWrapper_LNPKW(BaseSoilModuleWrapper):
     """This wraps the soil water balance for free drainage conditions and NPK balance
     for production conditions limited by both soil water and NPK.
     """
-    WaterbalanceFD = Instance(SimulationObject)
-    NPK_Soil_Dynamics = Instance(SimulationObject)
 
     def initialize(self, day, kiosk, parvalues):
         """

@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2015 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), Juli 2015
+# Modified by Will Solow, 2024
 
 import datetime
 
@@ -22,8 +25,25 @@ from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
+class BaseCropModel(SimulationObject):
+    # sub-model components for crop simulation
+    pheno = Instance(SimulationObject)
+    part = Instance(SimulationObject)
+    assim = Instance(SimulationObject)
+    mres = Instance(SimulationObject)
+    evtra = Instance(SimulationObject)
+    lv_dynamics = Instance(SimulationObject)
+    st_dynamics = Instance(SimulationObject)
+    ro_dynamics = Instance(SimulationObject)
+    so_dynamics = Instance(SimulationObject)
+    npk_crop_dynamics = Instance(SimulationObject)
+    npk_stress = Instance(SimulationObject)
 
-class Wofost80(SimulationObject):
+    def initialize(self, day, kiosk, parvalues):
+        msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
+        raise NotImplementedError(msg)
+
+class Wofost80(BaseCropModel):
     
     """Top level object organizing the different components of the WOFOST crop
     simulation including the implementation of N/P/K dynamics.
@@ -97,19 +117,6 @@ class Wofost80(SimulationObject):
 
     """
     
-    # sub-model components for crop simulation
-    pheno = Instance(SimulationObject)
-    part = Instance(SimulationObject)
-    assim = Instance(SimulationObject)
-    mres = Instance(SimulationObject)
-    evtra = Instance(SimulationObject)
-    lv_dynamics = Instance(SimulationObject)
-    st_dynamics = Instance(SimulationObject)
-    ro_dynamics = Instance(SimulationObject)
-    so_dynamics = Instance(SimulationObject)
-    npk_crop_dynamics = Instance(SimulationObject)
-    npk_stress = Instance(SimulationObject)
-        
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
     class Parameters(ParamTemplate):

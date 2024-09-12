@@ -1,36 +1,35 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2021 Wageningen Environmental Research
-# Allard de Wit (allard.dewit@wur.nl), August 2021
-# Modified by Will Solow, 2024
-"""PCSE configuration file for WOFOST 8.0 Water and NPK limited Production
-simulation for freely draining soils
+
+"""Utils file for making model configurations and setting parameters from arguments
 """
-
+import gymnasium as gym
 from datetime import datetime
+from wofost_gym.args import WOFOST_Args, Agro_Args
 
-from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
-from pcse.crop.wofost8 import Wofost80
-from pcse.agromanager import AgroManagerSingleYear
 
-class WOFOSTGymError(Exception):
-    """Top Level WOFOST Gym Exception"""
+from pcse.soil.soil_wrappers import BaseSoilModuleWrapper, SoilModuleWrapper_LNPKW
+from pcse.crop.wofost8 import BaseCropModel, Wofost80
+from pcse.agromanager import BaseAgroManager, AgroManagerSingleYear
 
-class PolicyException(WOFOSTGymError):
-    """Raised when there is an issue with the policy"""
 
-class ActionException(WOFOSTGymError):
-    """Raised when there is an issue with the inputted action"""
-
-def make_config():
+def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseCropModel=Wofost80, \
+                agro: BaseAgroManager=AgroManagerSingleYear):
+    """Makes the configuration dictionary to be used to set various values of
+    the model.
+    
+    Further modified in the WOFOST Gym delcaration.
+    
+    Args:
+        None
+    """
 
     # Module to be used for water balance
-    SOIL = SoilModuleWrapper_LNPKW
+    SOIL = soil
 
     # Module to be used for the crop simulation itself
-    CROP = Wofost80
+    CROP = crop
 
     # Module to use for AgroManagement actions
-    AGROMANAGEMENT = AgroManagerSingleYear
+    AGROMANAGEMENT = agro
 
     # interval for OUTPUT signals, either "daily"|"dekadal"|"monthly"
     # For daily output you change the number of days between successive
@@ -318,10 +317,14 @@ def make_config():
                 'OUTPUT_VARS': OUTPUT_VARS, 'SUMMARY_OUTPUT_VARS': SUMMARY_OUTPUT_VARS, \
                     'TERMINAL_OUTPUT_VARS': TERMINAL_OUTPUT_VARS}
 
-def set_params(env, args):
-        # All editable parameters for the WOFOST crop and soil. If left to default
-    # of None, values will be drawn from the .yaml files in /env_config/
-    # NPK Soil dynamics params
+def set_params(env: gym.Env, args: WOFOST_Args):
+    """Sets editable WOFOST Model parameters by overriding the value
+    in the configuration .yaml file
+    
+    Args:
+        args - WOFOST_Args dataclass
+    """
+
     """Base soil supply of N available through mineralization kg/ha"""
     if args.NSOILBASE is not None:
         env.parameterprovider.set_override("NSOILBASE", args.NSOILBASE, check=False)  
@@ -864,7 +867,13 @@ def set_params(env, args):
     if args.NPK_TRANSLRT_FR is not None:
         env.parameterprovider.set_override("NPK_TRANSLRT_FR", args.NPK_TRANSLRT_FR, check=False)
 
-def set_agro_params(agromanagement, args):
+def set_agro_params(agromanagement: dict, args: Agro_Args):
+    """Sets editable Agromanagement parameters by modifying the agromanagement
+    dictionary before being passed to the AgroManager Module
+    
+    Args:
+        args - Agro_Args dataclass
+    """
     if args.latitude is not None:
         agromanagement['SiteCalendar']['latitude'] = args.latitude
     if args.longitude is not None: 

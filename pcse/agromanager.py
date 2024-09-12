@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), Juli 2015
-# from __future__ import print_function
 # Modified by Will Solow, 2024
 """Implementation of AgroManager and related classes for agromanagement actions in PCSE.
 
 Available classes:
 
   * CropCalendar: A class for handling cropping calendars
-  * TimedEventDispatcher: A class for handling timed events (e.g. events connected to a date)
-  * StateEventDispatcher: A class for handling state events (e.g. events that happen when a state variable reaches
-    a certain values.
   * AgroManager: A class for handling all agromanagement events which encapsulates
     the CropCalendar and Timed/State events.
 """
@@ -47,7 +43,14 @@ def take_first(iterator):
     for item in iterator:
         return item
 
-class SiteCalendar(HasTraits, DispatcherObject):
+class BaseSiteCalendar(HasTraits, DispatcherObject):
+    # system parameters
+    kiosk = Instance(VariableKiosk)
+    parameterprovider = Instance(ParameterProvider)
+    mconf = Instance(ConfigurationLoader)
+    logger = Instance(logging.Logger)
+
+class SiteCalendar(BaseSiteCalendar):
     """A site calendar for managing the site cycle.
 
     A `SiteCalendar` object is responsible for storing, checking, starting and ending
@@ -74,12 +77,6 @@ class SiteCalendar(HasTraits, DispatcherObject):
     variation_name = Unicode()
     site_start_date = Instance(date)
     site_end_date = Instance(date)
-
-    # system parameters
-    kiosk = Instance(VariableKiosk)
-    parameterprovider = Instance(ParameterProvider)
-    mconf = Instance(ConfigurationLoader)
-    logger = Instance(logging.Logger)
 
     # Counter for duration of the site cycle
     duration = Int(0)
@@ -145,7 +142,14 @@ class SiteCalendar(HasTraits, DispatcherObject):
         self.in_site_cycle = False
 
 
-class CropCalendar(HasTraits, DispatcherObject):
+class BaseCropCalendar(HasTraits, DispatcherObject):
+    # system parameters
+    kiosk = Instance(VariableKiosk)
+    parameterprovider = Instance(ParameterProvider)
+    mconf = Instance(ConfigurationLoader)
+    logger = Instance(logging.Logger)
+
+class CropCalendar(BaseCropCalendar):
     """A crop calendar for managing the crop cycle.
 
     A `CropCalendar` object is responsible for storing, checking, starting and ending
@@ -283,6 +287,7 @@ class CropCalendar(HasTraits, DispatcherObject):
         self.in_crop_cycle = True
         self.duration = 0
 
+
 class CropCalendarHarvest(CropCalendar):
 
     def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
@@ -316,8 +321,19 @@ class CropCalendarHarvest(CropCalendar):
             self._send_signal(signal=signals.crop_finish, day=day,
                               finish_type=finish_type, crop_delete=True)
 
+class BaseAgroManager(AncillaryObject):
+    # Overall engine start date and end date
+    _site_calendar = Instance(BaseSiteCalendar)
+    _crop_calendar = Instance(BaseCropCalendar)
 
-class AgroManagerSingleYear(AncillaryObject):
+    start_date = Instance(date)
+    end_date = Instance(date)
+
+    def initialize(self, day, kiosk, parvalues):
+        msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
+        raise NotImplementedError(msg)
+    
+class AgroManagerSingleYear(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
 
     See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
@@ -334,13 +350,6 @@ class AgroManagerSingleYear(AncillaryObject):
     Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
     state events.
     """
-
-    # Overall engine start date and end date
-    _site_calendar = Instance(SiteCalendar)
-    _crop_calendar = Instance(CropCalendar)
-
-    start_date = Instance(date)
-    end_date = Instance(date)
 
     def initialize(self, kiosk, agromanagement):
         """Initialize the AgroManager.
@@ -400,7 +409,7 @@ class AgroManagerSingleYear(AncillaryObject):
         """
         self._send_signal(signal=signals.terminate)
 
-class AgroManagerHarvest(AncillaryObject):
+class AgroManagerHarvest(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
 
     See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
@@ -418,12 +427,7 @@ class AgroManagerHarvest(AncillaryObject):
     state events.
     """
 
-    # Overall engine start date and end date
-    _site_calendar = Instance(SiteCalendar)
-    _crop_calendar = Instance(CropCalendarHarvest)
-
-    start_date = Instance(date)
-    end_date = Instance(date)
+    
 
     def initialize(self, kiosk, agromanagement):
         """Initialize the AgroManager.

@@ -1,48 +1,47 @@
-import os
-import datetime
-import numpy as np
-import pandas as pd
-import yaml
 
 import gymnasium as gym
 import pcse
-from pathlib import Path
-import pcse.engine
 
-from .. import utils
+from wofost_gym import utils
+from wofost_gym.args import NPK_Args
 
-from .wofost import NPK_Env
+from wofost_gym.envs.wofost_base import Harvest_NPK_Env
 
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LN
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_PP
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LW
-from  pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LN
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
+from pcse.soil.soil_wrappers import SoilModuleWrapper_PP
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LW
+from pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
 from pcse.crop.wofost8 import Wofost80
 from pcse.agromanager import AgroManagerHarvest
 
 
-# Base model simulating growth of crop subject to NPK and water limited dynamics
-class Harvest_NPK_Env(NPK_Env):
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_LNPKW
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
+class Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
+    """Simulates crop growth under NPK and Water Limited Production 
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_Limited_NPKW_Env`.
 
-        self.crop_name = self.agromanagement['CropCalendar']['crop_name']
-        self.variety_name = self.agromanagement['CropCalendar']['variety_name']
-        self.crop_start_type = self.agromanagement['CropCalendar']['crop_start_type']
-        self.crop_end_type = self.agromanagement['CropCalendar']['crop_end_type']
-        self.active_crop_flag = False
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
         self.action_space = gym.spaces.Discrete(3+3*args.num_fert+args.num_irrig)
 
-    # Send action to the model
-    def _take_action(self, action):
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
         n_amount = 0
@@ -100,11 +99,6 @@ class Harvest_NPK_Env(NPK_Env):
                 
         return (p_act, h_act, n_amount, p_amount, k_amount, irrig_amount)
 
-    def _init_log(self):
-        return {'growth': dict(), 'plant': dict(), 'harvest': dict(), 'nitrogen': dict(), \
-                'phosphorous': dict(), 'potassium': dict(), 'irrigation':dict(), 'reward': dict(), 'day':dict()}
-    
-    def _log(self, growth, action, reward):
         self.log['growth'][self.date] = growth
         self.log['plant'][self.date] = action[0]
         self.log['harvest'][self.date] = action[1]
@@ -119,22 +113,31 @@ class Harvest_NPK_Env(NPK_Env):
         self.log['reward'][self.date] = reward
         self.log['day'][self.date] = self.date  
 
-
-# Simulating Potential Production - useful for seeing how much the crop
-# could grow without water limiting conditions
 class Harvest_PP_Env(Harvest_NPK_Env):
-    # Set config
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_PP
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
-    def __init__(self, args):
-        super().__init__(args)
+    """Simulates crop growth under abundant NPK and water
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_PP_Env`.
+
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
         self.action_space = gym.spaces.Discrete(3)
 
-    # Send action to the model
-    def _take_action(self, action):
+      
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
 
@@ -161,20 +164,31 @@ class Harvest_PP_Env(Harvest_NPK_Env):
             h_act=1
             return (p_act, h_act, 0, 0, 0, 0)
 
-
-# Simulating production under abundant water but limited NPK dynamics
 class Harvest_Limited_NPK_Env(Harvest_NPK_Env):
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_LNPK
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
-    def __init__(self, args):
-        super().__init__(args)
+    """Simulates crop growth under NPK Limited Production 
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_Limited_NPK_Env`.
 
-        self.action_space = gym.spaces.discrete(3+3*self.num_fert)
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
-    # Send action to the model
-    def _take_action(self, action):
+        self.action_space = gym.spaces.Discrete(3+3*self.num_fert)
+
+      
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
         n_amount = 0
@@ -223,20 +237,30 @@ class Harvest_Limited_NPK_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, p_amount, k_amount, 0)
         
-       
-# Simulating production under limited Nitrogen but abundant water and P/K
 class Harvest_Limited_N_Env(Harvest_NPK_Env):
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_LN
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
-    def __init__(self, args):
-        super().__init__(args)
+    """Simulates crop growth under Nitrogen Limited Production 
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_Limited_N_Env`.
+
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
         self.action_space = gym.spaces.Discrete(3+self.num_fert)
 
-    # Send action to the model
-    def _take_action(self, action):
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
         n_amount = 0
@@ -275,23 +299,32 @@ class Harvest_Limited_N_Env(Harvest_NPK_Env):
                                         N_amount=n_amount, N_recovery=self.n_recovery)
                 
         return (p_act, h_act, n_amount, 0, 0, 0)
-
-
-        
-
-# Simulating production under limited water and Nitrogen
+ 
 class Harvest_Limited_NW_Env(Harvest_NPK_Env):
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_LNW
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
-    def __init__(self, args):
-        super().__init__(args)
+    """Simulates crop growth under Nitrogen and Water Limited Production 
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_Limited_NW_Env`.
+
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
         self.action_space = gym.spaces.Discrete(3+self.num_fert + self.num_irrig)
 
-    # Send action to the model
-    def _take_action(self, action):
+      
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
         n_amount = 0
@@ -339,20 +372,30 @@ class Harvest_Limited_NW_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, 0, 0, irrig_amount)
 
-
-# Simulating production under limited water 
 class Harvest_Limited_W_Env(Harvest_NPK_Env):
-    config = utils.make_config()
-    config['SOIL'] = SoilModuleWrapper_LW
-    config['CROP'] = Wofost80
-    config['AGROMANAGEMENT'] = AgroManagerHarvest
-    def __init__(self, args):
-        super().__init__(args)
+    """Simulates crop growth under Water Limited Production 
+    with actions for planting and harvesting
+    """
+    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80, \
+                               agro=AgroManagerHarvest)
+    def __init__(self, args: NPK_Args):
+        """Initialize the :class:`Harvest_Limited_W_Env`.
+
+        Args: 
+            NPK_Args: The environment parameterization
+        """
+        super().__init__(args, config=self.config)
 
         self.action_space = gym.spaces.Discrete(2+self.num_irrig)
-
-    # Send action to the model
-    def _take_action(self, action):
+ 
+    def _take_action(self, action:int):
+        """Controls sending fertilization and irrigation signals to the model. 
+        Includes actions for planting and harvesting.
+        Converts the integer action to a signal and amount of NPK/Water to be applied.
+        
+        Args:
+            action
+        """
         p_act = 0
         h_act = 0
         irrig_amount = 0

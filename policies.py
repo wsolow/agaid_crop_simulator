@@ -2,7 +2,7 @@
 # A file contanining many different fertilization and irrigation policies
 # 
 
-from wofost_gym.utils import PolicyException
+from wofost_gym.exceptions import PolicyException
 from abc import abstractmethod
 
 class Policy:
@@ -62,7 +62,6 @@ class No_Action_Harvest(Policy):
         super().__init__(required_vars)
 
     def _get_action(self, obs):
-        print(obs[-1])
         if obs[-1] == 30:
             return {'plant': 1, 'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         if obs[-1] == 225:
