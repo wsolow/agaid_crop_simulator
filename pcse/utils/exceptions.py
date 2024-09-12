@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-
-"""Exceptions for the PCSE module"""
+"""
+Exceptions for the PCSE module
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 
 class PCSEError(Exception):
     """Top PCSE Exception"""

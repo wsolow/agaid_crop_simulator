@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
 """This module defines and describes the signals used by PCSE
 
 Signals are used by PCSE to notify components of events such as sowing,
@@ -12,6 +9,9 @@ Variables can be passed to the handler of the signal through
 positional or keyword arguments. However, it is highly discouraged to use
 positional arguments when sending signals in order to avoid conflicts between
 positional and keyword arguments.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 
 An example can help to clarify how signals are used in PCSE but check also the
 documentation of the PyDispatcher_ package for more information::

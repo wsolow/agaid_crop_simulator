@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-# Modified by Will Solow, 2024
 """Python implementations of the WOFOST waterbalance modules for simulation
 of potential production (`WaterbalancePP`) and water-limited production
 (`WaterbalanceFD`) under freely draining conditions.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
+
 from math import sqrt
-import numpy as np
 
 from ..utils.traitlets import Float, Int, Instance, Bool, List
 from ..utils.decorators import prepare_rates, prepare_states
@@ -495,7 +494,7 @@ class WaterbalanceFD(SimulationObject):
 
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
-            #raise exc.WaterBalanceError(msg)
+            raise exc.WaterBalanceError(msg)
 
         if abs(s.WBALTT) > 0.0001:
             msg = "Water balance for complete soil profile does not close.\n"
@@ -503,7 +502,7 @@ class WaterbalanceFD(SimulationObject):
                                                  s.RAINT))
             msg += ("Total FINAL + OUT: %f\n" % (s.WC + s.WLOW + s.SS + s.EVWT + s.EVST +
                                                  s.WTRAT + s.TSR + s.LOSST))
-            #raise exc.WaterBalanceError(msg)
+            raise exc.WaterBalanceError(msg)
         
         # Run finalize on the subSimulationObjects
         SimulationObject.finalize(self, day)
@@ -566,7 +565,6 @@ class WaterbalanceFD(SimulationObject):
     def _on_IRRIGATE(self, amount, efficiency):
         self.states.TOTIRRIG += amount
         self._RIRR = amount * efficiency
-
 
 class WaterbalancePP(SimulationObject):
     """Waterbalance for freely draining soils without limited production.
@@ -1025,7 +1023,7 @@ class WaterbalancePP(SimulationObject):
 
 
         # Accumulate days since oxygen stress, but only if a crop is present
-        if s.SM >= (p.SM0 - p.CRAIRC):  # and self.in_crop_cycle:
+        if s.SM >= (p.SM0 - p.CRAIRC): 
             s.DSOS += 1
         else:
             s.DSOS = 0
@@ -1048,7 +1046,7 @@ class WaterbalancePP(SimulationObject):
 
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
-            #raise exc.WaterBalanceError(msg)
+            raise exc.WaterBalanceError(msg)
 
         if abs(s.WBALTT) > 0.0001:
             msg = "Water balance for complete soil profile does not close.\n"
@@ -1056,7 +1054,7 @@ class WaterbalancePP(SimulationObject):
                                                  s.RAINT))
             msg += ("Total FINAL + OUT: %f\n" % (s.WC + s.WLOW + s.SS + s.EVWT + s.EVST +
                                                  s.WTRAT + s.TSR + s.LOSST))
-            #raise exc.WaterBalanceError(msg)
+            raise exc.WaterBalanceError(msg)
         
         # Run finalize on the subSimulationObjects
         SimulationObject.finalize(self, day)

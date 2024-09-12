@@ -1,6 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""
+Function dectorators for clarity in different simulation objects
+    @prepare_states
+    @prepare_rates
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+
 from __future__ import print_function
 from functools import wraps
 

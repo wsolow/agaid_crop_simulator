@@ -17,7 +17,6 @@ from .simulationobject import SimulationObject
 class BaseEngine(HasTraits, DispatcherObject):
     """Base Class for Engine to inherit from
     """
-
     def __init__(self):
         """Initialize class `BaseEngine`
         """

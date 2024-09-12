@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
 """
 This module is here only to ensure that all PCSE modules can import internally from .traitlets
 while this module loads the actual traitlets modules from the correct location. Moreover,
@@ -8,10 +5,12 @@ some traits are adapted to allow `None` as default values and coercing value to 
 
 Currently an adapted version of the traitlets package is used 'traitlets_pcse'. In the future
 the default traitlets package may be used when the `observe()` functionality on `type=All` is implemented.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
 from traitlets_pcse import *
 import traitlets_pcse as tr
-
 
 class Instance(tr.Instance):
 

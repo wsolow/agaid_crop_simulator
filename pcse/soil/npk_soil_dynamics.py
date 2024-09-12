@@ -1,17 +1,21 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
-# Modified by Will Solow, 2024
+"""Implementations of the WOFOST waterbalance modules for simulation
+of potential production (`NPK_Soil_Dynamics_PP`) and NPK-limited production
+(`NPK_Soil_Dynamics`) and N-limited production (`NPK_Soil_Dynamics_N`)
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+from datetime import date
 
 from ..utils.traitlets import Float
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from ..utils import signals
+from ..base import VariableKiosk
+from ..nasapower import WeatherDataProvider
 
 class NPK_Soil_Dynamics(SimulationObject):
-
     """A simple module for soil N/P/K dynamics.
 
     This modules represents the soil as a bucket for available N/P/K consisting
@@ -175,7 +179,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -205,7 +209,8 @@ class NPK_Soil_Dynamics(SimulationObject):
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Compute Rates for model"""
         r = self.rates
         s = self.states
         p = self.params
@@ -233,7 +238,9 @@ class NPK_Soil_Dynamics(SimulationObject):
         r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - RKuptake - r.RKSOIL
         
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate states with rates
+        """
         rates = self.rates
         states = self.states
 
@@ -247,9 +254,10 @@ class NPK_Soil_Dynamics(SimulationObject):
         states.PAVAIL += rates.RPAVAIL * delt
         states.KAVAIL += rates.RKAVAIL * delt
 
-    def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
-                      P_recovery=None, K_recovery=None):
-        
+    def _on_APPLY_NPK(self, N_amount:float=None, P_amount:float=None, K_amount:float=None, 
+                      N_recovery:float=None, P_recovery:float=None, K_recovery:float=None):
+        """Apply NPK based on amounts and update relevant parameters
+        """
         if N_amount is not None:
             self._FERT_N_SUPPLY = N_amount * N_recovery
             self.states.TOTN += N_amount
@@ -260,9 +268,7 @@ class NPK_Soil_Dynamics(SimulationObject):
             self._FERT_K_SUPPLY = K_amount * K_recovery
             self.states.TOTK += K_amount
 
-
 class NPK_Soil_Dynamics_PP(SimulationObject):
-
     """A simple module for soil N/P/K dynamics.
     Assumes that there is abundant NPK available at all times (100 kg/ha)
 
@@ -427,7 +433,7 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -457,7 +463,9 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Compute rate sto be integrated
+        """
         r = self.rates
         s = self.states
         p = self.params
@@ -485,7 +493,8 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - RKuptake - r.RKSOIL
         
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate rates into states"""
         rates = self.rates
         states = self.states
 
@@ -495,17 +504,14 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
         states.KSOIL += rates.RKSOIL * delt
         
         # total (soil + fertilizer) NPK amount in soil
-        #states.NAVAIL += rates.RNAVAIL * delt
-        #states.PAVAIL += rates.RPAVAIL * delt
-        #states.KAVAIL += rates.RKAVAIL * delt
-
         states.NAVAIL = 100.
         states.PAVAIL = 100.
         states.KAVAIL = 100.
 
-    def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
-                      P_recovery=None, K_recovery=None):
-
+    def _on_APPLY_NPK(self, N_amount:float=None, P_amount:float=None, K_amount:float=None, 
+                      N_recovery:float=None, P_recovery:float=None, K_recovery:float=None):
+        """Apply NPK based on amounts and update relevant parameters
+        """
         if N_amount is not None:
             self._FERT_N_SUPPLY = N_amount * N_recovery
             self.states.TOTN += N_amount
@@ -517,10 +523,9 @@ class NPK_Soil_Dynamics_PP(SimulationObject):
             self.states.TOTK += K_amount
 
 class NPK_Soil_Dynamics_LN(SimulationObject):
-
     """A simple module for soil N/P/K dynamics.
     Assumes that there is abundant PK available at all times and only
-    has limited N 
+    has limited N. 
 
     This modules represents the soil as a bucket for available N/P/K consisting
     of two components: 1) a native soil supply which consists of an initial
@@ -636,17 +641,16 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
     _FERT_K_SUPPLY = Float(0.)
 
     class Parameters(ParamTemplate):
-        NSOILBASE = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
+        NSOILBASE    = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
         NSOILBASE_FR = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
 
-        PSOILBASE = Float(-99.)  # total mineral soil P available at start of growth period [kg N/ha]
+        PSOILBASE    = Float(-99.)  # total mineral soil P available at start of growth period [kg N/ha]
         PSOILBASE_FR = Float(-99.)  # fraction of soil mineral P coming available per day [day-1]
         
-        KSOILBASE = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
+        KSOILBASE    = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
         KSOILBASE_FR = Float(-99.)  # fraction of soil mineral K coming available per day [day-1]
 
         # Initial values of available nutrients which is different from the previous ones
-        #
         NAVAILI = Float()
         PAVAILI = Float()
         KAVAILI = Float()
@@ -683,7 +687,7 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         FERT_P_SUPPLY = Float()
         FERT_K_SUPPLY = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -713,7 +717,9 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
-    def calc_rates(self, day, drv):
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate the rates to be integrated to the states
+        """
         r = self.rates
         s = self.states
         p = self.params
@@ -741,7 +747,9 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - RKuptake - r.RKSOIL
         
     @prepare_states
-    def integrate(self, day, delt=1.0):
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate rates
+        """
         rates = self.rates
         states = self.states
 
@@ -752,15 +760,14 @@ class NPK_Soil_Dynamics_LN(SimulationObject):
         
         # total (soil + fertilizer) NPK amount in soil
         states.NAVAIL += rates.RNAVAIL * delt
-        #states.PAVAIL += rates.RPAVAIL * delt
-        #states.KAVAIL += rates.RKAVAIL * delt
 
         states.PAVAIL = 100.
         states.KAVAIL = 100.
 
-    def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
-                      P_recovery=None, K_recovery=None):
-
+    def _on_APPLY_NPK(self, N_amount:float=None, P_amount:float=None, K_amount:float=None, \
+                      N_recovery:float=None, P_recovery:float=None, K_recovery:float=None):
+        """Apply NPK based on amounts and update relevant parameters
+        """
         if N_amount is not None:
             self._FERT_N_SUPPLY = N_amount * N_recovery
             self.states.TOTN += N_amount
