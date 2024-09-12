@@ -1,12 +1,15 @@
+"""Main API for simulating crop growth NPK fertilization and irrigation actions
+and the inclusion of planting and harvesting of the crop.
 
+Used for single year annual crop simulations.
+"""
 import gymnasium as gym
-import pcse
 
 from wofost_gym import utils
 from wofost_gym.args import NPK_Args
-
 from wofost_gym.envs.wofost_base import Harvest_NPK_Env
 
+import pcse
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LN
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK

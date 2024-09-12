@@ -1,6 +1,9 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Base class for for VariableKiosk object to handle parameter, state, and rate
+passing throughout various sub-objects of the crop and soil model
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 from ..utils import exceptions as exc
 
 
@@ -83,6 +86,8 @@ class VariableKiosk(dict):
     """
 
     def __init__(self):
+        """Initialize the class `VariableKiosk`
+        """
         dict.__init__(self)
         self.registered_states = {}
         self.registered_rates = {}

@@ -1,7 +1,11 @@
+"""Entry point for WOFOST_Gym package. Handles imports and Gym Environment
+registration.
+"""
+
 from gymnasium.envs.registration import register
 from wofost_gym import args
 from wofost_gym import utils
-from wofost_gym.envs import wofost_default_singleyear
+from wofost_gym import exceptions
 
 # Default single year environments
 register(

@@ -1,14 +1,35 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Base class for for State Rates and Parameters that each simulation object
+in the WOFOST model has.
+
+In general these classes are not to be used directly, but are to be subclassed
+when creating PCSE simulation units.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 import logging
 
-from ..utils.traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
-from ..pydispatch import dispatcher
+from ..utils.traitlets import (HasTraits, Float, Int, Instance, Bool, All)
 from ..utils import exceptions as exc
 from .variablekiosk import VariableKiosk
 from ..util import Afgen
 
+
+def check_publish(publish):
+    """ Convert the list of published variables to a set with unique elements.
+    Used in StateRatesCommon
+    """
+
+    if publish is None:
+        publish = []
+    elif isinstance(publish, str):
+        publish = [publish]
+    elif isinstance(publish, (list, tuple)):
+        pass
+    else:
+        msg = "The publish keyword should specify a string or a list of strings"
+        raise RuntimeError(msg)
+    return set(publish)
 
 class ParamTemplate(HasTraits):
     """Template for storing parameter values.
@@ -46,7 +67,10 @@ class ParamTemplate(HasTraits):
     """
 
     def __init__(self, parvalues):
-
+        """Initialize parameter template
+        Args:
+            parvalues - parameter values to include 
+        """
         HasTraits.__init__(self)
 
         for parname in self.trait_names():
@@ -76,29 +100,15 @@ class ParamTemplate(HasTraits):
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-
-def check_publish(publish):
-    """ Convert the list of published variables to a set with unique elements.
-    """
-
-    if publish is None:
-        publish = []
-    elif isinstance(publish, str):
-        publish = [publish]
-    elif isinstance(publish, (list, tuple)):
-        pass
-    else:
-        msg = "The publish keyword should specify a string or a list of strings"
-        raise RuntimeError(msg)
-    return set(publish)
-
-
 class StatesRatesCommon(HasTraits):
+    """Base class for States/Rates Templates. Includes all commonalitities
+    between the two templates
+    """
     _kiosk = Instance(VariableKiosk)
     _valid_vars = Instance(set)
     _locked = Bool(False)
 
-    def __init__(self, kiosk=None, publish=None):
+    def __init__(self, kiosk:VariableKiosk=None, publish=None):
         """Set up the common stuff for the states and rates template
         including variables that have to be published in the kiosk
         """
@@ -161,24 +171,6 @@ class StatesRatesCommon(HasTraits):
                    "keyword: %s") % publish
             raise exc.PCSEError(msg)
 
-    # def __setattr__(self, attr, value):
-    #     # Attributes starting with "_" can be assigned or updated regardless
-    #     # of whether the object is locked.
-    #     #
-    #     # Note that the check on startswith("_") *MUST* be the first otherwise
-    #     # the assignment of some trait internals will fail
-    #     if attr.startswith("_"):
-    #         HasTraits.__setattr__(self, attr, value)
-    #     elif attr in self._valid_vars:
-    #         if not self._locked:
-    #             HasTraits.__setattr__(self, attr, value)
-    #         else:
-    #             msg = "Assignment to locked attribute '%s' prevented." % attr
-    #             raise AttributeError(msg)
-    #     else:
-    #         msg = "Assignment to non-existing attribute '%s' prevented." % attr
-    #         raise AttributeError(msg)
-
     def _update_kiosk(self, change):
         """Update the variable_kiosk through trait notification.
         """
@@ -207,7 +199,6 @@ class StatesRatesCommon(HasTraits):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
         return logging.getLogger(loggername)
-
 
 class StatesTemplate(StatesRatesCommon):
     """Takes care of assigning initial values to state variables, registering
@@ -264,8 +255,12 @@ class StatesTemplate(StatesRatesCommon):
     _locked = Bool(False)
     _vartype = "S"
 
-    def __init__(self, kiosk=None, publish=None, **kwargs):
-
+    def __init__(self, kiosk: VariableKiosk=None, publish=None, **kwargs):
+        """Initialize the StatesTemplate class
+        
+        Args:
+            kiosk - VariableKiosk to handle default parameters
+        """
         StatesRatesCommon.__init__(self, kiosk, publish)
 
         # set initial state value
@@ -297,7 +292,6 @@ class StatesTemplate(StatesRatesCommon):
             value = getattr(self, name)
             setattr(self, name, value)
         self.lock()
-
 
 class StatesWithImplicitRatesTemplate(StatesTemplate):
     """Container class for state variables that have an associated rate.
@@ -357,7 +351,6 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
     def initialValues(cls):
         return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
 
-
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.
@@ -379,7 +372,7 @@ class RatesTemplate(StatesRatesCommon):
     _rate_vars_zero = Instance(dict)
     _vartype = "R"
 
-    def __init__(self, kiosk=None, publish=None):
+    def __init__(self, kiosk: VariableKiosk=None, publish=None):
         """Set up the RatesTemplate and set monitoring on variables that
         have to be published.
         """

@@ -1,21 +1,45 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Base classes for creating PCSE simulation units.
+"""Base classes Parameter Provider and includes parameter providers for crop
+and soil modules
 
-In general these classes are not to be used directly, but are to be subclassed
-when creating PCSE simulation units.
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
-import sys
 import logging
 from collections import Counter
-if sys.version_info > (3, 8):
-    from collections.abc import MutableMapping
-else:
-    from collections import MutableMapping
-
+from collections.abc import MutableMapping
 from ..utils import exceptions as exc
 
+class MultiCropDataProvider(dict):
+    """Provides base class for Crop Data loading from .yaml files"""
+    def __init__(self):
+        """Initialize class `MultiCropDataProvider"""
+        dict.__init__(self)
+        self._store = {}
+
+    def set_active_crop(self, crop_name, variety_name):
+        """Sets the crop parameters for the crop identified by crop_name and variety_name.
+
+        Needs to be implemented by each subclass of MultiCropDataProvider
+        """
+        msg = "'set_crop_type' method should be implemented specifically for each" \
+              "subclass of MultiCropDataProvider."
+        raise NotImplementedError(msg)
+    
+class MultiSiteDataProvider(dict):
+    """Provides base class for Site Data loading from .yaml files"""
+    def __init__(self):
+        """Initialize class `MultiSiteDataProvider"""
+        dict.__init__(self)
+        self._store = {}
+
+    def set_active_crop(self, site_name: str, variation_name: str):
+        """Sets the crop parameters for the crop identified by site_name and variation_name.
+
+        Needs to be implemented by each subclass of MultiSiteDataProvider
+        """
+        msg = "'set_crop_type' method should be implemented specifically for each" \
+              "subclass of MultiSiteDataProvider."
+        raise NotImplementedError(msg)
 
 class ParameterProvider(MutableMapping):
     """Class providing a dictionary-like interface over all parameter sets (crop, soil, site).
@@ -32,7 +56,7 @@ class ParameterProvider(MutableMapping):
     CROP_START signal. Finally, specific parameter values can be easily changed
     by setting an `override` on that parameter.
 
-    See also the `MultiCropDataProvider`
+    See also the `MultiCropDataProvider` and the `MultieSiteDataProvider`
     """
     _maps = list()
     _sitedata = dict()
@@ -44,7 +68,17 @@ class ParameterProvider(MutableMapping):
     _ncrops_activated = 0  # Counts the number of times `set_crop_type()` has been called.
     _nsites_activated = 0  # Counts the number of times `set_site_type()` has been called.
 
-    def __init__(self, sitedata=None, timerdata=None, soildata=None, cropdata=None, override=None):
+    def __init__(self, sitedata: MultiSiteDataProvider=None, timerdata: dict=None,\
+                 soildata: dict=None, cropdata: MultiCropDataProvider=None, override: dict=None):
+        """Initializes class `ParameterProvider
+        
+        Args:
+            sitedata  - data for site
+            timerdata - data for timer
+            soildata  - data for soil (generally unused, wrapped into site data
+            cropdata  - data for crop
+            override  - parameter overrides (useful for setting not .yaml configurations)
+        """
         if sitedata is not None:
             self._sitedata = sitedata
         else:
@@ -79,17 +113,6 @@ class ParameterProvider(MutableMapping):
         :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
         :param crop_end_type: end type for the given crop: 'maturity'|'harvest'
 
-        In case of crop rotations, there is a new set of crop parameters needed when a new
-        crop is started. This routine activates the crop parameters for the given crop_name and
-        variety_name. The `crop_name`, `variety_name` `crop_start_type` and `crop_end_type`
-        are defined in the agromanagement and supported by the AgroManager.
-
-        Note that many CropDataProviders are not designed for crop rotations and only support a single
-        crop whose parameters are active by default. In this case a call to `set_active_crop()` has no
-        effect and the `crop_name` and `variety_name` parameters are ignored.
-        CropDataProviders that support crop rotations explicitly have to subclass from
-        `pcse.base.MultiCropDataProvider` in order to be recognized.
-
         Besides the crop parameters, this method also sets the `crop_start_type` and `crop_end_type` of the
         crop which is required for all crops by the phenology module.
 
@@ -100,60 +123,27 @@ class ParameterProvider(MutableMapping):
             # we have a MultiCropDataProvider, so set the active crop and variety
             self._cropdata.set_active_crop(crop_name, variety_name)
         else:
-            # we do not have a MultiCropDataProvider, this means that crop rotations are not supported
-            # At the first call this is OK. However issue a warning with subsequent calls
-            # to set_crop_type() are done because we cannot change the set of crop parameters
-            if self._ncrops_activated == 0:
-                pass
-            else:
-                # has been called multiple times
-                msg = "A second crop was scheduled: however, the CropDataProvider does not " \
-                      "support multiple crop parameter sets. This will only work for crop" \
-                      "rotations with the same crop."
-                self.logger.warning(msg)
+            msg = f"Crop data provider {self._cropdata} is not of type {type(MultiCropDataProvider)}"
+            raise exc.PCSEError(msg)
 
         self._ncrops_activated += 1
         self._test_uniqueness()
 
     
-    def set_active_site(self, site_name=None, variation_name=None):
+    def set_active_site(self, site_name: str=None, variation_name: str=None):
         """Activate the site parameters for the given site_name and variation_name.
 
         :param site_name: string identifying the site name, is ignored as only
                one site is assumed to be here.
         :param variation_name: string identifying the variety name, is ignored as only
                one variation is assumed to be here.
-
-        In case of crop rotations, there is a new set of crop parameters needed when a new
-        crop is started. This routine activates the crop parameters for the given crop_name and
-        variety_name. The `crop_name`, `variety_name` `crop_start_type` and `crop_end_type`
-        are defined in the agromanagement and supported by the AgroManager.
-
-        Note that many CropDataProviders are not designed for crop rotations and only support a single
-        crop whose parameters are active by default. In this case a call to `set_active_crop()` has no
-        effect and the `crop_name` and `variety_name` parameters are ignored.
-        CropDataProviders that support crop rotations explicitly have to subclass from
-        `pcse.base.MultiCropDataProvider` in order to be recognized.
-
-        Besides the crop parameters, this method also sets the `crop_start_type` and `crop_end_type` of the
-        crop which is required for all crops by the phenology module.
-
         """
         if isinstance(self._sitedata, MultiSiteDataProvider):
             # we have a MultiCropDataProvider, so set the active crop and variety
             self._sitedata.set_active_site(site_name, variation_name)
         else:
-            # we do not have a MultiCropDataProvider, this means that crop rotations are not supported
-            # At the first call this is OK. However issue a warning with subsequent calls
-            # to set_crop_type() are done because we cannot change the set of crop parameters
-            if self._nsites_activated == 0:
-                pass
-            else:
-                # has been called multiple times
-                msg = "A second crop was scheduled: however, the CropDataProvider does not " \
-                      "support multiple crop parameter sets. This will only work for crop" \
-                      "rotations with the same crop."
-                self.logger.warning(msg)
+            msg = f"Site data provider {self._sitedata} is not of type {type(MultiSiteDataProvider)}"
+            raise exc.PCSEError(msg)
 
         self._nsites_activated += 1
         self._test_uniqueness()
@@ -298,37 +288,5 @@ class ParameterProvider(MutableMapping):
         else:
             self._iter = 0
             raise StopIteration
-
-
-class MultiCropDataProvider(dict):
-
-    def __init__(self):
-        dict.__init__(self)
-        self._store = {}
-
-    def set_active_crop(self, crop_name, variety_name):
-        """Sets the crop parameters for the crop identified by crop_name and variety_name.
-
-        Needs to be implemented by each subclass of MultiCropDataProvider
-        """
-        msg = "'set_crop_type' method should be implemented specifically for each" \
-              "subclass of MultiCropDataProvider."
-        raise NotImplementedError(msg)
-    
-    
-class MultiSiteDataProvider(dict):
-
-    def __init__(self):
-        dict.__init__(self)
-        self._store = {}
-
-    def set_active_crop(self, site_name, variation_name):
-        """Sets the crop parameters for the crop identified by site_name and variation_name.
-
-        Needs to be implemented by each subclass of MultiSiteDataProvider
-        """
-        msg = "'set_crop_type' method should be implemented specifically for each" \
-              "subclass of MultiSiteDataProvider."
-        raise NotImplementedError(msg)
 
 

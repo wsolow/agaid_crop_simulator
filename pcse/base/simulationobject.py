@@ -1,17 +1,20 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+"""Base class for for SimulationObject to be subclassed to the WOFOST Model
+
+In general these classes are not to be used directly, but are to be subclassed
+when creating PCSE simulation units.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
 import types
 import logging
 from datetime import date
 
 from .dispatcher import DispatcherObject
-from ..utils.traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
+from ..utils.traitlets import (HasTraits,Instance, Dict)
 from ..utils import exceptions as exc
 from .variablekiosk import VariableKiosk
 from .states_rates import StatesTemplate, RatesTemplate, ParamTemplate
-
-
 
 class SimulationObject(HasTraits, DispatcherObject):
     """Base class for PCSE simulation objects.
@@ -33,7 +36,15 @@ class SimulationObject(HasTraits, DispatcherObject):
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
 
-    def __init__(self, day, kiosk, *args, **kwargs):
+    def __init__(self, day: date, kiosk: VariableKiosk, *args, **kwargs):
+        """Initialize Simulation Object
+        
+        Args:
+            day    - current date
+            kiosk  - a variable kiosk object
+            args   - extra argumenets
+            kwargs - Keyword arguments
+        """
         HasTraits.__init__(self, *args, **kwargs)
         # Check that day variable is specified
         if not isinstance(day, date):
@@ -72,21 +83,21 @@ class SimulationObject(HasTraits, DispatcherObject):
         raise NotImplementedError(msg)
 
     def __setattr__(self, attr, value):
-        # __setattr__ has been modified  to enforce that class attributes
-        # must be defined before they can be assigned. There are a few
-        # exceptions:
-        # 1 if an attribute name starts with '_'  it will be assigned directly.
-        # 2 if the attribute value is a  function (e.g. types.FunctionType) it
-        #   will be assigned directly. This is needed because the
-        #   'prepare_states' and 'prepare_rates' decorators assign the wrapped
-        #   functions 'calc_rates', 'integrate' and optionally 'finalize' to
-        #   the Simulation Object. This will collide with __setattr__ because
-        #   these class methods are not defined attributes.
-        #
-        # Finally, if the value assigned to an attribute is a SimulationObject
-        #   or if the existing attribute value is a SimulationObject than
-        #   rebuild the list of sub-SimulationObjects.
-
+        """Sets the attribute with the value to a specific sublcass object
+        __setattr__ has been modified  to enforce that class attributes
+        must be defined before they can be assigned. There are a few
+        exceptions:
+        1. if an attribute name starts with '_'  it will be assigned directly.
+        2. if the attribute value is a  function (e.g. types.FunctionType) it
+          will be assigned directly. This is needed because the
+          'prepare_states' and 'prepare_rates' decorators assign the wrapped
+          functions 'calc_rates', 'integrate' and optionally 'finalize' to
+          the Simulation Object. This will collide with __setattr__ because
+          these class methods are not defined attributes.
+        3. if the value assigned to an attribute is a SimulationObject
+          or if the existing attribute value is a SimulationObject than
+          rebuild the list of sub-SimulationObjects.
+        """
         if attr.startswith("_") or type(value) is types.FunctionType:
             HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):
@@ -234,7 +245,6 @@ class SimulationObject(HasTraits, DispatcherObject):
             for simobj in self.subSimObjects:
                 simobj.zerofy()
 
-
 class AncillaryObject(HasTraits, DispatcherObject):
     """Base class for PCSE ancillary objects.
 
@@ -270,6 +280,8 @@ class AncillaryObject(HasTraits, DispatcherObject):
         return logging.getLogger(loggername)
 
     def __setattr__(self, attr, value):
+        """Set attribute of variable to specified value
+        """
         if attr.startswith("_"):
             HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):

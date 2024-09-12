@@ -1,11 +1,14 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-from __future__ import print_function
-import datetime
+"""Base class for for Timer object to keep track of important dates throughout
+the course of the WOFOST model
 
-from ..base import AncillaryObject
-from ..utils.traitlets import HasTraits, Instance, Bool, Int, Enum
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
+"""
+from __future__ import print_function
+from datetime import date, timedelta
+
+from ..base import AncillaryObject, VariableKiosk
+from ..utils.traitlets import Instance, Bool, Int, Enum
 from ..utils import signals
 
 class Timer(AncillaryObject):
@@ -25,14 +28,12 @@ class Timer(AncillaryObject):
  
         * "OUTPUT": sent when the condition for generating output is True
           which depends on the output type and interval.
- 
-
   """
 
-    start_date = Instance(datetime.date)
-    end_date = Instance(datetime.date)
-    current_date = Instance(datetime.date)
-    time_step = Instance(datetime.timedelta)
+    start_date = Instance(date)
+    end_date = Instance(date)
+    current_date = Instance(date)
+    time_step = Instance(timedelta)
     interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
     output_weekday = Int()
     interval_days = Int()
@@ -41,7 +42,7 @@ class Timer(AncillaryObject):
     first_call = Bool(True)
     _in_crop_cycle = Bool()
 
-    def initialize(self, kiosk, start_date, end_date, mconf):
+    def initialize(self, kiosk: VariableKiosk, start_date: date, end_date: date, mconf):
         """
         :param day: Start date of the simulation
         :param kiosk: Variable kiosk of the PCSE instance
@@ -54,23 +55,20 @@ class Timer(AncillaryObject):
             mconf.OUTPUT_INTERVAL_DAYS
 
         """
-        
         self.kiosk = kiosk
         self.start_date = start_date
         self.end_date = end_date
         self.current_date = start_date
-        # self.day_counter = 0
         # Settings for generating output. Note that if no OUTPUT_VARS are listed
         # in that case no OUTPUT signals will be generated.
         self.generate_output = bool(mconf.OUTPUT_VARS)
         self.interval_type = mconf.OUTPUT_INTERVAL.lower()
         self.output_weekday = mconf.OUTPUT_WEEKDAY
         self.interval_days = mconf.OUTPUT_INTERVAL_DAYS
-        self.time_step = datetime.timedelta(days=1)
-        # self.first_call = True
+        self.time_step = timedelta(days=1)
 
     def __call__(self):
-        
+        """Calls the Timer class. Handles signals for termination or output"""
         # On first call only return the current date, do not increase time
         if self.first_call is True:
             self.first_call = False
@@ -113,11 +111,11 @@ class Timer(AncillaryObject):
         """Returns True if the date is on the last day of a month."""
 
         if day.month==12:
-            if day == datetime.date(day.year, day.month, 31):
+            if day == date(day.year, day.month, 31):
                 return True
         else:
-            if (day == datetime.date(day.year, day.month+1, 1) -
-                    datetime.timedelta(days=1)):
+            if (day == date(day.year, day.month+1, 1) -
+                    timedelta(days=1)):
                 return True
         return False
 
@@ -135,19 +133,19 @@ class Timer(AncillaryObject):
         the 20th or the last day of each month"""
 
         if day.month == 12:
-            if day == datetime.date(day.year, day.month, 10):
+            if day == date(day.year, day.month, 10):
                 return True
-            elif day == datetime.date(day.year, day.month, 20):
+            elif day == date(day.year, day.month, 20):
                 return True
-            elif day == datetime.date(day.year, day.month, 31):
+            elif day == date(day.year, day.month, 31):
                 return True
         else:
-            if day == datetime.date(day.year, day.month, 10):
+            if day == date(day.year, day.month, 10):
                 return True
-            elif day == datetime.date(day.year, day.month, 20):
+            elif day == date(day.year, day.month, 20):
                 return True
-            elif (day == datetime.date(day.year, day.month+1, 1) -
-                        datetime.timedelta(days=1)):
+            elif (day == date(day.year, day.month+1, 1) -
+                        timedelta(days=1)):
                 return True
         return False
 

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-# Modified by Will Solow, 2024
 """Base classes for creating PCSE simulation units.
 
 In general these classes are not to be used directly, but are to be subclassed
 when creating PCSE simulation units.
+
+Written by: Allard de Wit (allard.dewit@wur.nl), April 2014
+Modified by Will Solow, 2024
 """
 from .variablekiosk import VariableKiosk
 from .engine import BaseEngine
