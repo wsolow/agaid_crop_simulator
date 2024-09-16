@@ -24,6 +24,9 @@ KSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
 NAVAILI       Initial N available in the N pool              SSi      |kg ha-1|
 PAVAILI       Initial P available in the P pool              SSi      |kg ha-1|
 KAVAILI       Initial K available in the K pool              SSi      |kg ha-1|
+NMAX          Maximum N available in the N pool              SSi      |kg ha-1|
+PMAX          Maximum P available in the N pool              SSi      |kg ha-1|
+KMAX          Maximum K available in the N pool              SSi      |kg ha-1|
 BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
                 deposition.
 BG_P_SUPPLY   Background supply of P through atmospheric     SSi      |kg ha-1 d-1|

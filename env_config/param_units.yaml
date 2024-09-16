@@ -636,7 +636,10 @@
   KSOILBASE_FR:  'factor'           # Fraction of base soil N that comes available every day
   NAVAILI:       '|kg ha-1|'        # Initial N available in the N pool           
   PAVAILI:       '|kg ha-1|'        # Initial P available in the P pool            
-  KAVAILI:       '|kg ha-1|'        # Initial K available in the K pool              
+  KAVAILI:       '|kg ha-1|'        # Initial K available in the K pool   
+  NMAX:          '|kg ha-1|'        # Maximum N available in the N pool                    
+  PMAX:          '|kg ha-1|'        # Maximum P available in the N pool                    
+  KMAX:          '|kg ha-1|'        # Maximum K available in the N pool                            
   BG_N_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of N through atmospheric deposition.
   BG_P_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of P through atmospheric deposition.
   BG_K_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of K through atmospheric deposition.

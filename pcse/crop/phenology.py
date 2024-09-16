@@ -185,7 +185,7 @@ class Vernalisation(SimulationObject):
         else:  # Reduction factor for phenologic development
             states.ISVERNALISED = False
 
-class DVS_Phenology(SimulationObject):
+class Base_Phenology(SimulationObject):
     """Implements the algorithms for phenologic development in WOFOST.
     
     Phenologic development in WOFOST is expresses using a unitless scale which
@@ -313,28 +313,9 @@ class DVS_Phenology(SimulationObject):
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """
-
-        self.params = self.Parameters(parvalues)
-        self.kiosk = kiosk
-
-        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-
-        # Define initial states
-        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
-        self.states = self.StateVariables(kiosk, 
-                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
-                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
-                                                   "STAGE", ],
-                                          TSUM=0., TSUME=0., DVS=DVS,
-                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, DOD=None, STAGE=STAGE)
+        msg = "Base Phenology not implemented - implement in subclass!"
+        raise NotImplementedError(msg)
         
-        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
-
-        # initialize vernalisation for IDSL=2
-        if self.params.IDSL >= 2:
-            self.vernalisation = Vernalisation(day, kiosk, parvalues)
-    
     def _get_initial_stage(self, day:datetime.date):
         """Set the initial state of the crop given the start type
         """
@@ -520,3 +501,52 @@ class DVS_Phenology(SimulationObject):
         if finish_type in ['harvest']:
             self._for_finalize["DOH"] = day
 
+class Annual_Phenology(Base_Phenology):
+
+    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
+
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
+        # Define initial states
+        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        self.states = self.StateVariables(kiosk, 
+                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
+                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
+                                                   "STAGE", ],
+                                          TSUM=0., TSUME=0., DVS=DVS,
+                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
+                                          DOH=None, DOD=None, STAGE=STAGE)
+        
+        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
+
+        # initialize vernalisation for IDSL=2
+        if self.params.IDSL >= 2:
+            self.vernalisation = Vernalisation(day, kiosk, parvalues)
+
+class Perennial_Phenology(Base_Phenology):
+
+    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
+
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
+        # Define initial states
+        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        self.states = self.StateVariables(kiosk, 
+                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
+                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
+                                                   "STAGE", ],
+                                          TSUM=0., TSUME=0., DVS=DVS,
+                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
+                                          DOH=None, DOD=None, STAGE=STAGE)
+        
+        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
+
+        # initialize vernalisation for IDSL=2
+        if self.params.IDSL >= 2:
+            self.vernalisation = Vernalisation(day, kiosk, parvalues)

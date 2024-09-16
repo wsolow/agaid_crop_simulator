@@ -81,7 +81,7 @@ CropParameters:
          - multiplication factor for AMAX to account for an increasing CO2 concentration
          - ['PPM', '-']
     EcoTypes:
-        jujebe: &jujube
+        pear: &pear
             <<: *GenericC3
             #
             # EMERGENCE
@@ -586,11 +586,11 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Jujube_1:
-            <<: *jujube
+        Pear_1:
+            <<: *pear
             Metadata:
                 <<: *meta
-                Description: Default parameter for Jujube
+                Description: Default parameter for Pear
             TSUM1:
             -  967
             - temperature sum from emergence to anthesis

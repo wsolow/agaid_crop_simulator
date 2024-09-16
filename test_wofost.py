@@ -1,110 +1,70 @@
-# Written Aug 2024, by Will Solow
-# Test the WOFOST Gym environment
-# With a few simple plots
+"""File for testing the installation and setup of the WOFOST Gym Environment
+with a few simple plots for output 
+
+Written by: Will Solow, 2024
+"""
 
 import gymnasium as gym
 import numpy as np
-import sys
-import wofost_gym
+import tyro
 import matplotlib.pyplot as plt
 
-from wofost_gym.args import NPK_Args
-import tyro
+import wofost_gym
+import wofost_gym.policies as policies
+from utils import Args
 import utils
-import policies
-
-def norm(x):
-    return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
 
 
 if __name__ == "__main__":
 
-    args = tyro.cli(NPK_Args)
+    args = tyro.cli(Args)
 
-    env_kwargs = {'args':args}
-    env_id = args.env_id
+    env_id, env_kwargs = utils.get_gym_args(args)
 
-    # Make the gym environment
+    # Make the gym environment with wrappers
     env = gym.make(env_id, **env_kwargs)
-    
-    
     env = wofost_gym.wrappers.RewardFertilizationThresholdWrapper(env, max_n=50)
     env = wofost_gym.wrappers.NPKDictActionWrapper(env)
     env = wofost_gym.wrappers.NPKDictObservationWrapper(env)
     
-    
-    #print(env.action_space.sample)
-    #env = utils.wrap_env_reward(env, args)
+    # Set default policy for use
+    policy = policies.No_Action(env)
 
     obs_arr = []
     obs, info = env.reset()
     done = False
     obs_arr = []
     reward_arr = []
-    k = 0
-    policy = policies.Weekly_N(env,amount=2)
 
-    action = {'plant':0, 'harvest':0, 'n':0, 'p':0, 'k':0, 'irrig':0}
+    # Run simulation and store data
     while not done:
         action = policy(obs)
         next_obs, rewards, done, trunc, info = env.step(action)
         obs_arr.append(obs)
         reward_arr.append(rewards)
-
-        # Append data
         obs = next_obs
-        k += 1
         if done:
             obs, info = env.reset()
             break
-    all_obs = np.array(obs_arr)
+    all_obs = np.array([list(d.values()) for d in obs_arr])
 
+    all_vars = args.npk_args.output_vars + args.npk_args.forecast_length * args.npk_args.weather_vars
+
+    # Plot Data
     plt.figure(0)
-    plt.title('Rewards')
+    plt.title('Cumulative Rewards')
+    plt.xlabel('Days')
     plt.plot(np.cumsum(reward_arr))
-    plt.show()
     
-    all_vars = args.output_vars + args.forecast_length * args.weather_vars
-    k=0
     plt.figure()
-    for i in range(len(all_vars)):
-        alpha=.5
-        if all_vars[i] == 'TEMP':
-            
-            plt.title(all_vars[i])
-            if k == 0:
-                alpha=1
-            plt.plot(all_obs[ :, i], alpha=alpha, label=f'Day: {k}')
-            k+=1
-    plt.legend()
-    k = 0
-    plt.figure()
-    for i in range(len(all_vars)):
-        alpha=.5
-        if all_vars[i] == 'IRRAD':
-            
-            plt.title(all_vars[i])
-            if k == 0:
-                alpha=1
-            plt.plot(all_obs[ :, i], alpha=alpha, label=f'Day: {k}')
-            k+=1
-    plt.legend()
-    plt.show()
     for i in range(len(all_vars)):
         plt.figure(i+1)
         plt.title(all_vars[i])
         plt.plot(all_obs[ :, i])
-        plt.plot(all_obs[ :, 0])
         plt.xlim(0-10, all_obs.shape[0]+10) 
+        plt.xlabel('Days')
     plt.show()
 
-    sys.exit(0)
-    for i in range(len(all_vars)):
-        plt.plot(norm(all_obs[ :, i]), label=all_vars[i])
-        plt.xlim(0-10, all_obs.shape[0]+10) 
-
-    plt.legend()
-    plt.show()
 
 
 

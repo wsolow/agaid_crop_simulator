@@ -1,7 +1,7 @@
 """Main API for simulating crop growth NPK fertilization and irrigation actions
 and the inclusion of planting and harvesting of the crop.
 
-Used for single year annual crop simulations.
+Used for single year perennial crop simulations.
 """
 import gymnasium as gym
 
@@ -16,16 +16,16 @@ from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
 from pcse.soil.soil_wrappers import SoilModuleWrapper_PP
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LW
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
-from pcse.crop.wofost8 import Wofost80
-from pcse.agromanager import AgroManagerHarvest
+from pcse.crop.wofost8 import Wofost80Perennial
+from pcse.agromanager import AgroManagerHarvestPerennial
 
 
-class Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
+class Perennial_Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
     """Simulates crop growth under NPK and Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
 
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
@@ -118,12 +118,12 @@ class Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
         self.log['reward'][self.date] = reward
         self.log['day'][self.date] = self.date  
 
-class Harvest_PP_Env(Harvest_NPK_Env):
+class Perennial_Harvest_PP_Env(Harvest_NPK_Env):
     """Simulates crop growth under abundant NPK and water
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Harvest_PP_Env`.
@@ -171,12 +171,12 @@ class Harvest_PP_Env(Harvest_NPK_Env):
             h_act=1
             return (p_act, h_act, 0, 0, 0, 0)
 
-class Harvest_Limited_NPK_Env(Harvest_NPK_Env):
+class Perennial_Harvest_Limited_NPK_Env(Harvest_NPK_Env):
     """Simulates crop growth under NPK Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Harvest_Limited_NPK_Env`.
@@ -246,12 +246,12 @@ class Harvest_Limited_NPK_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, p_amount, k_amount, 0)
         
-class Harvest_Limited_N_Env(Harvest_NPK_Env):
+class Perennial_Harvest_Limited_N_Env(Harvest_NPK_Env):
     """Simulates crop growth under Nitrogen Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Harvest_Limited_N_Env`.
@@ -310,12 +310,12 @@ class Harvest_Limited_N_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, 0, 0, 0)
  
-class Harvest_Limited_NW_Env(Harvest_NPK_Env):
+class Perennial_Harvest_Limited_NW_Env(Harvest_NPK_Env):
     """Simulates crop growth under Nitrogen and Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Harvest_Limited_NW_Env`.
@@ -383,12 +383,12 @@ class Harvest_Limited_NW_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, 0, 0, irrig_amount)
 
-class Harvest_Limited_W_Env(Harvest_NPK_Env):
+class Perennial_Harvest_Limited_W_Env(Harvest_NPK_Env):
     """Simulates crop growth under Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80, \
-                               agro=AgroManagerHarvest)
+    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80Perennial, \
+                               agro=AgroManagerHarvestPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Harvest_Limited_W_Env`.

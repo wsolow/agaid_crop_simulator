@@ -15,7 +15,7 @@ import yaml
 from utils import NPK_Args
 import tyro
 import utils
-import policies
+import wofost_gym.policies as policies
 
 np.set_printoptions(precision=3)
 def norm(x):

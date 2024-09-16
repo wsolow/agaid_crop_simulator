@@ -16,6 +16,7 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
 class WOFOST_Storage_Organ_Dynamics(SimulationObject):
+
     """Implementation of storage organ dynamics.
     
     Storage organs are the most simple component of the plant in WOFOST and

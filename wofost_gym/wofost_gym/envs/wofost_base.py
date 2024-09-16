@@ -34,7 +34,8 @@ class NPK_Env(gym.Env):
     WEATHER_YEARS = [1984, 2023]
     MISSING_YEARS = []
 
-    def __init__(self, args: NPK_Args, config:dict=None):
+    def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
+                 site_fpath:str, crop_fpath: str, config:dict=None):
         """Initialize the :class:`NPK_Env`.
 
         Args: 
@@ -64,11 +65,11 @@ class NPK_Env(gym.Env):
         self.log = self._init_log()
        
         # Load all model parameters from .yaml files
-        crop = pcse.fileinput.YAMLCropDataProvider(fpath=os.path.join(args.path, args.crop_fpath))
-        site = pcse.fileinput.YAMLSiteDataProvider(fpath=os.path.join(args.path, args.site_fpath))
+        crop = pcse.fileinput.YAMLCropDataProvider(fpath=os.path.join(base_fpath, crop_fpath))
+        site = pcse.fileinput.YAMLSiteDataProvider(fpath=os.path.join(base_fpath, site_fpath))
 
         self.parameterprovider = pcse.base.ParameterProvider(sitedata=site, cropdata=crop)
-        self.agromanagement = self._load_agromanagement_data(os.path.join(args.path, args.agro_fpath))
+        self.agromanagement = self._load_agromanagement_data(os.path.join(base_fpath, agro_fpath))
 
         # Get information from the agromanagement file
         self.location, self.year = self._load_site_parameters(self.agromanagement)
@@ -89,6 +90,8 @@ class NPK_Env(gym.Env):
         # Initialize crop engine
         self.model = Wofost8Engine(self.parameterprovider, self.weatherdataprovider,
                                          self.agromanagement, config=self.config)
+        
+        print('Successfully initialized WOFOST Engine. Ready to run simulation...')
         self.date = self.site_start_date
         
         # NPK/Irrigation action amounts
@@ -410,14 +413,16 @@ class Harvest_NPK_Env(NPK_Env):
     K = 4 # Potassium action
     I = 5 # Irrigation action 
 
-    def __init__(self, args: NPK_Args, config: dict=None):
+    def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
+                 site_fpath:str, crop_fpath: str, config: dict=None):
         """Initialize the :class:`Harvest_NPK_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
             config: Agromanagement configuration dictionary
         """
-        super().__init__(args, config)
+        super().__init__(args, base_fpath, agro_fpath, site_fpath, crop_fpath, \
+                         config=config)
 
         # Get specific crop names from agromanagement
         self.crop_name = self.agromanagement['CropCalendar']['crop_name']

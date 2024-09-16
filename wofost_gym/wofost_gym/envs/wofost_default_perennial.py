@@ -1,7 +1,7 @@
 """Main API for default WOFOST Gym environments with actions for NPK and water
 application.
 
-Used for single year annual crop simulations.
+Used for perennial crop simulations.
 """
 
 import gymnasium as gym
@@ -17,14 +17,14 @@ from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
 from pcse.soil.soil_wrappers import SoilModuleWrapper_PP
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LW
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
-from pcse.crop.wofost8 import Wofost80
-from pcse.agromanager import AgroManagerSingleYear
+from pcse.crop.wofost8 import Wofost80Perennial
+from pcse.agromanager import AgroManagerPerennial
 
-class Limited_NPKW_Env(NPK_Env):
+class Perennial_Limited_NPKW_Env(NPK_Env):
     """Simulates crop growth under NPK and water limited conditions
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Limited_NPKW_Env`.
@@ -77,12 +77,12 @@ class Limited_NPKW_Env(NPK_Env):
             
         return (n_amount, p_amount, k_amount, irrig_amount)
 
-class PP_Env(NPK_Env):
+class Perennial_PP_Env(NPK_Env):
     """Simulates Potential Production. That is how much the crop would grow
     with abundant NPK/Water
     """
-    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`PP_Env`.
@@ -106,11 +106,11 @@ class PP_Env(NPK_Env):
         """
         return (0, 0, 0, 0)
 
-class Limited_NPK_Env(NPK_Env):
+class Perennial_Limited_NPK_Env(NPK_Env):
     """Simulates crop growth under NPK Limited Production 
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
 
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
@@ -155,11 +155,11 @@ class Limited_NPK_Env(NPK_Env):
             
         return (n_amount, p_amount, k_amount, 0)
 
-class Limited_N_Env(NPK_Env):
+class Perennial_Limited_N_Env(NPK_Env):
     """Simulates crop growth under Nitrogen Limited Production 
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Limited_N_Env`.
@@ -194,11 +194,11 @@ class Limited_N_Env(NPK_Env):
             
         return (n_amount, 0, 0, 0)
 
-class Limited_NW_Env(NPK_Env):
+class Perennial_Limited_NW_Env(NPK_Env):
     """Simulates crop growth under Nitrogen and Water Limited Production 
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Limited_NW_Env`.
@@ -241,11 +241,11 @@ class Limited_NW_Env(NPK_Env):
             
         return (n_amount, 0, 0, irrig_amount)
 
-class Limited_W_Env(NPK_Env):
+class Perennial_Limited_W_Env(NPK_Env):
     """Simulates crop growth under Water Limited Production 
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80, \
-                               agro=AgroManagerSingleYear)
+    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80Perennial, \
+                               agro=AgroManagerPerennial)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
         """Initialize the :class:`Limited_W_Env`.

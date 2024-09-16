@@ -132,7 +132,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
-class WOFOST_Assimilation2(SimulationObject):
+class WOFOST_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine including
     effect of changes in atmospheric CO2 concentration.
 

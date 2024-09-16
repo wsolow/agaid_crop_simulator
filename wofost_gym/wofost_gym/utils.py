@@ -325,6 +325,7 @@ def set_params(env: gym.Env, args: WOFOST_Args):
         args - WOFOST_Args dataclass
     """
 
+    # NPK Soil Dynamics params
     """Base soil supply of N available through mineralization kg/ha"""
     if args.NSOILBASE is not None:
         env.parameterprovider.set_override("NSOILBASE", args.NSOILBASE, check=False)  
@@ -352,6 +353,15 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Initial K available in the K pool (kg/ha)"""
     if args.KAVAILI is not None:
         env.parameterprovider.set_override("KAVAILI", args.KAVAILI, check=False)
+    """Maximum N available in the N pool (kg/ha)"""
+    if args.NMAX is not None:
+        env.parameterprovider.set_override("NMAX", args.NMAX, check=False)
+    """Maximum P available in the P pool (kg/ha)"""
+    if args.PMAX is not None:
+        env.parameterprovider.set_override("PMAX", args.PMAX, check=False)
+    """Maximum K available in the K pool (kg/ha)"""
+    if args.KMAX is not None:
+        env.parameterprovider.set_override("KMAX", args.KMAX, check=False)
     """Background supply of N through atmospheric deposition (kg/ha/day)"""
     if args.BG_N_SUPPLY is not None:
         env.parameterprovider.set_override("BG_N_SUPPLY", args.BG_N_SUPPLY, check=False)
@@ -411,7 +421,7 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Conversion factor for assimilates to storage organs"""
     if args.CVO is not None:
         env.parameterprovider.set_override("CVO", args.CVO, check=False)
-    """onversion factor for assimilates to roots"""  
+    """Conversion factor for assimilates to roots"""  
     if args.CVR is not None:
         env.parameterprovider.set_override("CVR", args.CVR, check=False)
     """Conversion factor for assimilates to stems"""

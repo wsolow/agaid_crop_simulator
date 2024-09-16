@@ -63,6 +63,18 @@ SiteParameters:
        - 0.0
        - initial K available in the K pool     
        - ['kg ha-1']
+       NMAX:
+       - 50.
+       - maximum N available in the N pool
+       - ['kg ha-1']
+       PMAX:
+       - 50.
+       - maximum P available in the P pool
+       - ['kg ha-1']
+       KMAX:
+       - 50.
+       - maximum K available in the K pool
+       - ['kg ha-1']
        NSOILBASE:
        - 10.0
        - base soil supply of N available through mineralisation

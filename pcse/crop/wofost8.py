@@ -14,14 +14,14 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals
 from .. import exceptions as exc
-from .phenology import DVS_Phenology as Phenology
+from .phenology import Annual_Phenology, Perennial_Phenology
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics_NPK as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
-from .assimilation import WOFOST_Assimilation2 as Assimilation
+from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
@@ -48,7 +48,84 @@ class BaseCropModel(SimulationObject):
         9. Storage organ dynamics (self.so_dynamics)
         10. N/P/K crop dynamics (self.npk_crop_dynamics)
         12. N/P/K stress (self.npk_stress)
+
+        **Simulation parameters:**
+    
+    ======== =============================================== =======  ==========
+     Name     Description                                     Type     Unit
+    ======== =============================================== =======  ==========
+    CVL      Conversion factor for assimilates to leaves       SCr     -
+    CVO      Conversion factor for assimilates to storage      SCr     -
+             organs.
+    CVR      Conversion factor for assimilates to roots        SCr     -
+    CVS      Conversion factor for assimilates to stems        SCr     -
+    ======== =============================================== =======  ==========
+    
+    
+    **State variables:**
+
+    ============  ================================================= ==== ===============
+     Name          Description                                      Pbl      Unit
+    ============  ================================================= ==== ===============
+    TAGP          Total above-ground Production                      N    |kg ha-1|
+    GASST         Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT         Total crop transpiration accumulated over the
+                  crop cycle                                         N    cm
+    CEVST         Total soil evaporation accumulated over the
+                  crop cycle                                         N    cm
+    HI            Harvest Index (only calculated during              N    -
+                  `finalize()`)
+    DOF           Date representing the day of finish of the crop    N    -
+                  simulation.
+    FINISH_TYPE   String representing the reason for finishing the   N    -
+                  simulation: maturity, harvest, leave death, etc.
+    ============  ================================================= ==== ===============
+
+ 
+     **Rate variables:**
+
+    =======  ================================================ ==== =============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================ ==== =============
+    GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
+    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    MRES     Actual maintenance respiration rate, taking into
+             account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
+    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
+    ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
+    DMI      Total dry matter increase, calculated as ASRC
+             times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
+    ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
+    =======  ================================================ ==== =============
+
     """
+
+    # Parameters, rates and states which are relevant at the main crop
+    # simulation level
+    class Parameters(ParamTemplate):
+        CVL = Float(-99.)
+        CVO = Float(-99.)
+        CVR = Float(-99.)
+        CVS = Float(-99.)
+
+    class StateVariables(StatesTemplate):
+        TAGP = Float(-99.)
+        GASST = Float(-99.)
+        MREST = Float(-99.)
+        CTRAT = Float(-99.) # Crop total transpiration
+        CEVST = Float(-99.)
+        HI = Float(-99.)
+        DOF = Instance(date)
+        FINISH_TYPE = Unicode("")
+
+    class RateVariables(RatesTemplate):
+        GASS = Float(-99.)
+        PGASS = Float(-99.)
+        MRES = Float(-99.)
+        ASRC = Float(-99.)
+        DMI = Float(-99.)
+        ADMI = Float(-99.)
 
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
@@ -213,101 +290,7 @@ class Wofost80(BaseCropModel):
     
     """Top level object organizing the different components of the WOFOST crop
     simulation including the implementation of N/P/K dynamics.
-            
-    The CropSimulation object organizes the different processes of the crop
-    simulation. Moreover, it contains the parameters, rate and state variables
-    which are relevant at the level of the entire crop. The processes that are
-    implemented as embedded simulation objects consist of:
-    
-        1. Phenology (self.pheno)
-        2. Partitioning (self.part)
-        3. Assimilation (self.assim)
-        4. Maintenance respiration (self.mres)
-        5. Evapotranspiration (self.evtra)
-        6. Leaf dynamics (self.lv_dynamics)
-        7. Stem dynamics (self.st_dynamics)
-        8. Root dynamics (self.ro_dynamics)
-        9. Storage organ dynamics (self.so_dynamics)
-        10. N/P/K crop dynamics (self.npk_crop_dynamics)
-        12. N/P/K stress (self.npk_stress)
-
-    **Simulation parameters:**
-    
-    ======== =============================================== =======  ==========
-     Name     Description                                     Type     Unit
-    ======== =============================================== =======  ==========
-    CVL      Conversion factor for assimilates to leaves       SCr     -
-    CVO      Conversion factor for assimilates to storage      SCr     -
-             organs.
-    CVR      Conversion factor for assimilates to roots        SCr     -
-    CVS      Conversion factor for assimilates to stems        SCr     -
-    ======== =============================================== =======  ==========
-    
-    
-    **State variables:**
-
-    ============  ================================================= ==== ===============
-     Name          Description                                      Pbl      Unit
-    ============  ================================================= ==== ===============
-    TAGP          Total above-ground Production                      N    |kg ha-1|
-    GASST         Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT         Total crop transpiration accumulated over the
-                  crop cycle                                         N    cm
-    CEVST         Total soil evaporation accumulated over the
-                  crop cycle                                         N    cm
-    HI            Harvest Index (only calculated during              N    -
-                  `finalize()`)
-    DOF           Date representing the day of finish of the crop    N    -
-                  simulation.
-    FINISH_TYPE   String representing the reason for finishing the   N    -
-                  simulation: maturity, harvest, leave death, etc.
-    ============  ================================================= ==== ===============
-
- 
-     **Rate variables:**
-
-    =======  ================================================ ==== =============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================ ==== =============
-    GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
-    MRES     Actual maintenance respiration rate, taking into
-             account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
-    ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
-    DMI      Total dry matter increase, calculated as ASRC
-             times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
-    ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
-    =======  ================================================ ==== =============
-
     """
-    
-    # Parameters, rates and states which are relevant at the main crop
-    # simulation level
-    class Parameters(ParamTemplate):
-        CVL = Float(-99.)
-        CVO = Float(-99.)
-        CVR = Float(-99.)
-        CVS = Float(-99.)
-
-    class StateVariables(StatesTemplate):
-        TAGP = Float(-99.)
-        GASST = Float(-99.)
-        MREST = Float(-99.)
-        CTRAT = Float(-99.) # Crop total transpiration
-        CEVST = Float(-99.)
-        HI = Float(-99.)
-        DOF = Instance(date)
-        FINISH_TYPE = Unicode("")
-
-    class RateVariables(RatesTemplate):
-        GASS = Float(-99.)
-        PGASS = Float(-99.)
-        MRES = Float(-99.)
-        ASRC = Float(-99.)
-        DMI = Float(-99.)
-        ADMI = Float(-99.)
 
     def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
@@ -320,7 +303,61 @@ class Wofost80(BaseCropModel):
         self.kiosk = kiosk
         
         # Initialize components of the crop
-        self.pheno = Phenology(day, kiosk,  parvalues)
+        self.pheno = Annual_Phenology(day, kiosk,  parvalues)
+        self.part = Partitioning(day, kiosk, parvalues)
+        self.assim = Assimilation(day, kiosk, parvalues)
+        self.mres = MaintenanceRespiration(day, kiosk, parvalues)
+        self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
+        # Added for book keeping of N/P/K in crop and soil
+        self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
+        self.npk_stress = NPK_Stress(day, kiosk, parvalues)
+        
+
+        # Initial total (living+dead) above-ground biomass of the crop
+        TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+
+        self.states = self.StateVariables(kiosk,
+                publish=["TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", 
+                         "DOF", "FINISH_TYPE"],
+                TAGP=TAGP, GASST=0.0, MREST=0.0, CTRAT=0.0, HI=0.0, CEVST=0.0,
+                DOF=None, FINISH_TYPE=None)
+        
+        self.rates = self.RateVariables(kiosk, 
+                    publish=["GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI"])
+
+        # Check partitioning of TDWI over plant organs
+        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk.TWRT
+        if abs(checksum) > 0.0001:
+            msg = "Error in partitioning of initial biomass (TDWI)!"
+            raise exc.PartitioningError(msg)
+            
+        # assign handler for CROP_FINISH signal
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
+
+class Wofost80Perennial(BaseCropModel):
+    
+    """Top level object organizing the different components of the WOFOST crop
+    simulation including the implementation of N/P/K dynamics.
+            
+    """
+
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE model instance
+        :param parvalues: dictionary with parameter key/value pairs
+        """
+        
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+        
+        # Initialize components of the crop
+        self.pheno = Perennial_Phenology(day, kiosk,  parvalues)
         self.part = Partitioning(day, kiosk, parvalues)
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres = MaintenanceRespiration(day, kiosk, parvalues)

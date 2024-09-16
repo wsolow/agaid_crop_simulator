@@ -406,7 +406,7 @@ class Engine(BaseEngine):
         states = {"day":day}
         for var in self.mconf.OUTPUT_VARS:
             states[var] = self.get_variable(var)
-        self._saved_output.append(states)
+        self._saved_output = [states]
 
     def _save_summary_output(self):
         """Appends selected model variables to self._saved_summary_output.
@@ -415,7 +415,7 @@ class Engine(BaseEngine):
         states = {}
         for var in self.mconf.SUMMARY_OUTPUT_VARS:
             states[var] = self.get_variable(var)
-        self._saved_summary_output.append(states)
+        self._saved_summary_output = [states]
 
     def _save_terminal_output(self):
         """Appends selected model variables to self._saved_terminal_output.

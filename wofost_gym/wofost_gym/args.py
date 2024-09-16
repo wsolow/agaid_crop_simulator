@@ -32,6 +32,12 @@ class WOFOST_Args:
     PAVAILI: float = None
     """Initial K available in the K pool (kg/ha)"""
     KAVAILI: float = None
+    """Maximum N available in the N pool (kg/ha)"""
+    NMAX: float = None
+    """Maximum P available in the P pool (kg/ha)"""
+    PMAX: float = None
+    """Maximum K available in the K pool (kg/ha)"""
+    KMAX: float = None
     """Background supply of N through atmospheric deposition (kg/ha/day)"""
     BG_N_SUPPLY: float = None
     """Background supply of P through atmospheric deposition (kg/ha/day)"""
@@ -358,36 +364,15 @@ class NPK_Args:
     """Parameters for Agromanangement file"""
     ag_args: Agro_Args
 
-    """Location of data folder which contains multiple runs"""
-    save_folder: str = "data/"
-
-    """Environment ID"""
-    env_id: str = "lnpkw-v0"
-    """Env Reward Function"""
-    env_reward: str = "default"
     """Environment seed"""
     seed: int = 0
-    """Path"""
-    path: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
-    """Path to policy if using a trained Deep RL Agent Policy"""
-    """Typically in wandb/files/"""
-    agent_path: str = None
-    """Agent type (PPO, DQN, SAC)"""
-    agent_type: str = None
-    """Policy name if using a policy in the policies.py file"""
-    policy_name: str = None
-
+    
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'WSO', 'DVS'])
+    output_vars: list = field(default_factory = lambda: ['TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'WSO', 'DVS'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
-    """Year range, incremented by 1"""
-    year_range: list = field(default_factory = lambda: [1984, 2000])
-    """Latitude Range, incremented by .5"""
-    lat_range: list = field(default_factory = lambda: [50, 50])
-    """Longitude Range of values, incremented by .5"""
-    long_range: list = field(default_factory = lambda: [5, 5])
+    
 
     """Intervention Interval"""
     intvn_interval: int = 1
@@ -415,21 +400,5 @@ class NPK_Args:
     """Amount of water coefficient in cm/water"""
     irrig_amount: float  = 0.5
 
-    """Relative path to agromanagement configuration file"""
-    agro_fpath: str = "env_config/agro_config/test_agro_npk.yaml"
-    """Relative path to crop configuration file"""
-    crop_fpath: str = "env_config/crop_config/"
-    """Relative path to site configuration file"""
-    site_fpath: str = "env_config/site_config/"
-
     """Flag for resetting to random year"""
     random_reset: bool = False
-
-    """Maximum N applied in kg/ha (used in reward function)"""
-    max_n: float = 20
-    """Maximum K applied in kg/ha (used in reward function)"""
-    max_p: float = 20
-    """Maximum K applied in kg/ha (used in reward function)"""
-    max_k: float = 20
-    """Max water applied in cm (used in reward function)"""
-    max_w: float = 20

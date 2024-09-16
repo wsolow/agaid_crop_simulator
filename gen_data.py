@@ -14,7 +14,7 @@ import sys
 from utils import NPK_Args
 import tyro
 import utils
-import policies
+import wofost_gym.policies as policies
 from inspect import getmembers, isfunction
 from rl_algs.ppo import Agent as ppo
 from rl_algs.sac import Actor as sac

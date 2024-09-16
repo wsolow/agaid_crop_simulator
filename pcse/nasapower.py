@@ -511,7 +511,9 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             msg = "No cache file or forced update, getting data from NASA Power."
             self.logger.debug(msg)
             # No cache file, we really have to get the data from the NASA server
+            print('Retrieving NASA Weather. This may take a few seconds...')
             self._get_and_process_NASAPower(self.latitude, self.longitude)
+            print('Successfully retrieved NASA Weather.')
             return
 
         # get age of cache file, if age < 90 days then try to load it. If loading fails retrieve data
