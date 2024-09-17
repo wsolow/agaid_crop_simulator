@@ -13,7 +13,7 @@ from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
     
-class WOFOST_Root_Dynamics(SimulationObject):
+class Base_WOFOST_Root_Dynamics(SimulationObject):
     """Root biomass dynamics and rooting depth.
     
     Root growth and root biomass dynamics in WOFOST are separate processes,
@@ -198,4 +198,80 @@ class WOFOST_Root_Dynamics(SimulationObject):
         # New root depth
         states.RD += rates.RR
 
+class Annual_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
+    """Class for handling root dynamics of annual crops
+    """
+
+    def initialize(self, day:date , kiosk:VariableKiosk, parvalues:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+        
+        # INITIAL STATES
+        params = self.params
+        # Initial root depth states
+        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
+        RDM = rdmax
+        RD = params.RDI
+        # initial root biomass states
+        WRT  = params.TDWI * self.kiosk.FR
+        DWRT = 0.
+        TWRT = WRT + DWRT
+
+        self.states = self.StateVariables(kiosk, publish=["RD", "RDM", "WRT", 
+                                                          "DWRT", "TWRT"],
+                                          RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
+                                          TWRT=TWRT)
+        
+        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
+
+class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
+    """Class for handling root dynamics of annual crops
+    """
+
+    class Parameters(ParamTemplate):
+        RDI    = Float(-99.)
+        RRI    = Float(-99.)
+        RDMCR  = Float(-99.)
+        RDMSOL = Float(-99.)
+        TDWI   = AfgenTrait()
+        IAIRDU = Float(-99)
+        RDRRTB = AfgenTrait()
+                    
+    def initialize(self, day:date , kiosk:VariableKiosk, parvalues:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+        
+        # INITIAL STATES
+        params = self.params
+        # Initial root depth states
+        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
+        RDM = rdmax
+        RD = params.RDI
+        AGE = self.kiosk.AGE
+
+        # initial root biomass states
+        WRT  = params.TDWI(AGE) * self.kiosk.FR
+        DWRT = 0.
+        TWRT = WRT + DWRT
+
+        self.states = self.StateVariables(kiosk, publish=["RD", "RDM", "WRT", 
+                                                          "DWRT", "TWRT"],
+                                          RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
+                                          TWRT=TWRT)
+        
+        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
 

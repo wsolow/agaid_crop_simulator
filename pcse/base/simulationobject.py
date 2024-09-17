@@ -15,6 +15,7 @@ from ..utils.traitlets import (HasTraits,Instance, Dict)
 from ..utils import exceptions as exc
 from .variablekiosk import VariableKiosk
 from .states_rates import StatesTemplate, RatesTemplate, ParamTemplate
+from .parameter_providers import ParameterProvider
 
 class SimulationObject(HasTraits, DispatcherObject):
     """Base class for PCSE simulation objects.
@@ -32,6 +33,8 @@ class SimulationObject(HasTraits, DispatcherObject):
     rates = Instance(RatesTemplate)
     params = Instance(ParamTemplate)
     kiosk = Instance(VariableKiosk)
+
+    _par_values = Instance(ParameterProvider)
 
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
@@ -244,6 +247,8 @@ class SimulationObject(HasTraits, DispatcherObject):
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
                 simobj.zerofy()
+
+
 
 class AncillaryObject(HasTraits, DispatcherObject):
     """Base class for PCSE ancillary objects.

@@ -37,12 +37,15 @@ if __name__ == "__main__":
     reward_arr = []
 
     # Run simulation and store data
+    k = 0
     while not done:
         action = policy(obs)
         next_obs, rewards, done, trunc, info = env.step(action)
         obs_arr.append(obs)
         reward_arr.append(rewards)
         obs = next_obs
+        k+=1
+        print(k)
         if done:
             obs, info = env.reset()
             break

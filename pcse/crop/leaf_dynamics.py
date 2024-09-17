@@ -15,7 +15,7 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from ..nasapower import WeatherDataProvider
 
-class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
+class Base_WOFOST_Leaf_Dynamics_NPK(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
     NPK stress.
 
@@ -166,41 +166,9 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         :param kiosk: variable kiosk of this PCSE instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
-
-        self.kiosk = kiosk
-        self.params = self.Parameters(cropdata)
-
-        # CALCULATE INITIAL STATE VARIABLES
-        p = self.params
-        k = self.kiosk
-        # Initial leaf biomass
-        WLV = (p.TDWI * (1-k.FR)) * k.FL
-        DWLV = 0.
-        TWLV = WLV + DWLV
-
-        # First leaf class (SLA, age and weight)
-        SLA = deque([p.SLATB(k.DVS)])
-        LVAGE = deque([0.])
-        LV = deque([WLV])
-
-        # Initial values for leaf area
-        LAIEM = LV[0] * SLA[0]
-        LASUM = LAIEM
-        LAIEXP = LAIEM
-        LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
-
-        # Initialize StateVariables object
-        self.states = self.StateVariables(kiosk, 
-                publish=["LV", "SLA", "LVAGE", "LAIEM", "LASUM", "LAIEXP", 
-                         "LAIMAX", "LAI", "WLV", "DWLV", "TWLV"], 
-                LV=LV, SLA=SLA, LVAGE=LVAGE, LAIEM=LAIEM, LASUM=LASUM, LAIEXP=LAIEXP, 
-                LAIMAX=LAIMAX, LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
-        
-        self.rates = self.RateVariables(kiosk,
-                publish=["GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", 
-                         "DALV", "DRLV", "SLAT", "FYSAGE", "GLAIEX", "GLASOL"])
-
+        msg = "Implement `initialize` method in Leaf Dynamics subclass"
+        raise NotImplementedError(msg)
+    
     def _calc_LAI(self):
         """Compute LAI as Total leaf area Index as sum of leaf, pod and stem area
         """
@@ -344,3 +312,108 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         self.states.LV = tLV
         self.states.SLA = tSLA
         self.states.LVAGE = tLVAGE
+
+class Annual_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
+    """Class for simulating leaf dynamics of annual crops
+    """
+    def initialize(self, day:date, kiosk:VariableKiosk, cropdata:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        """
+
+        self.kiosk = kiosk
+        self.params = self.Parameters(cropdata)
+
+        # CALCULATE INITIAL STATE VARIABLES
+        p = self.params
+        k = self.kiosk
+        # Initial leaf biomass
+        WLV = (p.TDWI * (1-k.FR)) * k.FL
+        DWLV = 0.
+        TWLV = WLV + DWLV
+
+        # First leaf class (SLA, age and weight)
+        SLA = deque([p.SLATB(k.DVS)])
+        LVAGE = deque([0.])
+        LV = deque([WLV])
+
+        # Initial values for leaf area
+        LAIEM = LV[0] * SLA[0]
+        LASUM = LAIEM
+        LAIEXP = LAIEM
+        LAIMAX = LAIEM
+        LAI = LASUM + k.SAI + k.PAI
+
+        # Initialize StateVariables object
+        self.states = self.StateVariables(kiosk, 
+                publish=["LV", "SLA", "LVAGE", "LAIEM", "LASUM", "LAIEXP", 
+                         "LAIMAX", "LAI", "WLV", "DWLV", "TWLV"], 
+                LV=LV, SLA=SLA, LVAGE=LVAGE, LAIEM=LAIEM, LASUM=LASUM, LAIEXP=LAIEXP, 
+                LAIMAX=LAIMAX, LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
+        
+        self.rates = self.RateVariables(kiosk,
+                publish=["GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", 
+                         "DALV", "DRLV", "SLAT", "FYSAGE", "GLAIEX", "GLASOL"])
+        
+class Perennial_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
+    """Class for simulating leaf dynamics of perennial crops
+    """
+
+    class Parameters(ParamTemplate):
+        RGRLAI = Float(-99.)
+        SPAN = Float(-99.)
+        TBASE = Float(-99.)
+        PERDL = Float(-99.)
+        TDWI = AfgenTrait()
+        SLATB = AfgenTrait()
+        KDIFTB = AfgenTrait()
+        RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
+        NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
+        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
+                                  # LAI increase (during juvenile phase)
+
+    def initialize(self, day:date, kiosk:VariableKiosk, cropdata:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        """
+
+        self.kiosk = kiosk
+        self.params = self.Parameters(cropdata)
+
+        # CALCULATE INITIAL STATE VARIABLES
+        p = self.params
+        k = self.kiosk
+
+        # Initial leaf biomass
+        WLV = (p.TDWI(k.AGE) * (1-k.FR)) * k.FL
+        DWLV = 0.
+        TWLV = WLV + DWLV
+
+        # First leaf class (SLA, age and weight)
+        SLA = deque([p.SLATB(k.DVS)])
+        LVAGE = deque([0.])
+        LV = deque([WLV])
+
+        # Initial values for leaf area
+        LAIEM = LV[0] * SLA[0]
+        LASUM = LAIEM
+        LAIEXP = LAIEM
+        LAIMAX = LAIEM
+        LAI = LASUM + k.SAI + k.PAI
+
+        # Initialize StateVariables object
+        self.states = self.StateVariables(kiosk, 
+                publish=["LV", "SLA", "LVAGE", "LAIEM", "LASUM", "LAIEXP", 
+                         "LAIMAX", "LAI", "WLV", "DWLV", "TWLV"], 
+                LV=LV, SLA=SLA, LVAGE=LVAGE, LAIEM=LAIEM, LASUM=LASUM, LAIEXP=LAIEXP, 
+                LAIMAX=LAIMAX, LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
+        
+        self.rates = self.RateVariables(kiosk,
+                publish=["GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", 
+                         "DALV", "DRLV", "SLAT", "FYSAGE", "GLAIEX", "GLASOL"])
+        
+        

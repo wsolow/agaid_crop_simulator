@@ -13,14 +13,20 @@ from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals
+from ..util import Afgen
 from .. import exceptions as exc
 from .phenology import Annual_Phenology, Perennial_Phenology
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
-from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics_NPK as Leaf_Dynamics
-from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
-    Storage_Organ_Dynamics
+from .stem_dynamics import Annual_WOFOST_Stem_Dynamics as Annual_Stem_Dynamics
+from .root_dynamics import Annual_WOFOST_Root_Dynamics as Annual_Root_Dynamics
+from .leaf_dynamics import Annual_WOFOST_Leaf_Dynamics_NPK as Annual_Leaf_Dynamics
+from .stem_dynamics import Perennial_WOFOST_Stem_Dynamics as Perennial_Stem_Dynamics
+from .root_dynamics import Perennial_WOFOST_Root_Dynamics as Perennial_Root_Dynamics
+from .leaf_dynamics import Perennial_WOFOST_Leaf_Dynamics_NPK as Perennial_Leaf_Dynamics
+from .storage_organ_dynamics import Annual_WOFOST_Storage_Organ_Dynamics as \
+    Annual_Storage_Organ_Dynamics
+from .storage_organ_dynamics import Perennial_WOFOST_Storage_Organ_Dynamics as \
+    Perennial_Storage_Organ_Dynamics
 from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
@@ -308,10 +314,10 @@ class Wofost80(BaseCropModel):
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
-        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
-        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
+        self.ro_dynamics = Annual_Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Annual_Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Annual_Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Annual_Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
         self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
         self.npk_stress = NPK_Stress(day, kiosk, parvalues)
@@ -345,6 +351,7 @@ class Wofost80Perennial(BaseCropModel):
     simulation including the implementation of N/P/K dynamics.
             
     """
+    parvalues: dict
 
     def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
@@ -352,9 +359,9 @@ class Wofost80Perennial(BaseCropModel):
         :param kiosk: variable kiosk of this PCSE model instance
         :param parvalues: dictionary with parameter key/value pairs
         """
-        
         self.params = self.Parameters(parvalues)
         self.kiosk = kiosk
+        self._par_values = parvalues
         
         # Initialize components of the crop
         self.pheno = Perennial_Phenology(day, kiosk,  parvalues)
@@ -362,10 +369,10 @@ class Wofost80Perennial(BaseCropModel):
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
-        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
-        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
+        self.ro_dynamics = Perennial_Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Perennial_Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Perennial_Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Perennial_Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
         self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
         self.npk_stress = NPK_Stress(day, kiosk, parvalues)
@@ -373,7 +380,6 @@ class Wofost80Perennial(BaseCropModel):
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
-
         self.states = self.StateVariables(kiosk,
                 publish=["TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", 
                          "DOF", "FINISH_TYPE"],
@@ -383,12 +389,170 @@ class Wofost80Perennial(BaseCropModel):
         self.rates = self.RateVariables(kiosk, 
                     publish=["GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI"])
 
+        AGE = self.kiosk["AGE"]
         # Check partitioning of TDWI over plant organs
-        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk.TWRT
+        checksum = Afgen(self._par_values["TDWI"])(AGE) - self.states.TAGP - self.kiosk.TWRT
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)
             
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+        self._connect_signal(self._on_DORMANT, signal=signals.crop_dormant)
 
+    @prepare_rates
+    def calc_rates(self, day:date, drv:WeatherDataProvider):
+        """Calculate state rates for integration 
+        """
+        params = self.params
+        rates  = self.rates
+        k = self.kiosk
+
+        # Phenology
+        self.pheno.calc_rates(day, drv)
+        crop_stage = self.pheno.get_variable("STAGE")
+
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        if crop_stage == "emerging" or crop_stage == "dormant":
+            return
+
+        # Potential assimilation
+        rates.PGASS = self.assim(day, drv)
+        
+        # (evapo)transpiration rates
+        self.evtra(day, drv)
+
+        # nutrient status and reduction factor
+        NNI, NPKI, RFNPK = self.npk_stress(day, drv)
+
+        # Select minimum of nutrient and water/oxygen stress
+        reduction = min(RFNPK, k.RFTRA)
+
+        rates.GASS = rates.PGASS * reduction
+
+        # Respiration
+        PMRES = self.mres(day, drv)
+        rates.MRES = min(rates.GASS, PMRES)
+
+        # Net available assimilates
+        rates.ASRC = rates.GASS - rates.MRES
+
+        # DM partitioning factors (pf), conversion factor (CVF),
+        # dry matter increase (DMI) and check on carbon balance
+        pf = self.part.calc_rates(day, drv)
+        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
+                  (1.-pf.FR) + pf.FR/params.CVR)
+        rates.DMI = CVF * rates.ASRC
+        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
+                                   CVF, pf)
+
+        # distribution over plant organ
+        # Below-ground dry matter increase and root dynamics
+        self.ro_dynamics.calc_rates(day, drv)
+        # Aboveground dry matter increase and distribution over stems,
+        # leaves, organs
+        rates.ADMI = (1. - pf.FR) * rates.DMI
+        self.st_dynamics.calc_rates(day, drv)
+        self.so_dynamics.calc_rates(day, drv)
+        self.lv_dynamics.calc_rates(day, drv)
+        
+        # Update nutrient rates in crop and soil
+        self.npk_crop_dynamics.calc_rates(day, drv)
+
+    @prepare_states
+    def integrate(self, day:date, delt:float=1.0):
+        """Integrate state rates
+        """
+        rates = self.rates
+        states = self.states
+
+        # crop stage before integration
+        crop_stage = self.pheno.get_variable("STAGE")
+
+        # Phenology
+        self.pheno.integrate(day, delt)
+
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        # Just run a touch() to to ensure that all state variables are available
+        # in the kiosk
+        if crop_stage == "emerging" or crop_stage == "dormant":
+            self.touch()
+            return
+
+        # Partitioning
+        self.part.integrate(day, delt)
+        
+        # Integrate states on leaves, storage organs, stems and roots
+        self.ro_dynamics.integrate(day, delt)
+        self.so_dynamics.integrate(day, delt)
+        self.st_dynamics.integrate(day, delt)
+        self.lv_dynamics.integrate(day, delt)
+
+        # Update nutrient states in crop and soil
+        self.npk_crop_dynamics.integrate(day, delt)
+
+        # Integrate total (living+dead) above-ground biomass of the crop
+        states.TAGP = self.kiosk.TWLV + \
+                      self.kiosk.TWST + \
+                      self.kiosk.TWSO
+
+        # total gross assimilation and maintenance respiration 
+        states.GASST += rates.GASS
+        states.MREST += rates.MRES
+        
+        # total crop transpiration and soil evaporation
+        states.CTRAT += self.kiosk.TRA
+        states.CEVST += self.kiosk.EVS
+
+    def _on_DORMANT(self, day:date, drv:WeatherDataProvider):
+        """Handler for recieving the crop dormancy signal. Upon dormancy, reset
+        all crop parameters
+        """
+        print('DORMANCY')
+        # Deregister parameters from kiosk
+        self.part._delete()
+        self.assim._delete()
+        self.mres._delete()
+        self.evtra._delete()
+        self.ro_dynamics._delete()
+        self.st_dynamics._delete()
+        self.so_dynamics._delete()
+        self.lv_dynamics._delete()
+        # Added for book keeping of N/P/K in crop and soil
+        self.npk_crop_dynamics._delete()
+        self.npk_stress._delete()
+
+        # Reregister all params
+        self.part = Partitioning(day, self.kiosk, self._par_values)
+        self.assim = Assimilation(day, self.kiosk, self._par_values)
+        self.mres = MaintenanceRespiration(day, self.kiosk, self._par_values)
+        self.evtra = Evapotranspiration(day, self.kiosk, self._par_values)
+        self.ro_dynamics = Perennial_Root_Dynamics(day, self.kiosk, self._par_values)
+        self.st_dynamics = Perennial_Stem_Dynamics(day, self.kiosk, self._par_values)
+        self.so_dynamics = Perennial_Storage_Organ_Dynamics(day, self.kiosk, self._par_values)
+        self.lv_dynamics = Perennial_Leaf_Dynamics(day, self.kiosk, self._par_values)
+        # Added for book keeping of N/P/K in crop and soil
+        self.npk_crop_dynamics = NPK_crop(day, self.kiosk, self._par_values)
+        self.npk_stress = NPK_Stress(day, self.kiosk, self._par_values)
+
+        # Manually reset all WOFOST8 crop variables
+        s = self.states
+        r = self.rates
+        
+        # Initial total (living+dead) above-ground biomass of the crop
+        s.TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+        s.GASST = s.MREST = s.CTRAT = s.CEVST = s.HI = 0
+        s.DOF = s.FINISH_TYPE = None
+
+        r.GASS = r.PGASS = r.MRES = r.ASRC = r.DMI = r.ADMI = 0
+
+        AGE = self.kiosk["AGE"]
+        # Check partitioning of TDWI over plant organs
+        checksum = Afgen(self._par_values["TDWI"])(AGE) - self.states.TAGP - self.kiosk.TWRT
+        if abs(checksum) > 0.0001:
+            msg = "Error in partitioning of initial biomass (TDWI)!"
+            raise exc.PartitioningError(msg)
+
+  

@@ -106,6 +106,17 @@ keyword arguments with `signals.crop_finish`:
       from the system, for example for the implementation of crop rotations.
       Defaults to False.
 
+**CROP_DORMANT**
+
+ Indicates that the current crop is now dormant::
+ 
+     self._send_signal(signal=signals.crop_dormant, day=<date>,)
+
+keyword arguments with `signals.crop_dormant`:
+
+    * day: Current date
+
+
 **TERMINATE**
  
  Indicates that the entire system should terminate (crop & soil water balance) and
@@ -165,9 +176,9 @@ crop_start = "CROP_START"
 crop_emerged = "CROP_EMERGED"
 crop_finish = "CROP_FINISH"
 crop_harvest = "CROP_HARVEST"
+crop_dormant = "CROP_DORMANT"
 terminate = "TERMINATE"
 output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"
 apply_npk = "APPLY_NPK"
-apply_n = "APPLY_N"
 irrigate = "IRRIGATE" 

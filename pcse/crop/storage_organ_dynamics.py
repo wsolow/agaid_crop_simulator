@@ -15,7 +15,7 @@ from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
-class WOFOST_Storage_Organ_Dynamics(SimulationObject):
+class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
 
     """Implementation of storage organ dynamics.
     
@@ -108,30 +108,8 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                 key/value pairs
         """
 
-        self.params = self.Parameters(parvalues)
-        self.kiosk = kiosk
-        
-        self._connect_signal(self._on_CROP_HARVEST, signal=signals.crop_harvest)
-
-        # INITIAL STATES
-        params = self.params
-        # Initial storage organ biomass
-        FO = self.kiosk["FO"]
-        FR = self.kiosk["FR"]
-        WSO  = (params.TDWI * (1-FR)) * FO
-        DWSO = 0.
-        HWSO = 0.
-        LHW = HWSO
-        TWSO = WSO + DWSO
-        # Initial Pod Area Index
-        PAI = WSO * params.SPA
-
-        self.states = self.StateVariables(kiosk, publish=["WSO", "DWSO", "TWSO", 
-                                                          "HWSO", "PAI", "LHW"],
-                                          WSO=WSO, DWSO=DWSO, TWSO=TWSO, HWSO=HWSO,
-                                          PAI=PAI, LHW=LHW)
-        
-        self.rates = self.RateVariables(kiosk, publish=[ "GRSO", "DRSO", "GWSO", "DHSO"])
+        msg = "Implement `initialize` in Storage Organ subclass"
+        raise NotImplementedError(msg)
 
     @prepare_rates
     def calc_rates(self, day:date, drv:WeatherDataProvider):
@@ -175,3 +153,87 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         """
         self.states.LHW = (efficiency) * self.states.HWSO
         self.states.HWSO = (1-efficiency) * self.states.HWSO
+
+class Annual_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics):
+
+    """Class for handling annual crop storage organs
+    """
+    class Parameters(ParamTemplate):      
+        SPA    = Float(-99.)
+        TDWI   = Float(-99.)
+        RDRSOB = AfgenTrait()
+
+    def initialize(self, day: date, kiosk: VariableKiosk, parvalues: dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+        
+        self._connect_signal(self._on_CROP_HARVEST, signal=signals.crop_harvest)
+
+        # INITIAL STATES
+        params = self.params
+        # Initial storage organ biomass
+        FO = self.kiosk["FO"]
+        FR = self.kiosk["FR"]
+        WSO  = (params.TDWI * (1-FR)) * FO
+        DWSO = 0.
+        HWSO = 0.
+        LHW = HWSO
+        TWSO = WSO + DWSO
+        # Initial Pod Area Index
+        PAI = WSO * params.SPA
+
+        self.states = self.StateVariables(kiosk, publish=["WSO", "DWSO", "TWSO", 
+                                                          "HWSO", "PAI", "LHW"],
+                                          WSO=WSO, DWSO=DWSO, TWSO=TWSO, HWSO=HWSO,
+                                          PAI=PAI, LHW=LHW)
+        
+        self.rates = self.RateVariables(kiosk, publish=[ "GRSO", "DRSO", "GWSO", "DHSO"])
+
+class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics):
+    """Class for handling annual crop storage organs
+    """
+    class Parameters(ParamTemplate):      
+        SPA    = Float(-99.)
+        TDWI   = AfgenTrait()
+        RDRSOB = AfgenTrait()
+
+    def initialize(self, day: date, kiosk: VariableKiosk, parvalues: dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+        
+        self._connect_signal(self._on_CROP_HARVEST, signal=signals.crop_harvest)
+
+        # INITIAL STATES
+        params = self.params
+        # Initial storage organ biomass
+        FO = self.kiosk["FO"]
+        FR = self.kiosk["FR"]
+        AGE = self.kiosk["AGE"]
+        
+        WSO  = (params.TDWI(AGE) * (1-FR)) * FO
+        DWSO = 0.
+        HWSO = 0.
+        LHW = HWSO
+        TWSO = WSO + DWSO
+        # Initial Pod Area Index
+        PAI = WSO * params.SPA
+
+        self.states = self.StateVariables(kiosk, publish=["WSO", "DWSO", "TWSO", 
+                                                          "HWSO", "PAI", "LHW"],
+                                          WSO=WSO, DWSO=DWSO, TWSO=TWSO, HWSO=HWSO,
+                                          PAI=PAI, LHW=LHW)
+        
+        self.rates = self.RateVariables(kiosk, publish=[ "GRSO", "DRSO", "GWSO", "DHSO"])
+

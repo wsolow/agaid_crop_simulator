@@ -274,8 +274,6 @@ class StatesTemplate(StatesRatesCommon):
 
         # Check if kwargs is empty, otherwise issue a warning
         if len(kwargs) > 0:
-            print(kwargs)
-            print('WE ARE HERE')
             msg = ("Initial value given for unknown state variable(s): " +
                    "%s") % kwargs.keys()
             logging.warn(msg)

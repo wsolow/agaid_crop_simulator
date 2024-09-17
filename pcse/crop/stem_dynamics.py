@@ -13,7 +13,7 @@ from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
-class WOFOST_Stem_Dynamics(SimulationObject):
+class Base_WOFOST_Stem_Dynamics(SimulationObject):
     """Implementation of stem biomass dynamics.
     
     Stem biomass increase results from the assimilates partitioned to
@@ -101,24 +101,8 @@ class WOFOST_Stem_Dynamics(SimulationObject):
                 key/value pairs
         """
         
-        self.params = self.Parameters(parvalues)
-        self.kiosk  = kiosk
-
-        # INITIAL STATES
-        params = self.params
-        # Set initial stem biomass
-        FS = self.kiosk["FS"]
-        FR = self.kiosk["FR"]
-        WST  = (params.TDWI * (1-FR)) * FS
-        DWST = 0.
-        TWST = WST + DWST
-        # Initial Stem Area Index
-        DVS = self.kiosk["DVS"]
-        SAI = WST * params.SSATB(DVS)
-
-        self.states = self.StateVariables(kiosk, publish=["WST", "DWST", "TWST", "SAI"],
-                                          WST=WST, DWST=DWST, TWST=TWST, SAI=SAI)
-        self.rates  = self.RateVariables(kiosk, publish=["GRST", "DRST", "GWST"])
+        msg = "Initialize() should be implemented by subclass"
+        raise NotImplementedError(msg)
 
     @prepare_rates
     def calc_rates(self, day:date, drv:WeatherDataProvider):
@@ -153,3 +137,72 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         # Calculate Stem Area Index (SAI)
         DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)
+
+class Annual_WOFOST_Stem_Dynamics(Base_WOFOST_Stem_Dynamics):
+    """Class for Stem Dynamics of annual crops
+    """
+
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+        
+        self.params = self.Parameters(parvalues)
+        self.kiosk  = kiosk
+
+        # INITIAL STATES
+        params = self.params
+        # Set initial stem biomass
+        FS = self.kiosk["FS"]
+        FR = self.kiosk["FR"]
+        WST  = (params.TDWI * (1-FR)) * FS
+        DWST = 0.
+        TWST = WST + DWST
+        # Initial Stem Area Index
+        DVS = self.kiosk["DVS"]
+        SAI = WST * params.SSATB(DVS)
+
+        self.states = self.StateVariables(kiosk, publish=["WST", "DWST", "TWST", "SAI"],
+                                          WST=WST, DWST=DWST, TWST=TWST, SAI=SAI)
+        self.rates  = self.RateVariables(kiosk, publish=["GRST", "DRST", "GWST"])
+
+class Perennial_WOFOST_Stem_Dynamics(Base_WOFOST_Stem_Dynamics):
+    """Class for Stem Dynamics of annual crops
+    """
+
+    class Parameters(ParamTemplate):      
+        RDRSTB = AfgenTrait()
+        SSATB  = AfgenTrait()
+        TDWI   = AfgenTrait()
+    
+    def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+        
+        self.params = self.Parameters(parvalues)
+        self.kiosk  = kiosk
+
+        # INITIAL STATES
+        params = self.params
+        # Set initial stem biomass
+        FS = self.kiosk["FS"]
+        FR = self.kiosk["FR"]
+        AGE = self.kiosk["AGE"]
+
+        WST  = (params.TDWI(AGE) * (1-FR)) * FS
+        DWST = 0.
+        TWST = WST + DWST
+        # Initial Stem Area Index
+        DVS = self.kiosk["DVS"]
+        SAI = WST * params.SSATB(DVS)
+
+        self.states = self.StateVariables(kiosk, publish=["WST", "DWST", "TWST", "SAI"],
+                                          WST=WST, DWST=DWST, TWST=TWST, SAI=SAI)
+        self.rates  = self.RateVariables(kiosk, publish=["GRST", "DRST", "GWST"])
