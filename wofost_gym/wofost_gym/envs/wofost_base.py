@@ -59,8 +59,6 @@ class NPK_Env(gym.Env):
         self.weather_vars = args.weather_vars
         self.output_vars = args.output_vars
 
-        # Check that the configuration is valid
-        self._validate()
 
         self.log = self._init_log()
        
@@ -83,6 +81,9 @@ class NPK_Env(gym.Env):
 
         self.weatherdataprovider = NASAPowerWeatherDataProvider(*self.location)
         self.train_weather_data = self._get_train_weather_data()
+
+        # Check that the configuration is valid
+        self._validate()
         
         # Override parameters - must happen before initiaziing crop engine
         utils.set_params(self, self.wofost_params)
@@ -119,6 +120,7 @@ class NPK_Env(gym.Env):
         Args:
             seed: int - seed for the environment"""
         self.np_random_seed, seed = gym.utils.seeding.np_random(seed)
+        np.random.seed(seed)
         return [seed]
         
     def render(self, mode: str='human', close: bool=False):
@@ -138,18 +140,18 @@ class NPK_Env(gym.Env):
 
         if 'year' in kwargs:
             self.year = kwargs['year']
-            if self.year <= self.WEATHER_YEARS[0] or self.year >= self.WEATHER_YEARS[1]+1 \
+            if self.year < self.WEATHER_YEARS[0] or self.year > self.WEATHER_YEARS[1] \
                 or self.year in self.MISSING_YEARS:
                 msg = f"Specified year {self.year} outside of range {self.WEATHER_YEARS}"
                 raise exc.ResetException(msg) 
 
         if 'location' in kwargs:
             self.location = kwargs['location']
-            if self.location[0] <= -90 or self.location >= 90:
+            if self.location[0] <= -90 or self.location[0] >= 90:
                 msg = f"Latitude {self.location[0]} outside of range (-90, 90)"
                 raise exc.ResetException(msg)
             
-            if self.location[1] <= -180 or self.location >= 180:
+            if self.location[1] <= -180 or self.location[1] >= 180:
                 msg = f"Longitude {self.location[0]} outside of range (-180, 180)"
                 raise exc.ResetException(msg)
 
@@ -236,6 +238,19 @@ class NPK_Env(gym.Env):
             msg = 'Crop State \'WSO\' variable must be in output variables'
             raise exc.WOFOSTGymError(msg)
         
+        if self.year < self.WEATHER_YEARS[0] or self.year > self.WEATHER_YEARS[1] \
+            or self.year in self.MISSING_YEARS:
+            msg = f"Specified year {self.year} outside of range {self.WEATHER_YEARS}"
+            raise exc.ResetException(msg) 
+
+        if self.location[0] <= -90 or self.location[0] >= 90:
+            msg = f"Latitude {self.location[0]} outside of range (-90, 90)"
+            raise exc.ResetException(msg)
+        
+        if self.location[1] <= -180 or self.location[1] >= 180:
+            msg = f"Longitude {self.location[0]} outside of range (-180, 180)"
+            raise exc.ResetException(msg)
+        
     def _load_agromanagement_data(self, path: str):
         """Load the Agromanagement .yaml file
         
@@ -270,7 +285,8 @@ class NPK_Env(gym.Env):
     def _get_train_weather_data(self, year_range: list=WEATHER_YEARS, \
                                 missing_years: list=MISSING_YEARS):
         """Return the valid years of historical weather data for use in the 
-        NASA Weather Provider.
+        NASA Weather Provider. Helpful for providing a cyclical list of data for 
+        multi-year simulations.
 
         Generally do not need to specify these arguments, but some locations may
         not have the requisite data for that year.
@@ -279,7 +295,20 @@ class NPK_Env(gym.Env):
             year_range: list of [low, high]
             missing_years: list of years that have missing data
         """
-        return [year for year in np.arange(year_range[0], year_range[1]+1) if year not in missing_years]
+        valid_years = np.array([year for year in np.arange(year_range[0], year_range[1]+1) if year not in missing_years])
+
+        leap_inds = np.argwhere(valid_years % 4 == 0).flatten()
+        non_leap_inds = np.argwhere(valid_years % 4 != 0).flatten()
+        leap_years = valid_years[valid_years % 4 == 0]
+        non_leap_years = valid_years[valid_years % 4 != 0]
+
+        np.random.shuffle(leap_years)
+        np.random.shuffle(non_leap_years)
+
+        valid_years[leap_inds] = leap_years
+        valid_years[non_leap_inds] = non_leap_years
+
+        return valid_years
     
     def _get_weather(self, date:date):
         """Get the weather for a range of days from the NASA Weather Provider.
@@ -307,12 +336,16 @@ class NPK_Env(gym.Env):
 
     def _get_weather_day(self, date: date):
         """Get the weather for a specific date based on the desired weather
-        variables
+        variables. Tracks and replaces year to ensure cyclic functionality of weather
         
         Args:
             date: datetime - day which to get weather information
         """
-        weatherdatacontainer = self.weatherdataprovider(date)
+        # Get the index of the current year from which to draw weather
+        site_start_ind = np.argwhere(self.train_weather_data == self.site_start_date.year).flatten()[0]
+        weather_year_ind = (site_start_ind+date.year-self.site_start_date.year) % len(self.train_weather_data)
+        weatherdatacontainer = self.weatherdataprovider( 
+                            date.replace(year=self.train_weather_data[weather_year_ind]))
 
         return [getattr(weatherdatacontainer, attr) for attr in self.weather_vars]
     

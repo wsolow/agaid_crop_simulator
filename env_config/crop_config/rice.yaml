@@ -595,6 +595,10 @@ CropParameters:
             -  465
             - temperature sum from anthesis to maturity
             - ['C.d']
+            TSUM3:
+            - 350
+            - temperature sum from maturity to death
+            - ['C.d']
             DTSMTB:
             - [ 0.0,  0.0,
                11.0,  0.0,

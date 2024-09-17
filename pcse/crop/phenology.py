@@ -9,7 +9,7 @@ Modified by Will Solow, 2024
 """
 import datetime
 
-from ..utils.traitlets import Float, Instance, Enum, Bool
+from ..utils.traitlets import Float, Instance, Enum, Bool, Int
 from ..utils.decorators import prepare_rates, prepare_states
 
 from ..util import limit, AfgenTrait, daylength
@@ -212,6 +212,7 @@ class Base_Phenology(SimulationObject):
     TEFFMX   Maximum effective temperature for emergence    SCr        |C|
     TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
     TSUM2    Temperature sum from anthesis to maturity      SCr        |C| day
+    TSUM3    Temperature sum form maturity to death         SCr        |C| day
     IDSL     Switch for phenological development options    SCr        -
              temperature only (IDSL=0), including           SCr
              daylength (IDSL=1) and including               
@@ -277,6 +278,7 @@ class Base_Phenology(SimulationObject):
         TEFFMX = Float(-99.)  # Max eff temperature for emergence
         TSUM1  = Float(-99.)  # Temperature sum emergence to anthesis
         TSUM2  = Float(-99.)  # Temperature sum anthesis to maturity
+        TSUM3  = Float(-99.)  # Temperature sum from maturity to death
         IDSL   = Float(-99.)  # Switch for photoperiod (1) and vernalisation (2)
         DLO    = Float(-99.)  # Optimal day length for phenol. development
         DLC    = Float(-99.)  # Critical day length for phenol. development
@@ -339,6 +341,291 @@ class Base_Phenology(SimulationObject):
             DVS = -0.1
 
         else:
+            msg = "Unknown start type: %s. Are you using the corect Phenology \
+                module (Calling the correct Gym Environment)?" % p.CROP_START_TYPE
+            raise exc.PCSEError(msg)
+            
+        return DVS, DOS, DOE, STAGE
+
+    @prepare_rates
+    def calc_rates(self, day, drv):
+        """Calculates the rates for phenological development
+        """
+        p = self.params
+        r = self.rates
+        s = self.states
+
+        # Day length sensitivity
+        DVRED = 1.
+        if p.IDSL >= 1:
+            DAYLP = daylength(day, drv.LAT)
+            DVRED = limit(0., 1., (DAYLP - p.DLC)/(p.DLO - p.DLC))
+
+        # Vernalisation
+        VERNFAC = 1.
+        if p.IDSL >= 2:
+            if s.STAGE == 'vegetative':
+                self.vernalisation.calc_rates(day, drv)
+                VERNFAC = self.kiosk["VERNFAC"]
+
+        # Development rates
+        if s.STAGE == "emerging":
+            r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
+            r.DTSUM = 0.
+            r.DVR = 0.1 * r.DTSUME/p.TSUMEM
+
+        elif s.STAGE == 'vegetative':
+            r.DTSUME = 0.
+            r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
+            r.DVR = r.DTSUM/p.TSUM1
+        elif s.STAGE == 'reproductive':
+            r.DTSUME = 0.
+            r.DTSUM = p.DTSMTB(drv.TEMP)
+            r.DVR = r.DTSUM/p.TSUM2
+        elif s.STAGE == 'mature':
+            r.DTSUME = 0.
+            r.DTSUM = p.DTSMTB(drv.TEMP)
+            r.DVR = r.DTSUM/p.TSUM3
+        elif s.STAGE == 'dead':
+            r.DTSUME = 0.
+            r.DTSUM = 0.
+            r.DVR = 0.
+        else:  # Problem: no stage defined
+            msg = "Unrecognized STAGE defined in phenology submodule: %s."
+            raise exc.PCSEError(msg, self.states.STAGE)
+        
+        msg = "Finished rate calculation for %s"
+        self.logger.debug(msg % day)
+        
+    @prepare_states
+    def integrate(self, day, delt=1.0):
+        """Updates the state variable and checks for phenologic stages
+        """
+
+        p = self.params
+        r = self.rates
+        s = self.states
+
+        # Integrate vernalisation module
+        if p.IDSL >= 2:
+            if s.STAGE == 'vegetative':
+                self.vernalisation.integrate(day, delt)
+            else:
+                self.vernalisation.touch()
+
+        # Integrate phenologic states
+        s.TSUME += r.DTSUME
+        s.DVS += r.DVR
+        s.TSUM += r.DTSUM
+
+        # Check if a new stage is reached
+        if s.STAGE == "emerging":
+            if s.DVS >= 0.0:
+                self._next_stage(day)
+                s.DVS = 0.
+        elif s.STAGE == 'vegetative':
+            if s.DVS >= 1.0:
+                self._next_stage(day)
+                s.DVS = 1.0
+        elif s.STAGE == 'reproductive':
+            if s.DVS >= p.DVSM:
+                self._next_stage(day)
+                s.DVS = p.DVSM
+        elif s.STAGE == 'mature':
+            if s.DVS >= p.DVSEND:
+                self._next_stage(day)
+                s.DVS = p.DVSEND
+        elif s.STAGE == 'dead':
+            pass 
+        else: # Problem no stage defined
+            msg = "No STAGE defined in phenology submodule"
+            raise exc.PCSEError(msg)
+            
+        msg = "Finished state integration for %s"
+        self.logger.debug(msg % day)
+
+    def _next_stage(self, day):
+        """Moves states.STAGE to the next phenological stage"""
+        s = self.states
+        p = self.params
+
+        current_STAGE = s.STAGE
+        if s.STAGE == "emerging":
+            s.STAGE = "vegetative"
+            s.DOE = day
+            # send signal to indicate crop emergence
+            self._send_signal(signals.crop_emerged)
+
+            if p.CROP_END_TYPE in ["emergence"]:
+                self._send_signal(signal=signals.crop_finish,
+                                  day=day, finish_type="emergence",
+                                  crop_delete=True)
+        elif s.STAGE == "vegetative":
+            s.STAGE = "reproductive"
+            s.DOA = day
+                
+        elif s.STAGE == "reproductive":
+            s.STAGE = "mature"
+            s.DOM = day
+            if p.CROP_END_TYPE in ["maturity"]:
+                self._send_signal(signal=signals.crop_finish,
+                                  day=day, finish_type="maturity",
+                                  crop_delete=True)
+        elif s.STAGE == "mature":
+            s.STAGE = "dead"
+            s.DOD = day
+            if p.CROP_END_TYPE in ["death"]:
+                self._send_signal(signal=signals.crop_finish,
+                                    day=day, finish_type="death",
+                                    crop_delete=True)
+        elif s.STAGE == "dead":
+            msg = "Cannot move to next phenology stage: maturity already reached!"
+            raise exc.PCSEError(msg)
+
+        else: # Problem no stage defined
+            msg = "No STAGE defined in phenology submodule."
+            raise exc.PCSEError(msg)
+        
+        msg = "Changed phenological stage '%s' to '%s' on %s"
+        self.logger.info(msg % (current_STAGE, s.STAGE, day))
+
+    def _on_CROP_HARVEST(self, day):
+        self.states.DOH = day
+        if self.params.CROP_END_TYPE in ["harvest"]:
+            self._send_signal(signal=signals.crop_finish,day=day,finish_type="harvest",
+                              crop_delete=True)
+
+    def _on_CROP_FINISH(self, day, finish_type=None):
+        """Handler for setting day of harvest (DOH). Although DOH is not
+        strictly related to phenology (but to management) this is the most
+        logical place to put it.
+        """
+        if finish_type in ['harvest']:
+            self._for_finalize["DOH"] = day
+
+class Annual_Phenology(Base_Phenology):
+    """Annual Phenology for the crop. Inherits from the Base_Phenology class
+    """
+
+    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
+        # Define initial states
+        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        self.states = self.StateVariables(kiosk, 
+                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
+                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
+                                                   "STAGE", ],
+                                          TSUM=0., TSUME=0., DVS=DVS,
+                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
+                                          DOH=None, DOD=None, STAGE=STAGE)
+        
+        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
+
+        # initialize vernalisation for IDSL=2
+        if self.params.IDSL >= 2:
+            self.vernalisation = Vernalisation(day, kiosk, parvalues)
+
+class Perennial_Phenology(Base_Phenology):
+    """Perennial Phenology class for the crop. Inherits from the Base_Phenology class.
+    
+    Includes the `dormant` state in which no growth occurs.
+    """
+    class Parameters(ParamTemplate):
+        TSUMEM = Float(-99.)  # Temp. sum for emergence
+        TBASEM = Float(-99.)  # Base temp. for emergence
+        TEFFMX = Float(-99.)  # Max eff temperature for emergence
+        TSUM1  = Float(-99.)  # Temperature sum emergence to anthesis
+        TSUM2  = Float(-99.)  # Temperature sum anthesis to maturity
+        TSUM3  = Float(-99.)  # Temperature sum from maturity to death
+        IDSL   = Float(-99.)  # Switch for photoperiod (1) and vernalisation (2)
+        DLO    = Float(-99.)  # Optimal day length for phenol. development
+        DLC    = Float(-99.)  # Critical day length for phenol. development
+        DVSI   = Float(-99.)  # Initial development stage
+        DVSM   = Float(-99.)  # Mature development stage
+        DVSEND = Float(-99.)  # Final development stage
+        DTSMTB = AfgenTrait() # Temperature response function for phenol.
+                              # development.
+        CROP_START_TYPE = Enum(["sowing", "emergence", "dormant"])
+        CROP_END_TYPE = Enum(["emergence", "maturity", "harvest", "death", "max_duration"])
+        DORM   = Int(-99)     # Days after no growth at which crop transitions to dormancy
+        DORMCD = Int(-99)     # Minimum days in dormancy
+
+    class StateVariables(StatesTemplate):
+        DVS = Float(-99.)  # Development stage
+        TSUM = Float(-99.)  # Temperature sum state
+        TSUME = Float(-99.)  # Temperature sum for emergence state
+        # States which register phenological events
+        DOS = Instance(datetime.date) # Day of sowing
+        DOE = Instance(datetime.date) # Day of emergence
+        DOA = Instance(datetime.date) # Day of anthesis
+        DOM = Instance(datetime.date) # Day of maturity
+        DOD = Instance(datetime.date) # Day of crop death
+        DOH = Instance(datetime.date) # Day of harvest
+        STAGE = Enum(["dormant", "emerging", "vegetative", "reproductive", "mature", "dead"])
+        DSNG = Int(-99) # Days since no growth
+
+
+    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
+        print('initializing from perennial pheno')
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
+
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
+        # Define initial states
+        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        self.states = self.StateVariables(kiosk, 
+                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
+                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
+                                                   "STAGE", ],
+                                          TSUM=0., TSUME=0., DVS=DVS,
+                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
+                                          DOH=None, DOD=None, STAGE=STAGE)
+        
+        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
+
+        # initialize vernalisation for IDSL=2
+        if self.params.IDSL >= 2:
+            self.vernalisation = Vernalisation(day, kiosk, parvalues)
+
+    def _get_initial_stage(self, day:datetime.date):
+        """Set the initial state of the crop given the start type
+        """
+        p = self.params
+
+        # Define initial stage type (emergence/sowing) and fill the
+        # respective day of sowing/emergence (DOS/DOE)
+        if p.CROP_START_TYPE == "emergence":
+            STAGE = "vegetative"
+            DOE = day
+            DOS = None
+            DVS = p.DVSI
+
+            # send signal to indicate crop emergence
+            self._send_signal(signals.crop_emerged)
+
+        elif p.CROP_START_TYPE == "sowing":
+            STAGE = "emerging"
+            DOS = day
+            DOE = None
+            DVS = -0.1
+
+        elif p.CROP_START_TYPE == "dormant":
+            STAGE = "emerging"
+            DOS = day
+            DOE = None
+            DVS = -0.1
+        else:
             msg = "Unknown start type: %s" % p.CROP_START_TYPE
             raise exc.PCSEError(msg)
             
@@ -382,7 +669,7 @@ class Base_Phenology(SimulationObject):
         elif s.STAGE == 'mature':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
-            r.DVR = r.DTSUM/p.TSUM2
+            r.DVR = r.DTSUM/p.TSUM3
         elif s.STAGE == 'dead':
             r.DTSUME = 0.
             r.DTSUM = 0.
@@ -486,67 +773,3 @@ class Base_Phenology(SimulationObject):
         msg = "Changed phenological stage '%s' to '%s' on %s"
         self.logger.info(msg % (current_STAGE, s.STAGE, day))
 
-
-    def _on_CROP_HARVEST(self, day):
-        self.states.DOH = day
-        if self.params.CROP_END_TYPE in ["harvest"]:
-            self._send_signal(signal=signals.crop_finish,day=day,finish_type="harvest",
-                              crop_delete=True)
-
-    def _on_CROP_FINISH(self, day, finish_type=None):
-        """Handler for setting day of harvest (DOH). Although DOH is not
-        strictly related to phenology (but to management) this is the most
-        logical place to put it.
-        """
-        if finish_type in ['harvest']:
-            self._for_finalize["DOH"] = day
-
-class Annual_Phenology(Base_Phenology):
-
-    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
-
-        self.params = self.Parameters(parvalues)
-        self.kiosk = kiosk
-
-        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-
-        # Define initial states
-        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
-        self.states = self.StateVariables(kiosk, 
-                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
-                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
-                                                   "STAGE", ],
-                                          TSUM=0., TSUME=0., DVS=DVS,
-                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, DOD=None, STAGE=STAGE)
-        
-        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
-
-        # initialize vernalisation for IDSL=2
-        if self.params.IDSL >= 2:
-            self.vernalisation = Vernalisation(day, kiosk, parvalues)
-
-class Perennial_Phenology(Base_Phenology):
-
-    def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
-
-        self.params = self.Parameters(parvalues)
-        self.kiosk = kiosk
-
-        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-
-        # Define initial states
-        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
-        self.states = self.StateVariables(kiosk, 
-                                          publish=["DVS", "TSUM", "TSUME", "DOS", 
-                                                   "DOE", "DOA", "DOM", "DOH", "DOD", 
-                                                   "STAGE", ],
-                                          TSUM=0., TSUME=0., DVS=DVS,
-                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, DOD=None, STAGE=STAGE)
-        
-        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
-
-        # initialize vernalisation for IDSL=2
-        if self.params.IDSL >= 2:
-            self.vernalisation = Vernalisation(day, kiosk, parvalues)

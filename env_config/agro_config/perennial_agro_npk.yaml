@@ -6,7 +6,7 @@ AgroManagement:
         site_name: oregon
         variation_name: Oregon_1
         site_start_date: 1984-12-01
-        site_end_date: 1991-12-01
+        site_end_date: 1988-12-01
     CropCalendar:
         crop_name: jujube
         variety_name: Jujube_1

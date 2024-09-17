@@ -381,6 +381,7 @@ class PerennialCropCalendar(BaseCropCalendar):
     :return: A CropCalendar Instance
     """
 
+    crop_start_type = Enum(["sowing", "emergence", "dormant"])
 
     def __init__(self, kiosk, crop_name: str=None, variety_name: str=None, \
                  crop_start_date: date=None, crop_start_type: date=None, 
