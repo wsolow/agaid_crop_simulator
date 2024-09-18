@@ -473,7 +473,6 @@ class Wofost80Perennial(BaseCropModel):
     
         # Phenology
         self.pheno.integrate(day, delt)
-
         # if before emergence there is no need to continue
         # because only the phenology is running.
         # Just run a touch() to to ensure that all state variables are available
@@ -512,30 +511,17 @@ class Wofost80Perennial(BaseCropModel):
         all crop parameters
         """
         # Deregister parameters from kiosk
-        self.part._delete()
-        self.assim._delete()
-        self.mres._delete()
-        self.evtra._delete()
-        self.ro_dynamics._delete()
-        self.st_dynamics._delete()
-        self.so_dynamics._delete()
-        self.lv_dynamics._delete()
+        self.part.reset()
+        self.assim.reset()
+        self.mres.reset()
+        self.evtra.reset()
+        self.ro_dynamics.reset()
+        self.st_dynamics.reset()
+        self.so_dynamics.reset()
+        self.lv_dynamics.reset()
         # Added for book keeping of N/P/K in crop and soil
-        self.npk_crop_dynamics._delete()
-        self.npk_stress._delete()
-
-        # Reregister all params
-        self.part = Perennial_Partitioning(day, self.kiosk, self._par_values)
-        self.assim = Assimilation(day, self.kiosk, self._par_values)
-        self.mres = MaintenanceRespiration(day, self.kiosk, self._par_values)
-        self.evtra = Evapotranspiration(day, self.kiosk, self._par_values)
-        self.ro_dynamics = Perennial_Root_Dynamics(day, self.kiosk, self._par_values)
-        self.st_dynamics = Perennial_Stem_Dynamics(day, self.kiosk, self._par_values)
-        self.so_dynamics = Perennial_Storage_Organ_Dynamics(day, self.kiosk, self._par_values)
-        self.lv_dynamics = Perennial_Leaf_Dynamics(day, self.kiosk, self._par_values)
-        # Added for book keeping of N/P/K in crop and soil
-        self.npk_crop_dynamics = NPK_crop(day, self.kiosk, self._par_values)
-        self.npk_stress = NPK_Stress(day, self.kiosk, self._par_values)
+        self.npk_crop_dynamics.reset()
+        self.npk_stress.reset()
 
         # Manually reset all WOFOST8 crop variables
         s = self.states
@@ -554,5 +540,7 @@ class Wofost80Perennial(BaseCropModel):
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)
+        
+        print(f'Resetting from Dormant: {day}')
 
   

@@ -248,3 +248,7 @@ class WOFOST_Assimilation(SimulationObject):
 
         return PGASS
 
+    def reset(self):
+        """Reset states and rates
+        """
+        self._TMNSAV = deque(maxlen=7)

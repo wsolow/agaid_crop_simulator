@@ -8,6 +8,7 @@ import gymnasium as gym
 import numpy as np
 import tyro
 import matplotlib.pyplot as plt
+import sys
 
 import wofost_gym
 import wofost_gym.policies as policies
@@ -36,21 +37,6 @@ if __name__ == "__main__":
     done = False
     obs_arr = []
     reward_arr = []
-
-    afgen_test = \
-    [0.0, 
-     [ 0.0,  0.0,
-       10.0,  0.0,
-       35.5, 30.0,
-       40.0, 30.0],
-     5.0, 
-     [ 0.0,  0.0,
-       10.0,  0.0,
-       35.5, 30.0,
-       40.0, 30.0] 
-     ]
-    
-    pcse.util.MultiAfgenTrait(afgen_test)
 
     # Run simulation and store data
     k = 0

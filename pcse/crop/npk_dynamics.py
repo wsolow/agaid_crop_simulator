@@ -436,3 +436,60 @@ class NPK_Crop_Dynamics(SimulationObject):
                    (s.KamountLV, s.KamountST, s.KamountRT, s.KamountSO)
             msg += "KLOSST: %f\n" % (s.KlossesTotal)
             raise exc.NutrientBalanceError(msg)
+
+    def reset(self):
+        """Reset states and rates
+        """
+
+        # Initialize components of the npk_crop_dynamics
+        self.translocation.reset()
+        self.demand_uptake.reset()
+
+        # INITIAL STATES
+        params = self.params
+        k = self.kiosk
+        s = self.states
+        r = self.rates
+
+        # Initial amounts
+        self.NamountLVI = NamountLV = k.WLV * params.NMAXLV_TB(k.DVS)
+        self.NamountSTI = NamountST = k.WST * params.NMAXLV_TB(k.DVS) * params.NMAXST_FR
+        self.NamountRTI = NamountRT = k.WRT * params.NMAXLV_TB(k.DVS) * params.NMAXRT_FR
+        self.NamountSOI = NamountSO = 0.
+        
+        self.PamountLVI = PamountLV = k.WLV * params.PMAXLV_TB(k.DVS)
+        self.PamountSTI = PamountST = k.WST * params.PMAXLV_TB(k.DVS) * params.PMAXST_FR
+        self.PamountRTI = PamountRT = k.WRT * params.PMAXLV_TB(k.DVS) * params.PMAXRT_FR
+        self.PamountSOI = PamountSO = 0.
+
+        self.KamountLVI = KamountLV = k.WLV * params.KMAXLV_TB(k.DVS)
+        self.KamountSTI = KamountST = k.WST * params.KMAXLV_TB(k.DVS) * params.KMAXST_FR
+        self.KamountRTI = KamountRT = k.WRT * params.KMAXLV_TB(k.DVS) * params.KMAXRT_FR
+        self.KamountSOI = KamountSO = 0.
+
+        s.NamountLV=NamountLV
+        s.NamountST=NamountST
+        s.NamountRT=NamountRT
+        s.NamountSO=NamountSO
+        s.PamountLV=PamountLV
+        s.PamountST=PamountST
+        s.PamountRT=PamountRT
+        s.PamountSO=PamountSO
+        s.KamountLV=KamountLV
+        s.KamountST=KamountST
+        s.KamountRT=KamountRT
+        s.KamountSO=KamountSO
+        s.NuptakeTotal=0
+        s.PuptakeTotal=0.
+        s.KuptakeTotal=0.
+        s.NfixTotal=0.
+        s.NlossesTotal=0
+        s.PlossesTotal=0.
+        s.KlossesTotal=0.
+
+        r.RNamountLV = r.RPamountLV = r.RKamountLV = r.RNamountST = r.RPamountST \
+            = r.RKamountST = r.RNamountRT = r.RPamountRT = r.RKamountRT = r.RNamountSO \
+            = r.RPamountSO = r.RKamountSO = r.RNdeathLV = r.RNdeathST = r.RNdeathRT \
+            = r.RPdeathLV = r.RPdeathST = r.RPdeathRT = r.RKdeathLV = r.RKdeathST \
+            = r.RKdeathRT = r.RNloss = r.RPloss = r.RKloss = 0
+        

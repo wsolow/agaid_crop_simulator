@@ -382,3 +382,16 @@ class NPK_Demand_Uptake(SimulationObject):
         )
 
         return max_NPK_conc
+
+    def reset(self):
+        """Reset states and rates
+        """
+        r = self.rates
+        r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = r.RNuptakeSO = r.RPuptakeLV = \
+                    r.RPuptakeST = r.RPuptakeRT = r.RPuptakeSO =  \
+                    r.RKuptakeLV = r.RKuptakeST = r.RKuptakeRT = r.RKuptakeSO =  \
+                    r.RNuptake = r.RPuptake = r.RKuptake = r.RNfixation = \
+                    r.NdemandLV = r.NdemandST = r.NdemandRT = r.NdemandSO =  \
+                    r.PdemandLV = r.PdemandST = r.PdemandRT = r.PdemandSO = \
+                    r.KdemandLV = r.KdemandST = r.KdemandRT = r.KdemandSO =  \
+                    r.Ndemand = r.Pdemand = r.Kdemand = 0

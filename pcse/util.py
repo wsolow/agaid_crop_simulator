@@ -12,6 +12,7 @@ from bisect import bisect_left
 import textwrap
 from collections.abc import Iterable
 import datetime as dt
+import numpy as np
 
 from .utils import exceptions as exc
 from .utils.traitlets import TraitType
@@ -194,59 +195,71 @@ class MultiAfgen(object):
     """Emulates the AFGEN function in WOFOST for multi dimensional trait tables
     """
 
-    def _check_x_ascending(self, tbl_xy):
+    def _check_x_ascending(self, tbl_xyz):
         """Checks that the x values are strictly ascending.
         
         Also truncates any trailing (0.,0.) pairs as a results of data coming
         from a CGMS database.
         """
-        x_list = tbl_xy[0::2]
-        y_table = tbl_xy[1::2]
-        n = len(x_list)
-        
+        z_list = tbl_xyz[0::2]
+        xy_table = tbl_xyz[1::2]
+        n = len(z_list)
         # Check if x range is ascending continuously
         rng = list(range(1, n))
-        x_asc = [True if (x_list[i] > x_list[i-1]) else False for i in rng]
+        z_asc = [True if (z_list[i] > z_list[i-1]) else False for i in rng]
+
+        # Check that all sub afgens are valid
+        xy_afgen = []
+        for xy in xy_table:
+            xy_afgen.append(Afgen(xy))
+        
+        xy_first = xy_afgen[0]
+        for xy in xy_afgen[1:]:
+            if xy.x_list != xy_first.x_list:
+                msg = "X values for afgen list must be identical"
+                raise ValueError(msg)
         
         # Check for breaks in the series where the ascending sequence stops.
         # Only 0 or 1 breaks are allowed. Use the XOR operator '^' here
-        sum_break = sum([1 if (x0 ^ x1) else 0 for x0,x1 in zip(x_asc, x_asc[1:])])
+        sum_break = sum([1 if (x0 ^ x1) else 0 for x0,x1 in zip(z_asc, z_asc[1:])])
         if sum_break == 0:
-            x = x_list
-            y = y_list
+            z = z_list
+            xy = xy_table
         elif sum_break == 1:
-            x = [x_list[0]]
-            y = [y_list[0]]
-            for i,p in zip(rng, x_asc):
+            z = [z_list[0]]
+            xy = [xy_table[0]]
+            for i,p in zip(rng, z_asc):
                 if p is True:
-                    x.append(x_list[i])
-                    y.append(y_list[i])
+                    z.append(z_list[i])
+                    xy.append(xy_table[i])
         else:
             msg = ("X values for AFGEN input list not strictly ascending: %s"
-                   % x_list)
+                   % z_list)
             raise ValueError(msg)
-        
-        return x, y            
 
-    def __init__(self, tbl_xy):
-        
-        x_list, y_list = self._check_x_ascending(tbl_xy)
-        x_list = self.x_list = list(map(float, x_list))
-        y_list = self.y_list = list(map(float, y_list))
-        intervals = list(zip(x_list, x_list[1:], y_list, y_list[1:]))
+        return z, xy          
+
+    def __init__(self, tbl_xyz):
+        z_list, xy_list = self._check_x_ascending(tbl_xyz)
+
+        z_list = self.z_list = list(map(float, z_list))
+        xy_list = self.xy_list = list([np.array(y_list) for y_list in xy_list])
+
+        intervals = list(zip(z_list, z_list[1:], xy_list, xy_list[1:]))
         self.slopes = [(y2 - y1)/(x2 - x1) for x1, x2, y1, y2 in intervals]
 
-    def __call__(self, x):
+    def __call__(self, z, x):
 
-        if x <= self.x_list[0]:
-            return self.y_list[0]
-        if x >= self.x_list[-1]:
-            return self.y_list[-1]
+        if z <= self.z_list[0]:
+            return Afgen(self.xy_list[0])(x)
+        if z >= self.z_list[-1]:
+            return Afgen(self.xy_list[-1])(x)
 
-        i = bisect_left(self.x_list, x) - 1
-        v = self.y_list[i] + self.slopes[i] * (x - self.x_list[i])
+        i = bisect_left(self.z_list, z) - 1
 
-        return v
+        v = self.xy_list[i] + self.slopes[i] * (z - self.z_list[i])
+
+        return Afgen(v)(x)
 
 class AfgenTrait(TraitType):
     """An AFGEN table trait"""
@@ -262,11 +275,11 @@ class AfgenTrait(TraitType):
 
 class MultiAfgenTrait(TraitType):
     """A multi dimensional AFGEN table trait"""
-    default_value = Afgen([0,0,1,1])
+    default_value = MultiAfgen([0, [0,0,1,1], 1, [0,1,1,2]])
     into_text = "An AFGEN table of XY pairs"
 
     def validate(self, obj, value):
-        if isinstance(value, Afgen):
+        if isinstance(value, MultiAfgen):
            return value
         elif isinstance(value, Iterable):
            return Afgen(value)

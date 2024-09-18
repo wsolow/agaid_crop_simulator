@@ -139,26 +139,8 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
                 key/value pairs
         """
 
-        self.params = self.Parameters(parvalues)
-        self.kiosk = kiosk
-        
-        # INITIAL STATES
-        params = self.params
-        # Initial root depth states
-        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
-        RDM = rdmax
-        RD = params.RDI
-        # initial root biomass states
-        WRT  = params.TDWI * self.kiosk.FR
-        DWRT = 0.
-        TWRT = WRT + DWRT
-
-        self.states = self.StateVariables(kiosk, publish=["RD", "RDM", "WRT", 
-                                                          "DWRT", "TWRT"],
-                                          RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
-                                          TWRT=TWRT)
-        
-        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
+        msg = "Implement root dynamics in sublcass"
+        raise NotImplementedError(msg)
 
     @prepare_rates
     def calc_rates(self, day:date, drv:WeatherDataProvider):
@@ -194,9 +176,32 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
         states.DWRT += rates.DRRT
         # Total weight dry + living roots
         states.TWRT = states.WRT + states.DWRT
-
         # New root depth
         states.RD += rates.RR
+
+    def reset(self):
+        """Reset all states and rates to initial values
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+        # Initial root depth states
+        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
+        RDM = rdmax
+        RD = params.RDI
+        # initial root biomass states
+        WRT  = params.TDWI * self.kiosk.FR
+        DWRT = 0.
+        TWRT = WRT + DWRT
+        
+        s.RD = RD,
+        s.RDM = RDM
+        s.WRT = WRT
+        s.DWRT = DWRT
+        s.TWRT = TWRT
+
+        r.RR = r.GRRT = r.DRRT = r.GWRT = 0
 
 class Annual_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
     """Class for handling root dynamics of annual crops
@@ -275,3 +280,27 @@ class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
         
         self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
 
+    def reset(self):
+        """Reset all states and rates to initial values
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+
+        # Initial root depth states
+        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
+        RDM = rdmax
+        RD = params.RDI
+        # initial root biomass states
+        WRT  = params.TDWI(self.kiosk.AGE) * self.kiosk.FR
+        DWRT = 0.
+        TWRT = WRT + DWRT
+        
+        s.RD = RD
+        s.RDM = RDM
+        s.WRT = WRT
+        s.DWRT = DWRT
+        s.TWRT = TWRT
+
+        r.RR = r.GRRT = r.DRRT = r.GWRT = 0

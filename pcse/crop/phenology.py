@@ -185,6 +185,19 @@ class Vernalisation(SimulationObject):
         else:  # Reduction factor for phenologic development
             states.ISVERNALISED = False
 
+    def reset(self):
+        """Reset states and rates
+        """
+        s = self.states
+        r = self.rates
+
+        # Define initial states
+        s.VERN=0.
+        s.DOV=None
+        s.ISVERNALISED=False
+        
+        r.VERNR = r.VERNFAC = 0
+
 class Base_Phenology(SimulationObject):
     """Implements the algorithms for phenologic development in WOFOST.
     
@@ -546,11 +559,12 @@ class Perennial_Phenology(Base_Phenology):
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
-    DORM     Dormancy threshold after which the plant       Scr        day 
-             enters dormancy    
-    DORMCD   The number of days a plant will stay dormant   Scr        day
-    AGEI     The initial age of the crop in years           Scr        year
-
+    DORM      Dormancy threshold after which the plant       Scr        day 
+              enters dormancy    
+    DORMCD    The number of days a plant will stay dormant   Scr        day
+    AGEI      The initial age of the crop in years           Scr        year
+    DCYCLEMAX The maximum number of days in a crop cycle     Scr        day
+               before dormancy
 
     **State variables**
 
@@ -560,6 +574,7 @@ class Perennial_Phenology(Base_Phenology):
     DSNG     Days since no crop growth                          Y    day
     DSD      Days since dormancy started                        Y    day
     AGE      Age of the crop in years                           Y    year
+    DCYCLE   Number of days in current crop cycle               Y    day
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -591,22 +606,24 @@ class Perennial_Phenology(Base_Phenology):
         DORM   = Int(-99)     # Days after no growth at which crop transitions to dormancy
         DORMCD = Int(-99)     # Minimum days in dormancy
         AGEI   = Int(-99)     # Initial Tree age
+        DCYCLEMAX = Int(-99)   # Maximum number of days in crop cycle before dormancy
 
     class StateVariables(StatesTemplate):
         DVS   = Float(-99.)  # Development stage
         TSUM  = Float(-99.)  # Temperature sum state
         TSUME = Float(-99.)  # Temperature sum for emergence state
         # States which register phenological events
-        DOS   = Instance(datetime.date) # Day of sowing
-        DOE   = Instance(datetime.date) # Day of emergence
-        DOA   = Instance(datetime.date) # Day of anthesis
-        DOM   = Instance(datetime.date) # Day of maturity
-        DOD   = Instance(datetime.date) # Day of crop death
-        DOH   = Instance(datetime.date) # Day of harvest
-        STAGE = Enum(["dormant", "emerging", "vegetative", "reproductive", "mature", "dead"])
-        DSNG  = Int(-99) # Days since no growth
-        DSD   = Int(-99) # Days since dormancy
-        AGE   = Int(-99) # Age of crop (years)
+        DOS    = Instance(datetime.date) # Day of sowing
+        DOE    = Instance(datetime.date) # Day of emergence
+        DOA    = Instance(datetime.date) # Day of anthesis
+        DOM    = Instance(datetime.date) # Day of maturity
+        DOD    = Instance(datetime.date) # Day of crop death
+        DOH    = Instance(datetime.date) # Day of harvest
+        STAGE  = Enum(["dormant", "emerging", "vegetative", "reproductive", "mature", "dead"])
+        DSNG   = Int(-99) # Days since no growth
+        DSD    = Int(-99) # Days since dormancy
+        AGE    = Int(-99) # Age of crop (years)
+        DCYCLE = Int(-99) # Days in Crop cycle
 
     class RateVariables(RatesTemplate):
         DTSUME = Float(-99.)  # increase in temperature sum for emergence
@@ -619,17 +636,19 @@ class Perennial_Phenology(Base_Phenology):
         self.kiosk = kiosk
 
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+        self._connect_signal(self._on_DORMANT, signal=signals.crop_dormant)
         AGEI = self.params.AGEI
         # Define initial states
         DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, 
                                           publish=["DVS", "TSUM", "TSUME", "DOS", 
                                                    "DOE", "DOA", "DOM", "DOH", "DOD", 
-                                                   "STAGE", "DSNG", "DSD", "AGE"],
+                                                   "STAGE", "DSNG", "DSD", "AGE",
+                                                   "DCYCLE"],
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
                                           DOH=None, DOD=None, STAGE=STAGE, DSNG=0,
-                                          DSD=0, AGE=AGEI)
+                                          DSD=0, AGE=AGEI, DCYCLE=0)
         
         self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
 
@@ -721,17 +740,9 @@ class Perennial_Phenology(Base_Phenology):
             msg = "Unrecognized STAGE defined in phenology submodule: %s"
             raise exc.PCSEError(msg, self.states.STAGE)
         
-        # Increment plant age based on Day of Sowing or Day of Emergence
+        # Increment plant age based on Day of Emergence
         # Handles leap years
-        if s.DOS is not None:
-            try:
-                if s.DOS == day.replace(year=s.DOS.year):
-                    r.AGER = 1
-                else:
-                    r.AGER = 0
-            except:
-                r.AGER = 0
-        elif s.DOE is not None:
+        if s.DOE is not None:
             try:
                 if s.DOE == day.replace(year=s.DOE.year):
                     r.AGER = 1
@@ -773,26 +784,30 @@ class Perennial_Phenology(Base_Phenology):
 
         # Check if a new stage is reached
         if s.STAGE == "emerging":
+            s.DCYCLE += 1
             if s.DVS >= 0.0:
                 self._next_stage(day)
                 s.DVS = 0.
         elif s.STAGE == 'vegetative':
+            s.DCYCLE += 1
             if s.DVS >= 1.0:
                 self._next_stage(day)
                 s.DVS = 1.0
-            if s.DSNG >= p.DORM:
+            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == 'reproductive':
+            s.DCYCLE += 1
             if s.DVS >= p.DVSM:
                 self._next_stage(day)
                 s.DVS = p.DVSM
-            if s.DSNG >= p.DORM:
+            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == 'mature':
+            s.DCYCLE += 1
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
                 s.DVS = p.DVSEND
-            if s.DSNG >= p.DORM:
+            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == "dormant":
             if s.DSD >= p.DORMCD:
@@ -803,10 +818,13 @@ class Perennial_Phenology(Base_Phenology):
                 # If we are on the first stage of dormancy, send signal to 
                 # reset all crop modules
                 if s.DSD == 0:
+                    s.DCYCLE = 0
+                    s.DVS = -1
                     self._send_signal(signal=signals.crop_dormant, day=day)
                 s.DSD +=1
         elif s.STAGE == 'dead':
-            if s.DSNG >= p.DORM:
+            s.DCYCLE += 1
+            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
                 s.STAGE = "dormant"
                 s.DVS= -0.1
                 s.DSD = 0
@@ -864,3 +882,24 @@ class Perennial_Phenology(Base_Phenology):
         msg = "Changed phenological stage '%s' to '%s' on %s"
         self.logger.info(msg % (current_STAGE, s.STAGE, day))
 
+    def _on_DORMANT(self, day:datetime.date):
+        """Handler for dormant signal. Reset all nonessential states and rates to 0
+        """
+        if self.params.IDSL >= 2:
+            self.vernalisation.reset()
+        s = self.states
+        r = self.rates
+
+        s.TSUM  = 0
+        s.TSUME = 0
+        s.DOS    = None
+        s.DOE    = None
+        s.DOA    = None
+        s.DOM    = None
+        s.DOD    = None
+        s.DOH    = None
+
+        r.DTSUME = 0 
+        r.DTSUM  = 0
+        r.DVR    = 0
+        r.AGER   = 0

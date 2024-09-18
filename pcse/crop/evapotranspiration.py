@@ -225,3 +225,13 @@ class EvapotranspirationCO2(SimulationObject):
 
         SimulationObject.finalize(self, day)
 
+    def reset(self):
+        """Reset states and rates
+        """
+        s = self.states
+        r = self.rates
+        s.IDOST=-999
+        s.IDWST=-999
+
+        r.EVWMX = r.EVSMX = r.TRAMX = r.TRA = r.RFWS = r.RFOS = r.RFTRA = 0
+        r.IDOS = r.IDWS = False

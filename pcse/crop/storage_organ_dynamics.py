@@ -148,6 +148,35 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Calculate Pod Area Index (SAI)
         states.PAI = states.WSO * params.SPA
 
+    def reset(self):
+        """Reset states and rates
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+        # Initial storage organ biomass
+        FO = self.kiosk["FO"]
+        FR = self.kiosk["FR"]
+        
+        WSO  = (params.TDWI * (1-FR)) * FO
+        DWSO = 0.
+        HWSO = 0.
+        LHW = HWSO
+        TWSO = WSO + DWSO
+        # Initial Pod Area Index
+        PAI = WSO * params.SPA
+
+        s.WSO=WSO
+        s.DWSO=DWSO
+        s.TWSO=TWSO
+        s.HWSO=HWSO
+        s.PAI=PAI
+        s.LHW=LHW
+
+        r.GRSO = r.DRSO = r.GWSO = r.DHSO = 0
+
+
     def _on_CROP_HARVEST(self, day:date, efficiency:float=1.0):
         """Receive the on crop harvest signal and update relevant states
         """
@@ -237,3 +266,30 @@ class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics
         
         self.rates = self.RateVariables(kiosk, publish=[ "GRSO", "DRSO", "GWSO", "DHSO"])
 
+    def reset(self):
+        """Reset states and rates
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+        # Initial storage organ biomass
+        FO = self.kiosk["FO"]
+        FR = self.kiosk["FR"]
+        
+        WSO  = (params.TDWI(self.kiosk["AGE"]) * (1-FR)) * FO
+        DWSO = 0.
+        HWSO = 0.
+        LHW = HWSO
+        TWSO = WSO + DWSO
+        # Initial Pod Area Index
+        PAI = WSO * params.SPA
+
+        s.WSO=WSO
+        s.DWSO=DWSO
+        s.TWSO=TWSO
+        s.HWSO=HWSO
+        s.PAI=PAI
+        s.LHW=LHW
+
+        r.GRSO = r.DRSO = r.GWSO = r.DHSO = 0

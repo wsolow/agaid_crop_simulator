@@ -138,6 +138,31 @@ class Base_WOFOST_Stem_Dynamics(SimulationObject):
         DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)
 
+    def reset(self):
+        """Reset states and rates
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+        # Set initial stem biomass
+        FS = self.kiosk["FS"]
+        FR = self.kiosk["FR"]
+        WST  = (params.TDWI * (1-FR)) * FS
+        DWST = 0.
+        TWST = WST + DWST
+        # Initial Stem Area Index
+        DVS = self.kiosk["DVS"]
+        SAI = WST * params.SSATB(DVS)
+
+        s.WST=WST
+        s.DWST=DWST
+        s.TWST=TWST
+        s.SAI=SAI
+
+        r.GRST = r.DRST = r.GWST = 0
+
+
 class Annual_WOFOST_Stem_Dynamics(Base_WOFOST_Stem_Dynamics):
     """Class for Stem Dynamics of annual crops
     """
@@ -206,3 +231,27 @@ class Perennial_WOFOST_Stem_Dynamics(Base_WOFOST_Stem_Dynamics):
         self.states = self.StateVariables(kiosk, publish=["WST", "DWST", "TWST", "SAI"],
                                           WST=WST, DWST=DWST, TWST=TWST, SAI=SAI)
         self.rates  = self.RateVariables(kiosk, publish=["GRST", "DRST", "GWST"])
+
+    def reset(self):
+        """Reset states and rates
+        """
+        # INITIAL STATES
+        params = self.params
+        s = self.states
+        r = self.rates
+        # Set initial stem biomass
+        FS = self.kiosk["FS"]
+        FR = self.kiosk["FR"]
+        WST  = (params.TDWI(self.kiosk["AGE"]) * (1-FR)) * FS
+        DWST = 0.
+        TWST = WST + DWST
+        # Initial Stem Area Index
+        DVS = self.kiosk["DVS"]
+        SAI = WST * params.SSATB(DVS)
+
+        s.WST=WST
+        s.DWST=DWST
+        s.TWST=TWST
+        s.SAI=SAI
+
+        r.GRST = r.DRST = r.GWST = 0

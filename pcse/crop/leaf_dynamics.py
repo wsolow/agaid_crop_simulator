@@ -313,6 +313,46 @@ class Base_WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         self.states.SLA = tSLA
         self.states.LVAGE = tLVAGE
 
+    def reset(self):
+        """Reset states and rates
+        """
+        # CALCULATE INITIAL STATE VARIABLES
+        p = self.params
+        k = self.kiosk
+        s = self.states
+        r = self.rates
+        # Initial leaf biomass
+        WLV = (p.TDWI * (1-k.FR)) * k.FL
+        DWLV = 0.
+        TWLV = WLV + DWLV
+
+        # First leaf class (SLA, age and weight)
+        SLA = deque([p.SLATB(k.DVS)])
+        LVAGE = deque([0.])
+        LV = deque([WLV])
+
+        # Initial values for leaf area
+        LAIEM = LV[0] * SLA[0]
+        LASUM = LAIEM
+        LAIEXP = LAIEM
+        LAIMAX = LAIEM
+        LAI = LASUM + k.SAI + k.PAI
+
+        s.LV=LV
+        s.SLA=SLA
+        s.LVAGE=LVAGE
+        s.LAIEM=LAIEM
+        s.LASUM=LASUM
+        s.LAIEXP=LAIEXP
+        s.LAIMAX=LAIMAX
+        s.LAI=LAI
+        s.WLV=WLV
+        s.DWLV=DWLV
+        s.TWLV=TWLV
+
+        r.GRLV = r.DSLV1 = r.DSLV2 = r.DSLV3 = r.DSLV4 = r.DSLV = r.DALV = r.DRLV \
+            = r.SLAT = r.FYSAGE = r.GLAIEX = r.GLASOL = 0
+
 class Annual_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
     """Class for simulating leaf dynamics of annual crops
     """
@@ -416,4 +456,43 @@ class Perennial_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
                 publish=["GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", 
                          "DALV", "DRLV", "SLAT", "FYSAGE", "GLAIEX", "GLASOL"])
         
+    def reset(self):
+        """Reset states and rates
+        """
+        # CALCULATE INITIAL STATE VARIABLES
+        p = self.params
+        k = self.kiosk
+        s = self.states
+        r = self.rates
+        # Initial leaf biomass
+        WLV = (p.TDWI(k.AGE) * (1-k.FR)) * k.FL
+        DWLV = 0.
+        TWLV = WLV + DWLV
+
+        # First leaf class (SLA, age and weight)
+        SLA = deque([p.SLATB(k.DVS)])
+        LVAGE = deque([0.])
+        LV = deque([WLV])
+
+        # Initial values for leaf area
+        LAIEM = LV[0] * SLA[0]
+        LASUM = LAIEM
+        LAIEXP = LAIEM
+        LAIMAX = LAIEM
+        LAI = LASUM + k.SAI + k.PAI
+
+        s.LV=LV
+        s.SLA=SLA
+        s.LVAGE=LVAGE
+        s.LAIEM=LAIEM
+        s.LASUM=LASUM
+        s.LAIEXP=LAIEXP
+        s.LAIMAX=LAIMAX
+        s.LAI=LAI
+        s.WLV=WLV
+        s.DWLV=DWLV
+        s.TWLV=TWLV
+
+        r.GRLV = r.DSLV1 = r.DSLV2 = r.DSLV3 = r.DSLV4 = r.DSLV = r.DALV = r.DRLV \
+            = r.SLAT = r.FYSAGE = r.GLAIEX = r.GLASOL = 0
         

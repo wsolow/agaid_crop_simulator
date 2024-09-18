@@ -163,6 +163,27 @@ class Base_Partitioning_NPK(SimulationObject):
         """
         # rate calculation does nothing for partitioning as it is a derived state
         return self.states.PF
+
+    def reset(self):
+        """Reset states adn rates
+        """
+
+        # initial partioning factors (pf)
+        k = self.kiosk
+        s = self.states
+        FR = self.params.FRTB(k.DVS)
+        FL = self.params.FLTB(k.DVS)
+        FS = self.params.FSTB(k.DVS)
+        FO = self.params.FOTB(k.DVS)
+
+        # Pack partitioning factors into tuple
+        PF = PartioningFactors(FR, FL, FS, FO)
+
+        s.FR=FR
+        s.FL=FL
+        s.FS=FS
+        s.FO=FO
+        s.PF=PF
     
 class Annual_Partitioning_NPK(Base_Partitioning_NPK):
     """Class for assimilate partitioning based on development stage (`DVS`)
@@ -222,3 +243,24 @@ class Perennial_Partitioning_NPK(Base_Partitioning_NPK):
                                           FR=FR, FL=FL, FS=FS, FO=FO, PF=PF)
         self._check_partitioning()
 
+    def reset(self):
+        """Reset states adn rates
+        """
+
+        # initial partioning factors (pf)
+        k = self.kiosk
+        s = self.states
+        FR = self.params.FRTB(k.DVS)
+        FL = self.params.FLTB(k.DVS)
+        FS = self.params.FSTB(k.DVS)
+        FO = self.params.FOTB(k.DVS)
+
+        # Pack partitioning factors into tuple
+        PF = PartioningFactors(FR, FL, FS, FO)
+
+        s.FR=FR
+        s.FL=FL
+        s.FS=FS
+        s.FO=FO
+        s.PF=PF
+    

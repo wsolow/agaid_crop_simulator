@@ -111,3 +111,8 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         TEFF = p.Q10**((drv.TEMP-25.)/10.)
         self.rates.PMRES = RMRES * TEFF
         return self.rates.PMRES
+    
+    def reset(self):
+        """Reset states and rates
+        """
+        self.rates.PMRES = 0

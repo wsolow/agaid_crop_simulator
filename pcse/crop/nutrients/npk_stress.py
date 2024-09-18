@@ -249,3 +249,10 @@ class NPK_Stress(SimulationObject):
         r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
          
         return r.NNI, r.NPKI, r.RFNPK
+
+    def reset(self):
+        """Reset states and rates
+        """
+        r = self.rates
+
+        r.NNI = r.PNI = r.KNI = r.NPKI = r.RFNPK = 0

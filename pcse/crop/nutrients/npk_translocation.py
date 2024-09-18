@@ -180,7 +180,10 @@ class NPK_Translocation(SimulationObject):
             NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., PtranslocatableLV=0., PtranslocatableST=0.,
             PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
             Ntranslocatable=0., Ptranslocatable=0., Ktranslocatable=0.,
-            publish=["Ntranslocatable", "Ptranslocatable", "Ktranslocatable"])
+            publish=["Ntranslocatable", "Ptranslocatable", "Ktranslocatable", "NtranslocatableLV", 
+                     "NtranslocatableST", "NtranslocatableRT", "PtranslocatableLV", 
+                     "PtranslocatableST", "PtranslocatableRT", "KtranslocatableLV", 
+                     "KtranslocatableST", "KtranslocatableRT",])
         self.kiosk = kiosk
         
     @prepare_rates
@@ -242,3 +245,18 @@ class NPK_Translocation(SimulationObject):
         s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
         s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
         s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT
+
+    def reset(self):
+        """Reset states and rates
+        """ 
+        s = self.states
+        r = self.rates
+
+        r.RNtranslocationLV = r.RNtranslocationST = r.RNtranslocationRT = r.RPtranslocationLV \
+            = r.RPtranslocationST = r.RPtranslocationRT = r.RKtranslocationLV \
+            = r.RKtranslocationST = r.RKtranslocationRT = 0
+
+        s.NtranslocatableLV = s.NtranslocatableST = s.NtranslocatableRT = s.PtranslocatableLV \
+            = s.PtranslocatableST = s.PtranslocatableRT = s.KtranslocatableLV \
+            = s.KtranslocatableST = s.KtranslocatableRT = s.Ntranslocatable \
+            = s.Ptranslocatable = s.Ktranslocatable = 0
