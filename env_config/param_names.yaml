@@ -166,11 +166,15 @@
   DOM:         'Day Of Maturity'                                   
   DOH:         'Day Of Harvest'                                    
   STAGE:       'Phenological Stage'
+  DSNG:        'Days since no crop growth'                         
+  DSD:         'Days since dormancy started'                        
+  AGE:         'Age of the crop in years'                           
 
   #**Rate Variables** (For Output To Observation Space):
   DTSUME:        'Increase In Temperature Sum For Emergence'         
   DTSUM:         'Increase In Temperature Sum For Anthesis Or Maturity'
-  DVR:           'Development Rate'                                     
+  DVR:           'Development Rate'   
+  AGER:          'Increase in crop age'                    
 
   #*############################################################################**
   #Respiration Dynamics States And Rates
@@ -509,6 +513,9 @@
   DVSI:        'Initial Development Stage At Emergence'
   DVSEND:      'Final Development Stage'                     
   DTSMTB:      'Daily Increase In Temperature Sum'
+  DORM:        'Days after which plant enters dormancy'
+  DORMCD:      'Minimum length of dormant state' 
+  AGEI:        'The initial age of the crop in years'         
 
   #*############################################################################**
   # Respiration Parameters

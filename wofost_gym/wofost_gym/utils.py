@@ -78,9 +78,10 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
         # VERNALIZATION RATES
         "VERNR", "VERNFAC",   
         # PHENOLOGY STATES
-        "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", 
+        "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", "DSNG",
+        "DSD", "AGE",
         # PHENOLOGY RATES
-        "DTSUME", "DTSUM", "DVR",
+        "DTSUME", "DTSUM", "DVR", "AGER",
         # RESPIRATION STATES
             # NONE
         # RESPIRATION RATES
@@ -134,183 +135,11 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
 
     # Summary variables to save at CROP_FINISH signals
     # Set to an empty list if you do not want any SUMMARY_OUTPUT
-    SUMMARY_OUTPUT_VARS = [
-        # WOFOST STATES 
-        "TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", "DOF", "FINISH_TYPE",
-        # WOFOST RATES 
-        "GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI",
-        # EVAPOTRANSPIRATION STATES
-        "IDOST", "IDWST",
-        # EVAPOTRANSPIRATION RATES  
-        "EVWMX", "EVSMX", "TRAMX", "TRA", "IDOS", "IDWS", "RFWS", "RFOS", 
-        "RFTRA",
-        # LEAF DYNAMICS STATES
-        "LV", "SLA", "LVAGE", "LAIEM", "LASUM", "LAIEXP", "LAIMAX", "LAI", "WLV", 
-        "DWLV", "TWLV"
-        # LEAF DYNAMICS RATES
-        "GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", "DALV", "DRLV", "SLAT", 
-        "FYSAGE", "GLAIEX", "GLASOL",
-        # NPK DYNAMICS STATES
-        "NamountLV", "PamountLV", "KamountLV", "NamountST", "PamountST", "KamountST",
-        "NamountSO", "PamountSO", "KamountSO", "NamountRT", "PamountRT", "KamountRT",
-        "NuptakeTotal", "PuptakeTotal", "KuptakeTotal", "NfixTotal", "NlossesTotal", 
-        "PlossesTotal", "KlossesTotal", "RNamountLV", "RPamountLV", "RKamountLV", 
-        "RNamountST", "RPamountST", "RKamountST", "RNamountRT", "RPamountRT",  
-        "RKamountRT", "RNamountSO", "RPamountSO", "RKamountSO", "RNdeathLV", 
-        "RNdeathST", "RNdeathRT", "RPdeathLV", "RPdeathST", "RPdeathRT", "RKdeathLV",
-        "RKdeathST", "RKdeathRT", "RNloss", "RPloss", "RKloss", 
-        # PARTIONING STATES
-        "FR", "FL", "FS", "FO", "PF",
-        # PARTIONING RATES
-            # NONE
-        # VERNALIZATION STATES
-        "VERN", "DOV", "ISVERNALISED",
-        # VERNALIZATION RATES
-        "VERNR", "VERNFAC",   
-        # PHENOLOGY STATES
-        "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", 
-        # PHENOLOGY RATES
-        "DTSUME", "DTSUM", "DVR",
-        # RESPIRATION STATES
-            # NONE
-        # RESPIRATION RATES
-        "PMRES",
-        # ROOT DYNAMICS STATES
-        "RD", "RDM", "WRT", "DWRT", "TWRT", 
-        # ROOT DYNAMICS RATES
-        "RR", "GRRT", "DRRT", "GWRT", 
-        # STEM DYNAMICS STATES
-        "WST", "DWST", "TWST", "SAI", 
-        # STEM DYNAMICS RATES
-        "GRST", "DRST", "GWST",
-        # STORAGE ORGAN DYNAMICS STATES
-        "WSO", "DWSO", "TWSO", "HWSO", "PAI", "LHW",
-        # STORAGE ORGAN DYNAMICS RATES
-        "GRSO", "DRSO", "GWSO", "DHSO",
-        # NPK NUTRIENT DEMAND UPTAKE STATES
-            # NONE
-        # NPK NUTRIENT DEMAND UPTAKE RATES
-        "RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO", "RPuptakeLV", 
-        "RPuptakeST", "RPuptakeRT", "RPuptakeSO", "RKuptakeLV", "RKuptakeST", 
-        "RKuptakeRT", "RKuptakeSO", "RNuptake", "RPuptake", "RKuptake", "RNfixation",
-        "NdemandLV", "NdemandST", "NdemandRT", "NdemandSO", "PdemandLV", "PdemandST", 
-        "PdemandRT", "PdemandSO", "KdemandLV", "KdemandST", "KdemandRT","KdemandSO", 
-        "Ndemand", "Pdemand", "Kdemand", 
-        # NPK STRESS STATES
-            # NONE
-        # NPK STRESS RATES
-        "NNI", "PNI", "KNI", "NPKI", "RFNPK", 
-        # NPK TRANSLOCATION STATES
-        "NtranslocatableLV", "NtranslocatableST", "NtranslocatableRT", "PtranslocatableLV",
-        "PtranslocatableST", "PtranslocatableRT", "KtranslocatableLV", "KtranslocatableST",
-        "KtranslocatableRT", "Ntranslocatable", "Ptranslocatable", "Ktranslocatable", 
-        # NPK TRANSLOCATION RATES
-        "RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT", "RPtranslocationLV",
-        "RPtranslocationST", "RPtranslocationRT", "RKtranslocationLV", "RKtranslocationST",
-        "RKtranslocationRT",
-        # SOIL STATES
-        "SM", "SS", "SSI", "WC", "WI", "WLOW", "WLOWI", "WWLOW", "WTRAT", "EVST", 
-        "EVWT", "TSR", "RAINT", "WART", "TOTINF", "TOTIRR", "PERCT", "LOSST", "WBALRT", 
-        "WBALTT", "DSOS", "TOTIRRIG",
-        # SOIL RATES
-        "EVS", "EVW", "WTRA", "RIN", "RIRR", "PERC", "LOSS", "DW", "DWLOW", "DTSR", 
-        "DSS", "DRAINT", 
-        # NPK SOIL DYNAMICS STATES
-        "NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", "TOTN", "TOTP", "TOTK",
-        # NPK SOIL DYNAMICS RATES
-        "RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", "FERT_N_SUPPLY",
-        "FERT_P_SUPPLY", "FERT_K_SUPPLY",
-        ]
+    SUMMARY_OUTPUT_VARS = OUTPUT_VARS
 
     # Summary variables to save at TERMINATE signals
     # Set to an empty list if you do not want any TERMINAL_OUTPUT
-    TERMINAL_OUTPUT_VARS = [
-        # WOFOST STATES 
-        "TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", "DOF", "FINISH_TYPE",
-        # WOFOST RATES 
-        "GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI",
-        # EVAPOTRANSPIRATION STATES
-        "IDOST", "IDWST",
-        # EVAPOTRANSPIRATION RATES  
-        "EVWMX", "EVSMX", "TRAMX", "TRA", "IDOS", "IDWS", "RFWS", "RFOS", 
-        "RFTRA",
-        # LEAF DYNAMICS STATES
-        "LV", "SLA", "LVAGE", "LAIEM", "LASUM", "LAIEXP", "LAIMAX", "LAI", "WLV", 
-        "DWLV", "TWLV"
-        # LEAF DYNAMICS RATES
-        "GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", "DALV", "DRLV", "SLAT", 
-        "FYSAGE", "GLAIEX", "GLASOL",
-        # NPK DYNAMICS STATES
-        "NamountLV", "PamountLV", "KamountLV", "NamountST", "PamountST", "KamountST",
-        "NamountSO", "PamountSO", "KamountSO", "NamountRT", "PamountRT", "KamountRT",
-        "NuptakeTotal", "PuptakeTotal", "KuptakeTotal", "NfixTotal", "NlossesTotal", 
-        "PlossesTotal", "KlossesTotal", "RNamountLV", "RPamountLV", "RKamountLV", 
-        "RNamountST", "RPamountST", "RKamountST", "RNamountRT", "RPamountRT",  
-        "RKamountRT", "RNamountSO", "RPamountSO", "RKamountSO", "RNdeathLV", 
-        "RNdeathST", "RNdeathRT", "RPdeathLV", "RPdeathST", "RPdeathRT", "RKdeathLV",
-        "RKdeathST", "RKdeathRT", "RNloss", "RPloss", "RKloss", 
-        # PARTIONING STATES
-        "FR", "FL", "FS", "FO", "PF",
-        # PARTIONING RATES
-            # NONE
-        # VERNALIZATION STATES
-        "VERN", "DOV", "ISVERNALISED",
-        # VERNALIZATION RATES
-        "VERNR", "VERNFAC",   
-        # PHENOLOGY STATES
-        "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", 
-        # PHENOLOGY RATES
-        "DTSUME", "DTSUM", "DVR",
-        # RESPIRATION STATES
-            # NONE
-        # RESPIRATION RATES
-        "PMRES",
-        # ROOT DYNAMICS STATES
-        "RD", "RDM", "WRT", "DWRT", "TWRT", 
-        # ROOT DYNAMICS RATES
-        "RR", "GRRT", "DRRT", "GWRT", 
-        # STEM DYNAMICS STATES
-        "WST", "DWST", "TWST", "SAI", 
-        # STEM DYNAMICS RATES
-        "GRST", "DRST", "GWST",
-        # STORAGE ORGAN DYNAMICS STATES
-        "WSO", "DWSO", "TWSO", "HWSO", "PAI", "LHW",
-        # STORAGE ORGAN DYNAMICS RATES
-        "GRSO", "DRSO", "GWSO", "DHSO",
-        # NPK NUTRIENT DEMAND UPTAKE STATES
-            # NONE
-        # NPK NUTRIENT DEMAND UPTAKE RATES
-        "RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO", "RPuptakeLV", 
-        "RPuptakeST", "RPuptakeRT", "RPuptakeSO", "RKuptakeLV", "RKuptakeST", 
-        "RKuptakeRT", "RKuptakeSO", "RNuptake", "RPuptake", "RKuptake", "RNfixation",
-        "NdemandLV", "NdemandST", "NdemandRT", "NdemandSO", "PdemandLV", "PdemandST", 
-        "PdemandRT", "PdemandSO", "KdemandLV", "KdemandST", "KdemandRT","KdemandSO", 
-        "Ndemand", "Pdemand", "Kdemand", 
-        # NPK STRESS STATES
-            # NONE
-        # NPK STRESS RATES
-        "NNI", "PNI", "KNI", "NPKI", "RFNPK", 
-        # NPK TRANSLOCATION STATES
-        "NtranslocatableLV", "NtranslocatableST", "NtranslocatableRT", "PtranslocatableLV",
-        "PtranslocatableST", "PtranslocatableRT", "KtranslocatableLV", "KtranslocatableST",
-        "KtranslocatableRT", "Ntranslocatable", "Ptranslocatable", "Ktranslocatable", 
-        # NPK TRANSLOCATION RATES
-        "RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT", "RPtranslocationLV",
-        "RPtranslocationST", "RPtranslocationRT", "RKtranslocationLV", "RKtranslocationST",
-        "RKtranslocationRT",
-        # SOIL STATES
-        "SM", "SS", "SSI", "WC", "WI", "WLOW", "WLOWI", "WWLOW", "WTRAT", "EVST", 
-        "EVWT", "TSR", "RAINT", "WART", "TOTINF", "TOTIRR", "PERCT", "LOSST", "WBALRT", 
-        "WBALTT", "DSOS", "TOTIRRIG",
-        # SOIL RATES
-        "EVS", "EVW", "WTRA", "RIN", "RIRR", "PERC", "LOSS", "DW", "DWLOW", "DTSR", 
-        "DSS", "DRAINT", 
-        # NPK SOIL DYNAMICS STATES
-        "NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", "TOTN", "TOTP", "TOTK",
-        # NPK SOIL DYNAMICS RATES
-        "RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", "FERT_N_SUPPLY",
-        "FERT_P_SUPPLY", "FERT_K_SUPPLY",
-        ]
+    TERMINAL_OUTPUT_VARS = OUTPUT_VARS
 
     return {'SOIL': SOIL, 'CROP': CROP, 'AGROMANAGEMENT': AGROMANAGEMENT, 'OUTPUT_INTERVAL': OUTPUT_INTERVAL, \
             'OUTPUT_INTERVAL_DAYS':OUTPUT_INTERVAL_DAYS, 'OUTPUT_WEEKDAY': OUTPUT_WEEKDAY, \

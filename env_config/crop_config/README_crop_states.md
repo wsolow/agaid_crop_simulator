@@ -230,6 +230,9 @@ DOH      Day of harvest                                     N    -
 STAGE    Current phenological stage, can take the           N    -
             folowing values:
             emerging|vegetative|reproductive|mature
+DSNG     Days since no crop growth (perennial only)         Y    day
+DSD      Days since dormancy started (perennial only)       Y    day
+AGE      Age of the crop in years (perennial only)          Y    year
 =======  ================================================= ==== ============
 **Rate variables** (For output to observation space):
 =======  ================================================= ==== ============
@@ -239,6 +242,8 @@ DTSUME   Increase in temperature sum for emergence          N    |C|
 DTSUM    Increase in temperature sum for anthesis or        N    |C|
             maturity
 DVR      Development rate                                   Y    |day-1|
+AGER     Increase in age. Used to ensure the AGE state is   N    year
+             always visible (perennial only)
 =======  ================================================= ==== ============
 
 **############################################################################**

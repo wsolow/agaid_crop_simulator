@@ -181,6 +181,7 @@ TBASEM   Base temperature for emergence                 SCr        |C|
 TEFFMX   Maximum effective temperature for emergence    SCr        |C|
 TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
 TSUM2    Temperature sum from anthesis to maturity      SCr        |C| day
+TSUM3    Temperature sum from maturity to death         Scr        |C| day
 IDSL     Switch for phenological development options    SCr        -
             temperature only (IDSL=0), including        SCr
             daylength (IDSL=1) and including               
@@ -197,6 +198,13 @@ DVSM     Mature development stage, usually 2.0          Scr        -
 DVSEND   Final development stage                        SCr        -
 DTSMTB   Daily increase in temperature sum as a         TCr        |C|
             function of daily mean temperature.
+DORM     Dormancy threshold after which the plant       Scr        day 
+             enters dormancy (perennial only)    
+DORMCD   The number of days a plant will stay dormant   Scr        day
+          (perennial only)
+AGEI     The initial age of the crop in years           Scr        year
+          (perennial only)
+
 =======  ============================================= =======  ============
 
 **############################################################################**

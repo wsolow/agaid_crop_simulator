@@ -538,7 +538,38 @@ class Annual_Phenology(Base_Phenology):
 class Perennial_Phenology(Base_Phenology):
     """Perennial Phenology class for the crop. Inherits from the Base_Phenology class.
     
-    Includes the `dormant` state in which no growth occurs.
+    Includes the `dormant` state in which no growth occurs. See the table below for
+    added state, rate, and parameter values 
+
+    **Simulation parameters**
+    
+    =======  ============================================= =======  ============
+     Name     Description                                   Type     Unit
+    =======  ============================================= =======  ============
+    DORM     Dormancy threshold after which the plant       Scr        day 
+             enters dormancy    
+    DORMCD   The number of days a plant will stay dormant   Scr        day
+    AGEI     The initial age of the crop in years           Scr        year
+
+
+    **State variables**
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    DSNG     Days since no crop growth                          Y    day
+    DSD      Days since dormancy started                        Y    day
+    AGE      Age of the crop in years                           Y    year
+    =======  ================================================= ==== ============
+
+    **Rate variables**
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    AGER     Increase in age. Used to ensure the AGE state is   N    year
+             always visible
+    =======  ================================================= ==== ============
     """
     class Parameters(ParamTemplate):
         TSUMEM = Float(-99.)  # Temp. sum for emergence
@@ -690,26 +721,6 @@ class Perennial_Phenology(Base_Phenology):
             msg = "Unrecognized STAGE defined in phenology submodule: %s"
             raise exc.PCSEError(msg, self.states.STAGE)
         
-        # Compute the accumulated dates of no growth
-        if r.DVR == 0 and s.STAGE != "emerging":
-            s.DSNG += 1
-        else:
-            s.DSNG = 0
-
-        # Send to dormant if sufficiently 
-        if s.STAGE == 'vegetative':
-            if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day, drv=drv)
-                s.STAGE = "dormant"
-        elif s.STAGE == 'reproductive':
-            if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day, drv=drv)
-                s.STAGE = "dormant"
-        elif s.STAGE == 'mature':
-            if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day, drv=drv)
-                s.STAGE = "dormant"
-        
         # Increment plant age based on Day of Sowing or Day of Emergence
         # Handles leap years
         if s.DOS is not None:
@@ -754,6 +765,12 @@ class Perennial_Phenology(Base_Phenology):
         s.TSUM += r.DTSUM
         s.AGE += r.AGER
 
+        # Compute the accumulated dates of no growth
+        if r.DVR == 0 and s.STAGE != "emerging":
+            s.DSNG += 1
+        else:
+            s.DSNG = 0
+
         # Check if a new stage is reached
         if s.STAGE == "emerging":
             if s.DVS >= 0.0:
@@ -764,21 +781,18 @@ class Perennial_Phenology(Base_Phenology):
                 self._next_stage(day)
                 s.DVS = 1.0
             if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day)
                 s.STAGE = "dormant"
         elif s.STAGE == 'reproductive':
             if s.DVS >= p.DVSM:
                 self._next_stage(day)
                 s.DVS = p.DVSM
             if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day)
                 s.STAGE = "dormant"
         elif s.STAGE == 'mature':
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
                 s.DVS = p.DVSEND
             if s.DSNG >= p.DORM:
-                self._send_signal(signal=signals.crop_dormant, day=day)
                 s.STAGE = "dormant"
         elif s.STAGE == "dormant":
             if s.DSD >= p.DORMCD:
@@ -786,9 +800,16 @@ class Perennial_Phenology(Base_Phenology):
                 s.DVS = -0.1
                 s.DSD = 0
             else:
+                # If we are on the first stage of dormancy, send signal to 
+                # reset all crop modules
+                if s.DSD == 0:
+                    self._send_signal(signal=signals.crop_dormant, day=day)
                 s.DSD +=1
         elif s.STAGE == 'dead':
-            pass 
+            if s.DSNG >= p.DORM:
+                s.STAGE = "dormant"
+                s.DVS= -0.1
+                s.DSD = 0
         else: # Problem no stage defined
             msg = "No STAGE defined in phenology submodule"
             raise exc.PCSEError(msg)
@@ -826,6 +847,8 @@ class Perennial_Phenology(Base_Phenology):
         elif s.STAGE == "mature":
             s.STAGE = "dead"
             s.DOD = day
+            self._send_signal(signal=signals.crop_death, day=day)
+
             if p.CROP_END_TYPE in ["death"]:
                 self._send_signal(signal=signals.crop_finish,
                                     day=day, finish_type="death",

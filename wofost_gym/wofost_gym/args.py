@@ -214,6 +214,8 @@ class WOFOST_Args:
     TSUM1: float = None
     """Temperature sum from anthesis to maturity (C day)"""
     TSUM2: float = None
+    """Temperature sum from maturity to death (C day)"""
+    TSUM3: float = None
     """Switch for phenological development options temperature only (IDSL=0), 
     including daylength (IDSL=1) and including vernalization (IDSL>=2)"""
     IDSL: float = None
@@ -230,6 +232,12 @@ class WOFOST_Args:
     DVSEND: float = None      
     """Daily increase in temperature sum as a function of daily mean temperature (C)"""               
     DTSMTB: float = None
+    """Dormancy threshold after which plant becomes dormant (days)"""
+    DORM: float = None  
+    """Minimum length of dormancy state"""  
+    DORMCD: float = None  
+    """Initial age of crop (years)"""
+    AGEI: float = None
 
     # Respiration Parameters
     """Relative increase in maintenance repiration rate with each 10 degrees increase in temperature"""

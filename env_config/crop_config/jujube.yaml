@@ -171,11 +171,11 @@ CropParameters:
             - Temperature response function for vernalization
             - ['C', '-']
             DORM: 
-            - 10
+            - 15
             - Day threshold for which plant transitions to dormancy
             - ['d']
             DORMCD:
-            - 30
+            - 40
             - Minimum length of dormancy period
             - ['d']
             #

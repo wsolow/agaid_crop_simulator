@@ -168,11 +168,15 @@
   DOM:      'date'     # Day of maturity                                   
   DOH:      'date'     # Day of harvest                                    
   STAGE:    'enum'     # Current phenological stage, can take the folowing values: emerging|vegetative|reproductive|mature
+  DSNG:     'day'      # Days since no crop growth                         
+  DSD:      'day'      # Days since dormancy started                       
+  AGE:      'year'     # Age of the crop in years                           
 
   # **Rate variables** (For output to observation space):
   DTSUME:   '|C|'      # Increase in temperature sum for emergence         
   DTSUM:    '|C|'      # Increase in temperature sum for anthesis or maturity
-  DVR:      '|day-1|'  # Development rate                                     
+  DVR:      '|day-1|'  # Development rate   
+  AGER:     'year'     # Increase in crop age           
 
   #*############################################################################**
   # Respiration Dynamics States and Rates
@@ -511,6 +515,9 @@
   DVSI:     'enum'       # Initial development stage at emergence. Usually this is zero, but it can be higher for crops that are transplanted (e.g. paddy rice)
   DVSEND:   'enum'       # Final development stage                       
   DTSMTB:   'C'          # Daily increase in temperature sum as a function of daily mean temperature.
+  DORM:     'day'        # Dormancy threshold after which the plant enters dormancy 
+  DORMCD: 'day'          # The number of days a plant will stay dormant
+  AGEI:   'year'         # The initial age of the crop in years       
 
   #*############################################################################**
   # Respiration Parameters

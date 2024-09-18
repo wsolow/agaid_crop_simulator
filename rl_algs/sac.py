@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import gymnasium as gym
-import wofost_gym
-from wofost_gym.wrappers import NPKDiscreteWrapper
 import numpy as np
 import torch
 import torch.nn as nn
@@ -22,15 +20,27 @@ from torch.utils.tensorboard import SummaryWriter
 
 # Import relative npk_args file
 sys.path.append(str(Path(__file__).parent.parent))
-from utils import NPK_Args
+from wofost_gym.args import NPK_Args
 import utils
 
 
 @dataclass
 class Args:
+    # Environment configuration
     """Environment parameters for WOFOST Env"""
-    npk: NPK_Args
+    npk_args: NPK_Args
+    """the id of the environment"""
+    env_id: str = "lnpkw-v0"
+    """Path"""
+    base_fpath: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
+    """Relative path to agromanagement configuration file"""
+    agro_fpath: str = "env_config/agro_config/annual_agro_npk.yaml"
+    """Relative path to crop configuration file"""
+    crop_fpath: str = "env_config/crop_config/"
+    """Relative path to site configuration file"""
+    site_fpath: str = "env_config/site_config/"
 
+    # Experiment configuration
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
     seed: int = 1
@@ -49,8 +59,6 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "wofost-v0"
-    """the id of the environment"""
     total_timesteps: int = 5000000
     """total timesteps of the experiments"""
     buffer_size: int = int(1e4)
@@ -81,19 +89,15 @@ class Args:
     """How often to save the agent during training"""
 
 
-def make_env(env_id, kwargs, seed, idx, capture_video, run_name):
+def make_env(kwargs, seed, idx, capture_video, run_name):
+    env_id, env_kwargs = utils.get_gym_args(kwargs)
     def thunk():
         if capture_video and idx == 0:
-            env = gym.make(env_id, render_mode="rgb_array", **{'args': kwargs})
+            env = gym.make(env_id, render_mode="rgb_array", **env_kwargs)
             env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
         else:
-            env = gym.make(env_id,  **{'args': kwargs})
+            env = gym.make(env_id,  **env_kwargs)
         env = gym.wrappers.RecordEpisodeStatistics(env)
-
-        # Change the reward function used as specified by args.env_reward
-        env = utils.wrap_env_reward(env, kwargs)
-        # Wrap the action space to discrete
-        env = NPKDiscreteWrapper(env)
     
         env.action_space.seed(seed)
         return env
@@ -180,7 +184,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.npk, args.seed, 0, args.capture_video, run_name)])
+    envs = gym.vector.SyncVectorEnv([make_env(args, args.seed, 0, args.capture_video, run_name)])
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
 
     actor = Actor(envs).to(device)

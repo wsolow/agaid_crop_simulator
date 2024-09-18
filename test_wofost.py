@@ -13,6 +13,7 @@ import wofost_gym
 import wofost_gym.policies as policies
 from utils import Args
 import utils
+import pcse
 
 
 if __name__ == "__main__":
@@ -36,6 +37,21 @@ if __name__ == "__main__":
     obs_arr = []
     reward_arr = []
 
+    afgen_test = \
+    [0.0, 
+     [ 0.0,  0.0,
+       10.0,  0.0,
+       35.5, 30.0,
+       40.0, 30.0],
+     5.0, 
+     [ 0.0,  0.0,
+       10.0,  0.0,
+       35.5, 30.0,
+       40.0, 30.0] 
+     ]
+    
+    pcse.util.MultiAfgenTrait(afgen_test)
+
     # Run simulation and store data
     k = 0
     while not done:
@@ -45,7 +61,6 @@ if __name__ == "__main__":
         reward_arr.append(rewards)
         obs = next_obs
         k+=1
-        print(k)
         if done:
             obs, info = env.reset()
             break

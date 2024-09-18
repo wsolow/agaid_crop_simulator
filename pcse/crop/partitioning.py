@@ -17,7 +17,7 @@ class PartioningFactors(namedtuple("partitioning_factors", "FR FL FS FO")):
     """Template for namedtuple containing partitioning factors"""
     pass
 
-class DVS_Partitioning_NPK(SimulationObject):
+class Base_Partitioning_NPK(SimulationObject):
     """Class for assimilate partitioning based on development stage (`DVS`)
     with influence of NPK stress.
 
@@ -107,22 +107,8 @@ class DVS_Partitioning_NPK(SimulationObject):
         :param kiosk: variable kiosk of this PCSE instance
         :param parameters: dictionary with WOFOST cropdata key/value pairs
         """
-        self.params = self.Parameters(parameters)
-
-        # initial partioning factors (pf)
-        k = self.kiosk
-        FR = self.params.FRTB(k.DVS)
-        FL = self.params.FLTB(k.DVS)
-        FS = self.params.FSTB(k.DVS)
-        FO = self.params.FOTB(k.DVS)
-
-        # Pack partitioning factors into tuple
-        PF = PartioningFactors(FR, FL, FS, FO)
-
-        # Initial states
-        self.states = self.StateVariables(kiosk, publish=["FR", "FL", "FS", "FO", "PF"],
-                                          FR=FR, FL=FL, FS=FS, FO=FO, PF=PF)
-        self._check_partitioning()
+        msg = "Initialize Partitioning in subclass"
+        raise NotImplementedError(msg)
 
     def _check_partitioning(self):
         """Check for partitioning errors.
@@ -177,3 +163,62 @@ class DVS_Partitioning_NPK(SimulationObject):
         """
         # rate calculation does nothing for partitioning as it is a derived state
         return self.states.PF
+    
+class Annual_Partitioning_NPK(Base_Partitioning_NPK):
+    """Class for assimilate partitioning based on development stage (`DVS`)
+    with influence of NPK stress. For annual crops
+
+    """
+
+    def initialize(self, day:date, kiosk:VariableKiosk, parameters:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parameters: dictionary with WOFOST cropdata key/value pairs
+        """
+        self.params = self.Parameters(parameters)
+
+        # initial partioning factors (pf)
+        k = self.kiosk
+        FR = self.params.FRTB(k.DVS)
+        FL = self.params.FLTB(k.DVS)
+        FS = self.params.FSTB(k.DVS)
+        FO = self.params.FOTB(k.DVS)
+
+        # Pack partitioning factors into tuple
+        PF = PartioningFactors(FR, FL, FS, FO)
+
+        # Initial states
+        self.states = self.StateVariables(kiosk, publish=["FR", "FL", "FS", "FO", "PF"],
+                                          FR=FR, FL=FL, FS=FS, FO=FO, PF=PF)
+        self._check_partitioning()
+
+class Perennial_Partitioning_NPK(Base_Partitioning_NPK):
+    """Class for assimilate partitioning based on development stage (`DVS`)
+    with influence of NPK stress. For perennial crops
+
+    """
+
+    def initialize(self, day:date, kiosk:VariableKiosk, parameters:dict):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parameters: dictionary with WOFOST cropdata key/value pairs
+        """
+        self.params = self.Parameters(parameters)
+
+        # initial partioning factors (pf)
+        k = self.kiosk
+        FR = self.params.FRTB(k.DVS)
+        FL = self.params.FLTB(k.DVS)
+        FS = self.params.FSTB(k.DVS)
+        FO = self.params.FOTB(k.DVS)
+
+        # Pack partitioning factors into tuple
+        PF = PartioningFactors(FR, FL, FS, FO)
+
+        # Initial states
+        self.states = self.StateVariables(kiosk, publish=["FR", "FL", "FS", "FO", "PF"],
+                                          FR=FR, FL=FL, FS=FS, FO=FO, PF=PF)
+        self._check_partitioning()
+

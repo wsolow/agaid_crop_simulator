@@ -88,6 +88,10 @@ CropParameters:
             - 1481
             - temperature sum from anthesis to maturity
             - ['C.d']
+            TSUM3:
+            - 800
+            - temperature sum from anthesis to maturity
+            - ['C.d']
             DTSMTB:
             - < (2x4) array float >
             - daily increase in temperature sum as function of daily average temperature

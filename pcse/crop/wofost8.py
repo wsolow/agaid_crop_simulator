@@ -28,7 +28,8 @@ from .storage_organ_dynamics import Annual_WOFOST_Storage_Organ_Dynamics as \
 from .storage_organ_dynamics import Perennial_WOFOST_Storage_Organ_Dynamics as \
     Perennial_Storage_Organ_Dynamics
 from .assimilation import WOFOST_Assimilation as Assimilation
-from .partitioning import DVS_Partitioning_NPK as Partitioning
+from .partitioning import Annual_Partitioning_NPK as Annual_Partitioning
+from .partitioning import Perennial_Partitioning_NPK as Perennial_Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
@@ -310,7 +311,7 @@ class Wofost80(BaseCropModel):
         
         # Initialize components of the crop
         self.pheno = Annual_Phenology(day, kiosk,  parvalues)
-        self.part = Partitioning(day, kiosk, parvalues)
+        self.part = Annual_Partitioning(day, kiosk, parvalues)
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
@@ -365,7 +366,7 @@ class Wofost80Perennial(BaseCropModel):
         
         # Initialize components of the crop
         self.pheno = Perennial_Phenology(day, kiosk,  parvalues)
-        self.part = Partitioning(day, kiosk, parvalues)
+        self.part = Perennial_Partitioning(day, kiosk, parvalues)
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
@@ -409,9 +410,9 @@ class Wofost80Perennial(BaseCropModel):
         k = self.kiosk
 
         # Phenology
-        self.pheno.calc_rates(day, drv)
         crop_stage = self.pheno.get_variable("STAGE")
-
+        self.pheno.calc_rates(day, drv)
+    
         # if before emergence there is no need to continue
         # because only the phenology is running.
         if crop_stage == "emerging" or crop_stage == "dormant":
@@ -469,7 +470,7 @@ class Wofost80Perennial(BaseCropModel):
 
         # crop stage before integration
         crop_stage = self.pheno.get_variable("STAGE")
-
+    
         # Phenology
         self.pheno.integrate(day, delt)
 
@@ -506,11 +507,10 @@ class Wofost80Perennial(BaseCropModel):
         states.CTRAT += self.kiosk.TRA
         states.CEVST += self.kiosk.EVS
 
-    def _on_DORMANT(self, day:date, drv:WeatherDataProvider):
+    def _on_DORMANT(self, day:date):
         """Handler for recieving the crop dormancy signal. Upon dormancy, reset
         all crop parameters
         """
-        print('DORMANCY')
         # Deregister parameters from kiosk
         self.part._delete()
         self.assim._delete()
@@ -525,7 +525,7 @@ class Wofost80Perennial(BaseCropModel):
         self.npk_stress._delete()
 
         # Reregister all params
-        self.part = Partitioning(day, self.kiosk, self._par_values)
+        self.part = Perennial_Partitioning(day, self.kiosk, self._par_values)
         self.assim = Assimilation(day, self.kiosk, self._par_values)
         self.mres = MaintenanceRespiration(day, self.kiosk, self._par_values)
         self.evtra = Evapotranspiration(day, self.kiosk, self._par_values)

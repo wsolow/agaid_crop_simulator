@@ -30,7 +30,6 @@ class Args:
 if __name__ == "__main__":
     
     args = tyro.cli(Args)
-
     if args.agent_type == 'PPO':
         ppo.main(args.ppo)
 
