@@ -44,7 +44,7 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
     # Set to an empty list if you do not want any OUTPUT
     OUTPUT_VARS = [ 
         # WOFOST STATES 
-        "TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", "DOF", "FINISH_TYPE",
+        "TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", "DOF", "FINISH_TYPE", "FIN",
         # WOFOST RATES 
         "GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI",
         # EVAPOTRANSPIRATION STATES

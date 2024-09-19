@@ -4,7 +4,7 @@ Written by: Will Solow, 2024
 """
 import gymnasium as gym
 from wofost_gym.exceptions import PolicyException
-from wofost_gym.envs.wofost_base import Harvest_NPK_Env
+from wofost_gym.envs.wofost_base import Plant_NPK_Env
 from abc import abstractmethod
 
 class Policy:
@@ -105,7 +105,7 @@ class Weekly_N(Policy):
         """
         return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
 
-class No_Action_Harvest(Policy):
+class No_Action_Plant(Policy):
     """Default policy for performing no irrigation or fertilization actions
     in a Harvest Environment
     """
@@ -125,8 +125,8 @@ class No_Action_Harvest(Policy):
         """
         super()._validate()
 
-        if not isinstance(self.env.unwrapped, Harvest_NPK_Env):
-            msg = "Environment does not inherit from `Harvest_NPK_Env`"
+        if not isinstance(self.env.unwrapped, Plant_NPK_Env):
+            msg = "Environment does not inherit from `Plant_NPK_Env`"
             raise PolicyException(msg)
         
     def _get_action(self, obs:dict):

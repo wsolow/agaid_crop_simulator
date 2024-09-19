@@ -34,20 +34,21 @@ if __name__ == "__main__":
 
     obs_arr = []
     obs, info = env.reset()
-    done = False
+    term = False
+    #trunc = False
     obs_arr = []
     reward_arr = []
 
     # Run simulation and store data
     k = 0
-    while not done:
+    while not term:
         action = policy(obs)
-        next_obs, rewards, done, trunc, info = env.step(action)
+        next_obs, rewards, term, trunc, info = env.step(action)
         obs_arr.append(obs)
         reward_arr.append(rewards)
         obs = next_obs
         k+=1
-        if done:
+        if term:
             obs, info = env.reset()
             break
     all_obs = np.array([list(d.values()) for d in obs_arr])

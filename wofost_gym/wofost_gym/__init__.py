@@ -10,103 +10,103 @@ from wofost_gym import exceptions
 # Default single year environments
 register(
     id='lnpkw-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:Limited_NPKW_Env',
+    entry_point='wofost_gym.envs.wofost_annual:Limited_NPKW_Env',
 )
 register(
     id='pp-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:PP_Env',
+    entry_point='wofost_gym.envs.wofost_annual:PP_Env',
 )
 register(
     id='lnpk-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:Limited_NPK_Env',
+    entry_point='wofost_gym.envs.wofost_annual:Limited_NPK_Env',
 )
 register(
     id='ln-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:Limited_N_Env',
+    entry_point='wofost_gym.envs.wofost_annual:Limited_N_Env',
 )
 register(
     id='lnw-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:Limited_NW_Env',
+    entry_point='wofost_gym.envs.wofost_annual:Limited_NW_Env',
 )
 register(
     id='lw-v0',
-    entry_point='wofost_gym.envs.wofost_default_singleyear:Limited_W_Env',
+    entry_point='wofost_gym.envs.wofost_annual:Limited_W_Env',
 )
 
 # Single year Harvest Environments
 register(
     id='harvest-npk-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_LNPKW_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_LNPKW_Env',
 )
 register(
     id='harvest-pp-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_PP_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_PP_Env',
 )
 register(
     id='harvest-lnpk-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_Limited_NPK_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_Limited_NPK_Env',
 )
 register(
     id='harvest-ln-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_Limited_N_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_Limited_N_Env',
 )
 register(
     id='harvest-lnw-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_Limited_NW_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_Limited_NW_Env',
 )
 register(
     id='harvest-lw-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_singleyear:Harvest_Limited_W_Env',
+    entry_point='wofost_gym.envs.plant_annual:Harvest_Limited_W_Env',
 )
 
 # Default perennial environments
 register(
     id='perennial-lnpkw-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_Limited_NPKW_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_Limited_NPKW_Env',
 )
 register(
     id='perennial-pp-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_PP_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_PP_Env',
 )
 register(
     id='perennial-lnpk-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_Limited_NPK_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_Limited_NPK_Env',
 )
 register(
     id='perennial-ln-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_Limited_N_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_Limited_N_Env',
 )
 register(
     id='perennial-lnw-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_Limited_NW_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_Limited_NW_Env',
 )
 register(
     id='perennial-lw-v0',
-    entry_point='wofost_gym.envs.wofost_default_perennial:Perennial_Limited_W_Env',
+    entry_point='wofost_gym.envs.wofost_perennail:Perennial_Limited_W_Env',
 )
 
 # Perennial Harvest Environments
 register(
     id='perennial-harvest-npk-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_LNPKW_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_LNPKW_Env',
 )
 register(
     id='perennial-harvest-pp-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_PP_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_PP_Env',
 )
 register(
     id='perennial-harvest-lnpk-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_Limited_NPK_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_Limited_NPK_Env',
 )
 register(
     id='perennial-harvest-ln-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_Limited_N_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_Limited_N_Env',
 )
 register(
     id='perennial-harvest-lnw-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_Limited_NW_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_Limited_NW_Env',
 )
 register(
     id='perennial-harvest-lw-v0',
-    entry_point='wofost_gym.envs.wofost_harvest_perennial:Perennail_Harvest_Limited_W_Env',
+    entry_point='wofost_gym.envs.plant_perennial:Perennail_Harvest_Limited_W_Env',
 )

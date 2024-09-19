@@ -137,7 +137,6 @@ class NPK_Env(gym.Env):
                 year: year to reset enviroment to for weather
                 location: (latitude, longitude). Location to set environment to"""
         self.log = self._init_log()
-
         if 'year' in kwargs:
             self.year = kwargs['year']
             if self.year < self.WEATHER_YEARS[0] or self.year > self.WEATHER_YEARS[1] \
@@ -213,17 +212,14 @@ class NPK_Env(gym.Env):
 
         observation = self._process_output(output)
         
-        reward = self._get_reward(output, action) 
+        reward = self._get_reward(output, act_tuple) 
         
         # Terminate based on site end date
         terminate = self.date >= self.site_end_date
-        # Truncate (in some cases) based on the crop end date
-        truncation = self.date >= self.crop_end_date
+        # Truncate based on crop finishing
+        truncation = output.iloc[-1]['FIN'] == 1.0
 
         self._log(output.iloc[-1]['WSO'], act_tuple, reward)
-
-        #TODO Truncations and crop signals
-        truncation = False
 
         return observation, reward, terminate, truncation, self.log
     
@@ -236,6 +232,10 @@ class NPK_Env(gym.Env):
         # Check that WSO is present
         if 'WSO' not in self.output_vars:
             msg = 'Crop State \'WSO\' variable must be in output variables'
+            raise exc.WOFOSTGymError(msg)
+        # Check that DOF is present
+        if 'FIN' not in self.output_vars:
+            msg = 'Crop State \'FIN\' variable must be in output variables'
             raise exc.WOFOSTGymError(msg)
         
         if self.year < self.WEATHER_YEARS[0] or self.year > self.WEATHER_YEARS[1] \
@@ -431,7 +431,7 @@ class NPK_Env(gym.Env):
         self.log['reward'][self.date] = reward
         self.log['day'][self.date] = self.date  
 
-class Harvest_NPK_Env(NPK_Env):
+class Plant_NPK_Env(NPK_Env):
     """Base Gym Environment for simulating crop growth with planting and 
     harvesting actions. Does not automatically start crop
     
@@ -448,7 +448,7 @@ class Harvest_NPK_Env(NPK_Env):
 
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str, config: dict=None):
-        """Initialize the :class:`Harvest_NPK_Env`.
+        """Initialize the :class:`Plant_NPK_Env`.
 
         Args: 
             NPK_Args: The environment parameterization

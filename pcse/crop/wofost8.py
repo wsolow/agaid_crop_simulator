@@ -8,7 +8,7 @@ Modified by Will Solow, 2024
 from datetime import date
 
 from ..nasapower import WeatherDataProvider
-from ..utils.traitlets import Float, Instance, Unicode
+from ..utils.traitlets import Float, Instance, Unicode, Bool
 from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
@@ -87,6 +87,7 @@ class BaseCropModel(SimulationObject):
                   simulation.
     FINISH_TYPE   String representing the reason for finishing the   N    -
                   simulation: maturity, harvest, leave death, etc.
+    FIN           Boolean value for if the crop has finished         Y    - 
     ============  ================================================= ==== ===============
 
  
@@ -125,6 +126,7 @@ class BaseCropModel(SimulationObject):
         HI = Float(-99.)
         DOF = Instance(date)
         FINISH_TYPE = Unicode("")
+        FIN = Bool(False)
 
     class RateVariables(RatesTemplate):
         GASS = Float(-99.)
@@ -289,6 +291,7 @@ class BaseCropModel(SimulationObject):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).
         """
+        self.states.FIN = True
         self._for_finalize["DOF"] = day
         self._for_finalize["FINISH_TYPE"] = finish_type
 
@@ -329,9 +332,9 @@ class Wofost80(BaseCropModel):
 
         self.states = self.StateVariables(kiosk,
                 publish=["TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", 
-                         "DOF", "FINISH_TYPE"],
+                         "DOF", "FINISH_TYPE", "FIN",],
                 TAGP=TAGP, GASST=0.0, MREST=0.0, CTRAT=0.0, HI=0.0, CEVST=0.0,
-                DOF=None, FINISH_TYPE=None)
+                DOF=None, FINISH_TYPE=None, FIN=False)
         
         self.rates = self.RateVariables(kiosk, 
                     publish=["GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI"])
@@ -383,9 +386,9 @@ class Wofost80Perennial(BaseCropModel):
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
         self.states = self.StateVariables(kiosk,
                 publish=["TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", 
-                         "DOF", "FINISH_TYPE"],
+                         "DOF", "FINISH_TYPE", "FIN",],
                 TAGP=TAGP, GASST=0.0, MREST=0.0, CTRAT=0.0, HI=0.0, CEVST=0.0,
-                DOF=None, FINISH_TYPE=None)
+                DOF=None, FINISH_TYPE=None, FIN=False)
         
         self.rates = self.RateVariables(kiosk, 
                     publish=["GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI"])
@@ -531,6 +534,7 @@ class Wofost80Perennial(BaseCropModel):
         s.TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
         s.GASST = s.MREST = s.CTRAT = s.CEVST = s.HI = 0
         s.DOF = s.FINISH_TYPE = None
+        s.FIN = False
 
         r.GASS = r.PGASS = r.MRES = r.ASRC = r.DMI = r.ADMI = 0
 

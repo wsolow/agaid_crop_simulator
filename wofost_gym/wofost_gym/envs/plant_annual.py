@@ -1,13 +1,13 @@
 """Main API for simulating crop growth NPK fertilization and irrigation actions
 and the inclusion of planting and harvesting of the crop.
 
-Used for single year perennial crop simulations.
+Used for single year annual crop simulations.
 """
 import gymnasium as gym
 
 from wofost_gym import utils
 from wofost_gym.args import NPK_Args
-from wofost_gym.envs.wofost_base import Harvest_NPK_Env
+from wofost_gym.envs.wofost_base import Plant_NPK_Env
 
 import pcse
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPKW
@@ -16,20 +16,20 @@ from pcse.soil.soil_wrappers import SoilModuleWrapper_LNPK
 from pcse.soil.soil_wrappers import SoilModuleWrapper_PP
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LW
 from pcse.soil.soil_wrappers import SoilModuleWrapper_LNW
-from pcse.crop.wofost8 import Wofost80Perennial
-from pcse.agromanager import AgroManagerHarvestPerennial
+from pcse.crop.wofost8 import Wofost80
+from pcse.agromanager import AgroManagerPlant
 
 
-class Perennial_Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
+class Plant_Limited_NPKW_Env(Plant_NPK_Env):
     """Simulates crop growth under NPK and Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPKW, crop=Wofost80, \
+                               agro=AgroManagerPlant)
 
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_Limited_NPKW_Env`.
+        """Initialize the :class:`Plant_Limited_NPKW_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -73,7 +73,7 @@ class Perennial_Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, n_amount, p_amount, k_amount, irrig_amount)
 
@@ -104,29 +104,16 @@ class Perennial_Harvest_Limited_NPKW_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, p_amount, k_amount, irrig_amount)
 
-        self.log['growth'][self.date] = growth
-        self.log['plant'][self.date] = action[0]
-        self.log['harvest'][self.date] = action[1]
-        self.log['nitrogen'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            action[2]
-        self.log['phosphorous'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            action[3]
-        self.log['potassium'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            action[4]
-        self.log['irrigation'][self.date - datetime.timedelta(self.intervention_interval)] = \
-            action[5]
-        self.log['reward'][self.date] = reward
-        self.log['day'][self.date] = self.date  
 
-class Perennial_Harvest_PP_Env(Harvest_NPK_Env):
+class Plant_PP_Env(Plant_NPK_Env):
     """Simulates crop growth under abundant NPK and water
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_PP, crop=Wofost80, \
+                               agro=AgroManagerPlant)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_PP_Env`.
+        """Initialize the :class:`Plant_PP_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -139,7 +126,7 @@ class Perennial_Harvest_PP_Env(Harvest_NPK_Env):
       
     def _take_action(self, action:int):
         """Controls sending fertilization and irrigation signals to the model. 
-        Includes actions for planting and harvesting.
+        Includes actions for planting and Planting.
         Converts the integer action to a signal and amount of NPK/Water to be applied.
         
         Args:
@@ -163,23 +150,23 @@ class Perennial_Harvest_PP_Env(Harvest_NPK_Env):
             p_act = 1
             return (p_act, h_act, 0, 0, 0, 0)
         
-        # Harvesting Action
+        # Planting Action
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, 0, 0, 0, 0)
 
-class Perennial_Harvest_Limited_NPK_Env(Harvest_NPK_Env):
+class Plant_Limited_NPK_Env(Plant_NPK_Env):
     """Simulates crop growth under NPK Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_LNPK, crop=Wofost80, \
+                               agro=AgroManagerPlant)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_Limited_NPK_Env`.
+        """Initialize the :class:`Plant_Limited_NPK_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -223,7 +210,7 @@ class Perennial_Harvest_Limited_NPK_Env(Harvest_NPK_Env):
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, n_amount, p_amount, k_amount, 0)
 
@@ -246,15 +233,15 @@ class Perennial_Harvest_Limited_NPK_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, p_amount, k_amount, 0)
         
-class Perennial_Harvest_Limited_N_Env(Harvest_NPK_Env):
+class Plant_Limited_N_Env(Plant_NPK_Env):
     """Simulates crop growth under Nitrogen Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_LN, crop=Wofost80, \
+                               agro=AgroManagerPlant)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_Limited_N_Env`.
+        """Initialize the :class:`Plant_Limited_N_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -294,7 +281,7 @@ class Perennial_Harvest_Limited_N_Env(Harvest_NPK_Env):
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, n_amount, 0, 0, 0)
 
@@ -310,15 +297,15 @@ class Perennial_Harvest_Limited_N_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, 0, 0, 0)
  
-class Perennial_Harvest_Limited_NW_Env(Harvest_NPK_Env):
+class Plant_Limited_NW_Env(Plant_NPK_Env):
     """Simulates crop growth under Nitrogen and Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_LNW, crop=Wofost80, \
+                               agro=AgroManagerPlant)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_Limited_NW_Env`.
+        """Initialize the :class:`Plant_Limited_NW_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -360,7 +347,7 @@ class Perennial_Harvest_Limited_NW_Env(Harvest_NPK_Env):
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, n_amount, 0, 0, irrig_amount)
 
@@ -383,15 +370,15 @@ class Perennial_Harvest_Limited_NW_Env(Harvest_NPK_Env):
                 
         return (p_act, h_act, n_amount, 0, 0, irrig_amount)
 
-class Perennial_Harvest_Limited_W_Env(Harvest_NPK_Env):
+class Plant_Limited_W_Env(Plant_NPK_Env):
     """Simulates crop growth under Water Limited Production 
     with actions for planting and harvesting
     """
-    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80Perennial, \
-                               agro=AgroManagerHarvestPerennial)
+    config = utils.make_config(soil=SoilModuleWrapper_LW, crop=Wofost80, \
+                               agro=AgroManagerPlant)
     def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
                  site_fpath:str, crop_fpath: str):
-        """Initialize the :class:`Harvest_Limited_W_Env`.
+        """Initialize the :class:`Plant_Limited_W_Env`.
 
         Args: 
             NPK_Args: The environment parameterization
@@ -432,7 +419,7 @@ class Perennial_Harvest_Limited_W_Env(Harvest_NPK_Env):
         elif action == 2:
             if self.active_crop_flag:
                 self.model._send_signal(signal=pcse.signals.crop_harvest, day=self.date,\
-                                        effiency=self.harvest_effec)
+                                        effiency=self.Plant_effec)
             h_act=1
             return (p_act, h_act, 0, 0, 0, irrig_amount)
 

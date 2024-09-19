@@ -482,7 +482,7 @@ class AgroManagerSingleYear(BaseAgroManager):
             cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
             self._crop_calendar = cc
 
-class AgroManagerHarvest(BaseAgroManager):
+class AgroManagerPlant(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
     The Harvesting Agromanagement class differs slightly in that it does not specify
     crop planting and ending dates, instead requires signals to be sent from the 
@@ -608,7 +608,7 @@ class AgroManagerPerennial(BaseAgroManager):
         """
         self._send_signal(signal=signals.terminate)
 
-class AgroManagerHarvestPerennial(BaseAgroManager):
+class AgroManagerPlantPerennial(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
     The Harvesting Agromanagement class differs slightly in that it does not specify
     crop planting and ending dates, instead requires signals to be sent from the 
