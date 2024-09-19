@@ -4,7 +4,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium.spaces import Dict, Discrete, Box
 
-from wofost_gym.envs.wofost_base import NPK_Env, Plant_NPK_Env
+from wofost_gym.envs.wofost_base import NPK_Env, Plant_NPK_Env, Harvest_NPK_Env
 
 from wofost_gym.envs.wofost_annual import Limited_NPKW_Env
 from wofost_gym.envs.wofost_annual import PP_Env
@@ -20,6 +20,13 @@ from wofost_gym.envs.plant_annual import Plant_Limited_N_Env
 from wofost_gym.envs.plant_annual import Plant_Limited_NW_Env
 from wofost_gym.envs.plant_annual import Plant_Limited_W_Env
 
+from wofost_gym.envs.harvest_annual import Harvest_Limited_NPKW_Env
+from wofost_gym.envs.harvest_annual import Harvest_PP_Env
+from wofost_gym.envs.harvest_annual import Harvest_Limited_NPK_Env
+from wofost_gym.envs.harvest_annual import Harvest_Limited_N_Env
+from wofost_gym.envs.harvest_annual import Harvest_Limited_NW_Env
+from wofost_gym.envs.harvest_annual import Harvest_Limited_W_Env
+
 from wofost_gym.envs.wofost_perennial import Perennial_Limited_NPKW_Env
 from wofost_gym.envs.wofost_perennial import Perennial_PP_Env
 from wofost_gym.envs.wofost_perennial import Perennial_Limited_NPK_Env
@@ -33,6 +40,13 @@ from wofost_gym.envs.plant_perennial import Perennial_Plant_Limited_NPK_Env
 from wofost_gym.envs.plant_perennial import Perennial_Plant_Limited_N_Env
 from wofost_gym.envs.plant_perennial import Perennial_Plant_Limited_NW_Env
 from wofost_gym.envs.plant_perennial import Perennial_Plant_Limited_W_Env
+
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_Limited_NPKW_Env
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_PP_Env
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_Limited_NPK_Env
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_Limited_N_Env
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_Limited_NW_Env
+from wofost_gym.envs.harvest_perennial import Perennial_Harvest_Limited_W_Env
 
 from wofost_gym import exceptions as exc
 
@@ -180,7 +194,43 @@ class NPKDictActionWrapper(gym.ActionWrapper):
                                  "p": Discrete(self.env.unwrapped.num_fert),\
                                  "k": Discrete(self.env.unwrapped.num_fert),\
                                  "irrig": Discrete(self.env.unwrapped.num_irrig)})
-
+                
+        elif isinstance(self.env.unwrapped, Harvest_NPK_Env):
+            if isinstance(env, Harvest_PP_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_PP_Env): 
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1)})
+            elif isinstance(self.env.unwrapped, Harvest_Limited_NPK_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_Limited_NPK_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(self.env.unwrapped.num_fert),\
+                                 "p": Discrete(self.env.unwrapped.num_fert),\
+                                 "k": Discrete(self.env.unwrapped.num_fert)})
+            elif isinstance(self.env.unwrapped, Harvest_Limited_N_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_Limited_N_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(self.env.unwrapped.num_fert)})
+            elif isinstance(self.env.unwrapped, Harvest_Limited_NW_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_Limited_NW_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(self.env.unwrapped.num_fert),\
+                                 "irrig": Discrete(self.env.unwrapped.num_irrig)})
+            elif isinstance(self.env.unwrapped, Harvest_Limited_W_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_Limited_W_Env):
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
+                                 "irrig": Discrete(self.env.unwrapped.num_irrig)})
+            elif isinstance(self.env.unwrapped, Harvest_Limited_NPKW_Env) or \
+                isinstance(self.env.unwrapped, Perennial_Harvest_Limited_NPKW_Env): 
+                self.action_space = gym.spaces.Dict({"null": Discrete(1), \
+                                 "plant": Discrete(1), "harvest": Discrete(1), \
+                                 "n": Discrete(self.env.unwrapped.num_fert),\
+                                 "p": Discrete(self.env.unwrapped.num_fert),\
+                                 "k": Discrete(self.env.unwrapped.num_fert),\
+                                 "irrig": Discrete(self.env.unwrapped.num_irrig)})
         # Default environments
         else: 
             if isinstance(self.env.unwrapped, PP_Env) or \
@@ -249,7 +299,7 @@ class NPKDictActionWrapper(gym.ActionWrapper):
             msg = "Irrigation action \'irrig\' not included in action dictionary keys"
             raise exc.ActionException(msg)
 
-        # Harvesting Single Year environments
+        # Planting Single Year environments
         if isinstance(self.env.unwrapped, Plant_NPK_Env):
             # Check for planting and harvesting actions
             if not "plant" in act.keys():
@@ -265,6 +315,22 @@ class NPKDictActionWrapper(gym.ActionWrapper):
             # Set the offsets to support converting to the correct action
             offsets = [1,1,self.num_fert,self.num_fert,self.num_fert,self.num_irrig]
             act_values = [act["plant"],act["harvest"],act["n"],act["p"],act["k"],act["irrig"]]
+            offset_flags = np.zeros(self.env.unwrapped.NUM_ACT)
+            offset_flags[:np.nonzero(act_values)[0][0]] = 1
+
+        # Harvesting Single Year environments
+        elif isinstance(self.env.unwrapped, Harvest_NPK_Env):
+            # Check for harvesting actions
+            if not "harvest" in act.keys():
+                msg = "\'harvest\' not included in action dictionary keys"
+                raise exc.ActionException(msg)
+            if len(act.keys()) != self.env.unwrapped.NUM_ACT:
+                msg = "Incorrect action dictionary specification"
+                raise exc.ActionException(msg)
+            
+            # Set the offsets to support converting to the correct action
+            offsets = [1,self.num_fert,self.num_fert,self.num_fert,self.num_irrig]
+            act_values = [act["harvest"],act["n"],act["p"],act["k"],act["irrig"]]
             offset_flags = np.zeros(self.env.unwrapped.NUM_ACT)
             offset_flags[:np.nonzero(act_values)[0][0]] = 1
 

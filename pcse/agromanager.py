@@ -351,6 +351,14 @@ class CropCalendarHarvest(BaseCropCalendar):
         if self.in_crop_cycle:
             self.duration += 1
 
+        # Start of the crop cycle
+        if day == self.crop_start_date:  # Start a new crop
+            msg = "Starting crop (%s) with variety (%s) on day %s" % (self.crop_name, self.variety_name, day)
+            self.logger.info(msg)
+            self._send_signal(signal=signals.crop_start, day=day, crop_name=self.crop_name,
+                              variety_name=self.variety_name, crop_start_type=self.crop_start_type,
+                              crop_end_type=self.crop_end_type)
+
         # end of the crop cycle
         finish_type = None
         if self.in_crop_cycle:
@@ -363,6 +371,64 @@ class CropCalendarHarvest(BaseCropCalendar):
             self.in_crop_cycle = False
             self._send_signal(signal=signals.crop_finish, day=day,
                               finish_type=finish_type, crop_delete=True)
+
+
+    def _on_CROP_FINISH(self, day=date):
+        """Register that crop has reached the end of its cycle.
+        """
+        self.in_crop_cycle = False
+
+    def _on_CROP_START(self, day=date):
+        """Register that a crop has started"""
+        self.in_crop_cycle = True
+        self.duration = 0
+
+class CropCalendarPlant(BaseCropCalendar):
+
+    def __init__(self, kiosk, crop_name: str=None, variety_name: str=None, \
+                 crop_start_date: date=None, crop_start_type: str=None, \
+                    crop_end_date: date=None, crop_end_type: str=None, max_duration: int=None):
+        """Initialize Crop Calendar Harvest Class inherits from CropCalendar
+
+        Args:
+            param kiosk: The PCSE VariableKiosk instance
+            param crop_name: String identifying the crop
+            param variety_name: String identifying the variety
+            param crop_start_date: Start date of the crop simulation
+            param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
+            param crop_end_date: End date of the crop simulation
+            param crop_end_type: End type of the crop simulation ('harvest', 'maturity', 'death')
+            param max_duration: Integer describing the maximum duration of the crop cycle
+        """
+        super().__init__(kiosk, crop_name=crop_name, variety_name=variety_name, 
+                       crop_start_date=crop_start_date, crop_start_type=crop_start_type, 
+                       crop_end_date=crop_end_date, crop_end_type=crop_end_type, 
+                       max_duration=max_duration)
+
+    def __call__(self, day):
+        """Runs the crop calendar to determine if any actions are needed.
+
+        :param day:  a date object for the current simulation day
+        :param drv: the driving variables at this day
+        :return: None
+        """
+
+        if self.in_crop_cycle:
+            self.duration += 1
+
+        # end of the crop cycle
+        finish_type = None
+        if self.in_crop_cycle:
+            # Check for forced stop because maximum duration is reached
+            if self.in_crop_cycle and self.duration == self.max_duration:
+                finish_type = "max_duration"
+
+        # If finish condition is reached send a signal to finish the crop
+        if finish_type is not None:
+            self.in_crop_cycle = False
+            self._send_signal(signal=signals.crop_finish, day=day,
+                              finish_type=finish_type, crop_delete=True)
+
 
 class PerennialCropCalendar(BaseCropCalendar):
     """A crop calendar for managing the crop cycle.
@@ -433,7 +499,7 @@ class BaseAgroManager(AncillaryObject):
         """
         self._send_signal(signal=signals.terminate)
     
-class AgroManagerSingleYear(BaseAgroManager):
+class AgroManagerAnnual(BaseAgroManager):
     """Class for continuous AgroManagement actions including crop rotations and events.
 
     The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
@@ -503,6 +569,55 @@ class AgroManagerPlant(BaseAgroManager):
 
     def initialize(self, kiosk:VariableKiosk, agromanagement:dict):
         """Initialize the AgroManagerHarvest.
+
+        :param kiosk: A PCSE variable Kiosk
+        :param agromanagement: the agromanagement definition, see the example above in YAML.
+        """
+        self.kiosk = kiosk
+
+        # Connect CROP_FINISH signal with handler
+        self._connect_signal(self._on_SITE_FINISH, signals.site_finish)
+
+        # If there is an "AgroManagement" item defined then we first need to get
+        # the contents defined within that item
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
+
+        # Validate that a site calendar and crop calendar are present
+        sc_def = agromanagement['SiteCalendar']
+        if sc_def is not None:
+            sc = SiteCalendar(kiosk, **sc_def)
+            sc.validate()
+            self._site_calendar = sc
+
+            self.start_date = self._site_calendar.site_start_date
+            self.end_date = self._site_calendar.site_end_date
+        
+        # Get and validate the crop calendar
+        cc_def = agromanagement['CropCalendar']
+        if cc_def is not None and sc_def is not None:
+            cc = CropCalendarPlant(kiosk, **cc_def)
+            cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
+            self._crop_calendar = cc
+
+class AgroManagerHarvest(BaseAgroManager):
+    """Class for continuous AgroManagement actions including crop rotations and events.
+
+    The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
+    fields including planting and harvesting of the crop, as well as management actions such as fertilizer
+    application, irrigation and spraying.
+
+    The agromanagement during the simulation is implemented as a sequence of campaigns. Campaigns start on a
+    prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
+    provided a trailing empty campaign or by deriving the end date from the crop calendar and timed events in the
+    last campaign. See also the section below on `end_date` property.
+
+    Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
+    state events.
+    """
+
+    def initialize(self, kiosk:VariableKiosk, agromanagement:dict):
+        """Initialize the AgroManager.
 
         :param kiosk: A PCSE variable Kiosk
         :param agromanagement: the agromanagement definition, see the example above in YAML.
@@ -656,31 +771,55 @@ class AgroManagerPlantPerennial(BaseAgroManager):
         # Get and validate the crop calendar
         cc_def = agromanagement['CropCalendar']
         if cc_def is not None and sc_def is not None:
-            cc = CropCalendarHarvest(kiosk, **cc_def)
+            cc = CropCalendarPlant(kiosk, **cc_def)
             cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
             self._crop_calendar = cc
 
-    def __call__(self, day:date, drv):
-        """Calls the AgroManager to execute and crop calendar actions, timed or state events.
+class AgroManagerHarvestPerennial(BaseAgroManager):
+    """Class for continuous AgroManagement actions including crop rotations and events.
 
-        :param day: The current simulation date
-        :param drv: The driving variables for the current day
-        :return: None
+    The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
+    fields including planting and harvesting of the crop, as well as management actions such as fertilizer
+    application, irrigation and spraying.
+
+    The agromanagement during the simulation is implemented as a sequence of campaigns. Campaigns start on a
+    prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
+    provided a trailing empty campaign or by deriving the end date from the crop calendar and timed events in the
+    last campaign. See also the section below on `end_date` property.
+
+    Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
+    state events.
+    """
+
+    def initialize(self, kiosk:VariableKiosk, agromanagement:dict):
+        """Initialize the AgroManager.
+
+        :param kiosk: A PCSE variable Kiosk
+        :param agromanagement: the agromanagement definition, see the example above in YAML.
         """
-        if self._site_calendar is not None:
-            self._site_calendar(day)
+        self.kiosk = kiosk
 
-        # call handlers for the crop calendar, timed and state events
-        if self._crop_calendar is not None:
-            self._crop_calendar(day)
+        # Connect CROP_FINISH signal with handler
+        self._connect_signal(self._on_SITE_FINISH, signals.site_finish)
 
+        # If there is an "AgroManagement" item defined then we first need to get
+        # the contents defined within that item
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
 
-    def _on_SITE_FINISH(self, day:date):
-        """Send signal to terminate after the crop cycle finishes.
+        # Validate that a site calendar and crop calendar are present
+        sc_def = agromanagement['SiteCalendar']
+        if sc_def is not None:
+            sc = SiteCalendar(kiosk, **sc_def)
+            sc.validate()
+            self._site_calendar = sc
 
-        The simulation will be terminated when the following conditions are met:
-        1. There are no campaigns defined after the current campaign
-        2. There are no StateEvents active
-        3. There are no TimedEvents scheduled after the current date.
-        """
-        self._send_signal(signal=signals.terminate)
+            self.start_date = self._site_calendar.site_start_date
+            self.end_date = self._site_calendar.site_end_date
+        
+        # Get and validate the crop calendar
+        cc_def = agromanagement['CropCalendar']
+        if cc_def is not None and sc_def is not None:
+            cc = CropCalendarHarvest(kiosk, **cc_def)
+            cc.validate(self._site_calendar.site_start_date, self._site_calendar.site_end_date)
+            self._crop_calendar = cc

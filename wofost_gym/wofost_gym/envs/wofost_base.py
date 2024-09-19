@@ -497,3 +497,69 @@ class Plant_NPK_Env(NPK_Env):
             action[5]
         self.log['reward'][self.date] = reward
         self.log['day'][self.date] = self.date  
+
+class Harvest_NPK_Env(NPK_Env):
+    """Base Gym Environment for simulating crop growth with only 
+    harvesting actions. Automatically starts crop but does not handle harvesting.
+    Useful in perennial models
+    
+    Relies on the PCSE package (in base folder) and the WOFOST80 crop model. 
+    """
+    # Env Constants
+    NUM_ACT = 5
+    H = 0 # Harvest action
+    N = 1 # Nitrogen action
+    P = 2 # Phosphorous action
+    K = 3 # Potassium action
+    I = 4 # Irrigation action 
+
+    def __init__(self, args: NPK_Args, base_fpath: str, agro_fpath:str, \
+                 site_fpath:str, crop_fpath: str, config: dict=None):
+        """Initialize the :class:`Plant_NPK_Env`.
+
+        Args: 
+            NPK_Args: The environment parameterization
+            config: Agromanagement configuration dictionary
+        """
+        super().__init__(args, base_fpath, agro_fpath, site_fpath, crop_fpath, \
+                         config=config)
+
+        # Get specific crop names from agromanagement
+        self.crop_name = self.agromanagement['CropCalendar']['crop_name']
+        self.variety_name = self.agromanagement['CropCalendar']['variety_name']
+        self.crop_start_type = self.agromanagement['CropCalendar']['crop_start_type']
+        self.crop_end_type = self.agromanagement['CropCalendar']['crop_end_type']
+        self.active_crop_flag = False
+
+    def _take_action(self, action: int):
+        """Sends action to the model
+        """
+        msg = "\'Take Action\' method not yet implemented on %s" % self.__class__.__name__
+        raise NotImplementedError(msg)
+
+    def _init_log(self):
+        """Initialize the log.
+        """
+        return {'growth': dict(), 'harvest': dict(), 'nitrogen': dict(), \
+                'phosphorous': dict(), 'potassium': dict(), 'irrigation':dict(), 'reward': dict(), 'day':dict()}
+    
+    def _log(self, growth: float, action: int, reward: float):
+        """Log the outputs into the log dictionary
+        
+        Args: 
+            growth: float - Weight of Storage Organs
+            action: int   - the action taken by the agent
+            reward: float - the reward
+        """
+        self.log['growth'][self.date] = growth
+        self.log['harvest'][self.date] = action[0]
+        self.log['nitrogen'][self.date - datetime.timedelta(self.intervention_interval)] = \
+            action[1]
+        self.log['phosphorous'][self.date - datetime.timedelta(self.intervention_interval)] = \
+            action[2]
+        self.log['potassium'][self.date - datetime.timedelta(self.intervention_interval)] = \
+            action[3]
+        self.log['irrigation'][self.date - datetime.timedelta(self.intervention_interval)] = \
+            action[4]
+        self.log['reward'][self.date] = reward
+        self.log['day'][self.date] = self.date  

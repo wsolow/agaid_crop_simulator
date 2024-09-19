@@ -8,11 +8,11 @@ from wofost_gym.args import WOFOST_Args, Agro_Args
 
 from pcse.soil.soil_wrappers import BaseSoilModuleWrapper, SoilModuleWrapper_LNPKW
 from pcse.crop.wofost8 import BaseCropModel, Wofost80
-from pcse.agromanager import BaseAgroManager, AgroManagerSingleYear
+from pcse.agromanager import BaseAgroManager, AgroManagerAnnual
 
 
 def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseCropModel=Wofost80, \
-                agro: BaseAgroManager=AgroManagerSingleYear):
+                agro: BaseAgroManager=AgroManagerAnnual):
     """Makes the configuration dictionary to be used to set various values of
     the model.
     

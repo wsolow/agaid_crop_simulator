@@ -12,10 +12,9 @@ import sys
 
 import wofost_gym
 import wofost_gym.policies as policies
+from wofost_gym.envs.wofost_base import NPK_Env, Plant_NPK_Env, Harvest_NPK_Env
 from utils import Args
 import utils
-import pcse
-
 
 if __name__ == "__main__":
 
@@ -30,7 +29,12 @@ if __name__ == "__main__":
     env = wofost_gym.wrappers.NPKDictObservationWrapper(env)
     
     # Set default policy for use
-    policy = policies.No_Action(env)
+    if isinstance(env.unwrapped, Harvest_NPK_Env):
+        policy = policies.No_Action_Harvest(env)
+    elif isinstance(env.unwrapped, Plant_NPK_Env):
+        policy = policies.No_Action_Plant(env)
+    else:
+        policy = policies.No_Action(env)
 
     obs_arr = []
     obs, info = env.reset()
@@ -54,7 +58,8 @@ if __name__ == "__main__":
     all_obs = np.array([list(d.values()) for d in obs_arr])
 
     all_vars = args.npk_args.output_vars + args.npk_args.forecast_length * args.npk_args.weather_vars
-
+    print(f'SUCCESS in {args.env_id}')
+    
     # Plot Data
     plt.figure(0)
     plt.title('Cumulative Rewards')

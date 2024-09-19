@@ -4,7 +4,7 @@ Written by: Will Solow, 2024
 """
 import gymnasium as gym
 from wofost_gym.exceptions import PolicyException
-from wofost_gym.envs.wofost_base import Plant_NPK_Env
+from wofost_gym.envs.wofost_base import Plant_NPK_Env, Harvest_NPK_Env
 from abc import abstractmethod
 
 class Policy:
@@ -105,11 +105,11 @@ class Weekly_N(Policy):
         """
         return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
 
-class No_Action_Plant(Policy):
+class No_Action_Harvest(Policy):
     """Default policy for performing no irrigation or fertilization actions
     in a Harvest Environment
     """
-    required_vars = []
+    required_vars = ["DAYS"]
 
     def __init__(self, env:gym.Env):
         """Initialize the :class:`No_Action_Harvest`.
@@ -125,6 +125,38 @@ class No_Action_Plant(Policy):
         """
         super()._validate()
 
+        if not isinstance(self.env.unwrapped, Harvest_NPK_Env):
+            msg = "Environment does not inherit from `Harvest_NPK_Env`"
+            raise PolicyException(msg)
+        
+    def _get_action(self, obs:dict):
+        """Return an action which harvests on day 225
+        """
+        if obs["DAYS"] == 225:
+            return {'harvest': 1, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+        
+        return {'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+    
+class No_Action_Plant(Policy):
+    """Default policy for performing no irrigation or fertilization actions
+    in a Plant Environment
+    """
+    required_vars = ["DAYS"]
+
+    def __init__(self, env:gym.Env):
+        """Initialize the :class:`No_Action_Plant`.
+
+        Args: 
+            env: The Gymnasium Environment
+            required_vars: list of required state space variables 
+        """
+        super().__init__(env, required_vars=self.required_vars)
+
+    def _validate(self):
+        """Validates that the environment is a planting environment
+        """
+        super()._validate()
+
         if not isinstance(self.env.unwrapped, Plant_NPK_Env):
             msg = "Environment does not inherit from `Plant_NPK_Env`"
             raise PolicyException(msg)
@@ -132,9 +164,9 @@ class No_Action_Plant(Policy):
     def _get_action(self, obs:dict):
         """Return an action which plants on day 30 and harvests on day 225
         """
-        if obs[-1] == 30:
+        if obs["DAYS"] == 30:
             return {'plant': 1, 'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
-        if obs[-1] == 225:
+        if obs["DAYS"] == 225:
             return {'plant': 0, 'harvest': 1, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         
         return {'plant': 0, 'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }

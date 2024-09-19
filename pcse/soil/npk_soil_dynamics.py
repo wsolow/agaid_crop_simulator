@@ -314,7 +314,7 @@ class NPK_Soil_Dynamics_PP(NPK_Soil_Dynamics):
         states.PAVAIL = params.PMAX
         states.KAVAIL = params.KMAX
 
-class NPK_Soil_Dynamics_LN(SimulationObject):
+class NPK_Soil_Dynamics_LN(NPK_Soil_Dynamics):
     """A simple module for soil N/P/K dynamics.
     Assumes that there is abundant PK available at all times and only
     has limited N. 
