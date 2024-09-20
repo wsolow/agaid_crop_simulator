@@ -176,6 +176,8 @@ VERNDVS  Critical development stage after which the     SCr        -
 =======  ============================================= =======  ============
  Name     Description                                   Type     Unit
 =======  ============================================= =======  ============
+DTBEM    Consecutive days required above temperature    Scr        day
+          emergence for germination
 TSUMEM   Temperature sum from sowing to emergence       SCr        |C| day
 TBASEM   Base temperature for emergence                 SCr        |C|
 TEFFMX   Maximum effective temperature for emergence    SCr        |C|

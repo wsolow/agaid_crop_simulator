@@ -241,6 +241,7 @@ class Base_Phenology(SimulationObject):
     DVSEND   Final development stage                        SCr        -
     DTSMTB   Daily increase in temperature sum as a         TCr        |C|
              function of daily mean temperature.
+    DTBEM    Days at TBASEM required for crop to start      TCr        |C|
     =======  ============================================= =======  ============
 
     **State variables**
@@ -259,6 +260,7 @@ class Base_Phenology(SimulationObject):
     STAGE    Current phenological stage, can take the           N    -
              folowing values:
              `emerging|vegetative|reproductive|mature`
+    DATBE    Days above Temperature sum for emergence           N    days
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -270,6 +272,7 @@ class Base_Phenology(SimulationObject):
     DTSUM    Increase in temperature sum for anthesis or        N    |C|
              maturity
     DVR      Development rate                                   Y    |day-1|
+    RDEM     Day counter for if day is suitable for germination Y    day
     =======  ================================================= ==== ============
     
     **External dependencies:**
@@ -300,26 +303,30 @@ class Base_Phenology(SimulationObject):
         DVSEND = Float(-99.)  # Final development stage
         DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
-        CROP_START_TYPE = Enum(["sowing", "emergence"])
-        CROP_END_TYPE = Enum(["emergence", "maturity", "harvest", "death", "max_duration"])
+        CROP_START_TYPE = Enum(["dormant", "sowing", "emergence"])
+        CROP_END_TYPE = Enum(["sowing", "emergence", "maturity", "harvest", "death", "max_duration"])
+        DTBEM  = Int(-99)
 
     class RateVariables(RatesTemplate):
         DTSUME = Float(-99.)  # increase in temperature sum for emergence
         DTSUM  = Float(-99.)  # increase in temperature sum
         DVR    = Float(-99.)  # development rate
+        RDEM   = Int(-99.)    # Days above temp sum
 
     class StateVariables(StatesTemplate):
         DVS = Float(-99.)  # Development stage
         TSUM = Float(-99.)  # Temperature sum state
         TSUME = Float(-99.)  # Temperature sum for emergence state
         # States which register phenological events
+        DOP = Instance(datetime.date) # Day of planting
         DOS = Instance(datetime.date) # Day of sowing
         DOE = Instance(datetime.date) # Day of emergence
         DOA = Instance(datetime.date) # Day of anthesis
         DOM = Instance(datetime.date) # Day of maturity
         DOD = Instance(datetime.date) # Day of crop death
         DOH = Instance(datetime.date) # Day of harvest
-        STAGE = Enum(["emerging", "vegetative", "reproductive", "mature", "dead"])
+        STAGE = Enum(["sowing", "emerging", "vegetative", "reproductive", "mature", "dead"])
+        DATBE = Int(-99)  # Current number of days above TSUMEM
 
     def initialize(self, day:datetime.date, kiosk:VariableKiosk, parvalues:dict):
         """
@@ -343,7 +350,7 @@ class Base_Phenology(SimulationObject):
             DOE = day
             DOS = None
             DVS = p.DVSI
-
+            DOP = day
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
 
@@ -351,14 +358,20 @@ class Base_Phenology(SimulationObject):
             STAGE = "emerging"
             DOS = day
             DOE = None
+            DOP = day
             DVS = -0.1
-
+        elif p.CROP_START_TYPE == "dormant":
+            STAGE = "sowing"
+            DOS = None
+            DOE = None
+            DOP = day
+            DVS = -0.1
         else:
             msg = "Unknown start type: %s. Are you using the corect Phenology \
                 module (Calling the correct Gym Environment)?" % p.CROP_START_TYPE
             raise exc.PCSEError(msg)
             
-        return DVS, DOS, DOE, STAGE
+        return DVS, DOS, DOE, DOP, STAGE
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -382,27 +395,39 @@ class Base_Phenology(SimulationObject):
                 VERNFAC = self.kiosk["VERNFAC"]
 
         # Development rates
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            r.DTSUME = 0.
+            r.DTSUM = 0.
+            r.DVR = 0.
+            if drv.TEMP > p.TBASEM:
+                r.RDEM = 1
+            else:
+                r.RDEM = 0
+        elif s.STAGE == "emerging":
             r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
             r.DTSUM = 0.
             r.DVR = 0.1 * r.DTSUME/p.TSUMEM
-
+            r.RDEM = 0
         elif s.STAGE == 'vegetative':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
+            r.RDEM = 0
         elif s.STAGE == 'reproductive':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM2
+            r.RDEM = 0
         elif s.STAGE == 'mature':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM3
+            r.RDEM = 0
         elif s.STAGE == 'dead':
             r.DTSUME = 0.
             r.DTSUM = 0.
             r.DVR = 0.
+            r.RDEM = 0
         else:  # Problem: no stage defined
             msg = "Unrecognized STAGE defined in phenology submodule: %s."
             raise exc.PCSEError(msg, self.states.STAGE)
@@ -430,9 +455,15 @@ class Base_Phenology(SimulationObject):
         s.TSUME += r.DTSUME
         s.DVS += r.DVR
         s.TSUM += r.DTSUM
+        s.DATBE += r.RDEM
 
         # Check if a new stage is reached
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            if s.DATBE >= p.DTBEM:
+                self._next_stage(day)
+                s.DVS = -0.1
+                s.DATBE = 0
+        elif s.STAGE == "emerging":
             if s.DVS >= 0.0:
                 self._next_stage(day)
                 s.DVS = 0.
@@ -463,7 +494,11 @@ class Base_Phenology(SimulationObject):
         p = self.params
 
         current_STAGE = s.STAGE
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            s.STAGE = "emerging"
+            s.DOS = day
+
+        elif s.STAGE == "emerging":
             s.STAGE = "vegetative"
             s.DOE = day
             # send signal to indicate crop emergence
@@ -533,16 +568,16 @@ class Annual_Phenology(Base_Phenology):
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
         # Define initial states
-        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        DVS, DOS, DOE, DOP, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, 
                                           publish=["DVS", "TSUM", "TSUME", "DOS", 
                                                    "DOE", "DOA", "DOM", "DOH", "DOD", 
-                                                   "STAGE", ],
-                                          TSUM=0., TSUME=0., DVS=DVS,
+                                                   "STAGE", "DOP", "DATBE", ],
+                                          TSUM=0., TSUME=0., DOP=DOP, DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, DOD=None, STAGE=STAGE)
+                                          DOH=None, DOD=None, STAGE=STAGE, DATBE=0)
         
-        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
+        self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR", "RDEM"])
 
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
@@ -582,8 +617,7 @@ class Perennial_Phenology(Base_Phenology):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    AGER     Increase in age. Used to ensure the AGE state is   N    year
-             always visible
+
     =======  ================================================= ==== ============
     """
     class Parameters(ParamTemplate):
@@ -602,34 +636,31 @@ class Perennial_Phenology(Base_Phenology):
         DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
         CROP_START_TYPE = Enum(["sowing", "emergence", "dormant"])
-        CROP_END_TYPE = Enum(["emergence", "maturity", "harvest", "death", "max_duration"])
+        CROP_END_TYPE = Enum(["sowing", "emergence", "maturity", "harvest", "death", "max_duration"])
         DORM   = Int(-99)     # Days after no growth at which crop transitions to dormancy
         DORMCD = Int(-99)     # Minimum days in dormancy
         AGEI   = Int(-99)     # Initial Tree age
         DCYCLEMAX = Int(-99)   # Maximum number of days in crop cycle before dormancy
+        DTBEM  = Int(-99)     # Number of days above emergence temp required for germination
 
     class StateVariables(StatesTemplate):
         DVS   = Float(-99.)  # Development stage
         TSUM  = Float(-99.)  # Temperature sum state
         TSUME = Float(-99.)  # Temperature sum for emergence state
         # States which register phenological events
+        DOP    = Instance(datetime.date) # Day of planting
         DOS    = Instance(datetime.date) # Day of sowing
         DOE    = Instance(datetime.date) # Day of emergence
         DOA    = Instance(datetime.date) # Day of anthesis
         DOM    = Instance(datetime.date) # Day of maturity
         DOD    = Instance(datetime.date) # Day of crop death
         DOH    = Instance(datetime.date) # Day of harvest
-        STAGE  = Enum(["dormant", "emerging", "vegetative", "reproductive", "mature", "dead"])
+        STAGE  = Enum(["dormant", "sowing", "emerging", "vegetative", "reproductive", "mature", "dead"])
         DSNG   = Int(-99) # Days since no growth
         DSD    = Int(-99) # Days since dormancy
         AGE    = Int(-99) # Age of crop (years)
         DCYCLE = Int(-99) # Days in Crop cycle
-
-    class RateVariables(RatesTemplate):
-        DTSUME = Float(-99.)  # increase in temperature sum for emergence
-        DTSUM  = Float(-99.)  # increase in temperature sum
-        DVR    = Float(-99.)  # development rate
-        AGER   = Int(-99)     # Increase in crop age
+        DATBE = Int(-99)  # Current number of days above TSUMEM
 
     def initialize(self, day: datetime.date, kiosk: VariableKiosk, parvalues: dict):
         self.params = self.Parameters(parvalues)
@@ -639,55 +670,22 @@ class Perennial_Phenology(Base_Phenology):
         self._connect_signal(self._on_DORMANT, signal=signals.crop_dormant)
         AGEI = self.params.AGEI
         # Define initial states
-        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
+        DVS, DOS, DOE, DOP, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, 
                                           publish=["DVS", "TSUM", "TSUME", "DOS", 
                                                    "DOE", "DOA", "DOM", "DOH", "DOD", 
                                                    "STAGE", "DSNG", "DSD", "AGE",
-                                                   "DCYCLE"],
+                                                   "DCYCLE", "DATBE", "DOP"],
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
                                           DOH=None, DOD=None, STAGE=STAGE, DSNG=0,
-                                          DSD=0, AGE=AGEI, DCYCLE=0)
+                                          DSD=0, AGE=AGEI, DCYCLE=0,DATBE=0, DOP=DOP)
         
         self.rates = self.RateVariables(kiosk, publish=["DTSUME", "DTSUM", "DVR"])
 
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
             self.vernalisation = Vernalisation(day, kiosk, parvalues)
-
-    def _get_initial_stage(self, day:datetime.date):
-        """Set the initial state of the crop given the start type
-        """
-        p = self.params
-
-        # Define initial stage type (emergence/sowing) and fill the
-        # respective day of sowing/emergence (DOS/DOE)
-        if p.CROP_START_TYPE == "emergence":
-            STAGE = "vegetative"
-            DOE = day
-            DOS = None
-            DVS = p.DVSI
-
-            # send signal to indicate crop emergence
-            self._send_signal(signals.crop_emerged)
-
-        elif p.CROP_START_TYPE == "sowing":
-            STAGE = "emerging"
-            DOS = day
-            DOE = None
-            DVS = -0.1
-
-        elif p.CROP_START_TYPE == "dormant":
-            STAGE = "emerging"
-            DOS = day
-            DOE = None
-            DVS = -0.1
-        else:
-            msg = "Unknown start type: %s" % p.CROP_START_TYPE
-            raise exc.PCSEError(msg)
-            
-        return DVS, DOS, DOE, STAGE
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -711,46 +709,48 @@ class Perennial_Phenology(Base_Phenology):
                 VERNFAC = self.kiosk["VERNFAC"]
 
         # Development rates
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            r.DTSUME = 0.
+            r.DTSUM = 0.
+            r.DVR = 0.
+            if drv.TEMP > p.TBASEM:
+                r.RDEM = 1
+            else:
+                r.RDEM = 0
+        elif s.STAGE == "emerging":
             r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
             r.DTSUM = 0.
             r.DVR = 0.1 * r.DTSUME/p.TSUMEM
-
+            r.RDEM = 0
         elif s.STAGE == 'vegetative':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
+            r.RDEM = 0
         elif s.STAGE == 'reproductive':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM2
+            r.RDEM = 0
         elif s.STAGE == 'mature':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM3
+            r.RDEM = 0
         elif s.STAGE == 'dead':
             r.DTSUME = 0.
             r.DTSUM = 0.
             r.DVR = 0.
+            r.RDEM = 0
         elif s.STAGE == 'dormant':
             r.DTSUME = 0.
             r.DTSUM = 0.
             r.DVR = 0.
+            r.RDEM = 0
         else:  # Problem: no stage defined
             msg = "Unrecognized STAGE defined in phenology submodule: %s"
             raise exc.PCSEError(msg, self.states.STAGE)
-        
-        # Increment plant age based on Day of Emergence
-        # Handles leap years
-        if s.DOE is not None:
-            try:
-                if s.DOE == day.replace(year=s.DOE.year):
-                    r.AGER = 1
-                else:
-                    r.AGER = 0
-            except:
-                r.AGER = 0
-
+    
         msg = "Finished rate calculation for %s"
         self.logger.debug(msg % day)
         
@@ -762,7 +762,6 @@ class Perennial_Phenology(Base_Phenology):
         p = self.params
         r = self.rates
         s = self.states
-
         # Integrate vernalisation module
         if p.IDSL >= 2:
             if s.STAGE == 'vegetative':
@@ -774,16 +773,36 @@ class Perennial_Phenology(Base_Phenology):
         s.TSUME += r.DTSUME
         s.DVS += r.DVR
         s.TSUM += r.DTSUM
-        s.AGE += r.AGER
+
+        # Require that days above temperature sum must be consecutive
+        if r.RDEM == 0:
+            s.DATBE = 0
+        else:
+            s.DATBE += r.RDEM
+
+        # Increment plant age based on Day of Planting
+        # Handles leap years
+        try:
+            if s.DOP == day.replace(year=s.DOP.year):
+                s.AGE += 1 
+            else:
+                s.AGE += 0
+        except:
+            s.AGE += 0
 
         # Compute the accumulated dates of no growth
-        if r.DVR == 0 and s.STAGE != "emerging":
+        if r.DVR == 0 and s.STAGE != "emerging" and s.STAGE != "sowing":
             s.DSNG += 1
         else:
             s.DSNG = 0
 
         # Check if a new stage is reached
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            if s.DATBE >= p.DTBEM:
+                self._next_stage(day)
+                s.DVS = -0.1
+                s.DATBE = 0
+        elif s.STAGE == "emerging":
             s.DCYCLE += 1
             if s.DVS >= 0.0:
                 self._next_stage(day)
@@ -793,25 +812,25 @@ class Perennial_Phenology(Base_Phenology):
             if s.DVS >= 1.0:
                 self._next_stage(day)
                 s.DVS = 1.0
-            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == 'reproductive':
             s.DCYCLE += 1
             if s.DVS >= p.DVSM:
                 self._next_stage(day)
                 s.DVS = p.DVSM
-            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == 'mature':
             s.DCYCLE += 1
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
                 s.DVS = p.DVSEND
-            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
                 s.STAGE = "dormant"
         elif s.STAGE == "dormant":
             if s.DSD >= p.DORMCD:
-                s.STAGE = "emerging"
+                s.STAGE = "sowing"
                 s.DVS = -0.1
                 s.DSD = 0
             else:
@@ -824,7 +843,7 @@ class Perennial_Phenology(Base_Phenology):
                 s.DSD +=1
         elif s.STAGE == 'dead':
             s.DCYCLE += 1
-            if s.DSNG >= p.DORM or s.DCYCLE > p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
                 s.STAGE = "dormant"
                 s.DVS= -0.1
                 s.DSD = 0
@@ -841,7 +860,10 @@ class Perennial_Phenology(Base_Phenology):
         p = self.params
 
         current_STAGE = s.STAGE
-        if s.STAGE == "emerging":
+        if s.STAGE == "sowing":
+            s.STAGE = "emerging"
+            s.DOS = day
+        elif s.STAGE == "emerging":
             s.STAGE = "vegetative"
             s.DOE = day
             # send signal to indicate crop emergence
@@ -902,4 +924,3 @@ class Perennial_Phenology(Base_Phenology):
         r.DTSUME = 0 
         r.DTSUM  = 0
         r.DVR    = 0
-        r.AGER   = 0

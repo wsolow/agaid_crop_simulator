@@ -204,6 +204,8 @@ class WOFOST_Args:
     VERNDVS: float = None
 
     # Phenology Parameters
+    """Number of days above TSUMEM for germination to occur"""
+    DTBEM: float = None
     """Temperature sum from sowing to emergence (C day)"""
     TSUMEM: float = None   
     """Base temperature for emergence (C)"""

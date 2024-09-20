@@ -513,6 +513,7 @@ class Wofost80Perennial(BaseCropModel):
         """Handler for recieving the crop dormancy signal. Upon dormancy, reset
         all crop parameters
         """
+        print('trying to reset from dormant')
         # Deregister parameters from kiosk
         self.part.reset()
         self.assim.reset()

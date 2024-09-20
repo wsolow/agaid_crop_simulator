@@ -168,13 +168,15 @@
   STAGE:       'Phenological Stage'
   DSNG:        'Days since no crop growth'                         
   DSD:         'Days since dormancy started'                        
-  AGE:         'Age of the crop in years'                           
+  AGE:         'Age of the crop in years'   
+  DATBE:       'Consecutive Days Above Emergence Temperature Sum'
+  DOP:         'Day of Planting'                        
 
   #**Rate Variables** (For Output To Observation Space):
   DTSUME:        'Increase In Temperature Sum For Emergence'         
   DTSUM:         'Increase In Temperature Sum For Anthesis Or Maturity'
   DVR:           'Development Rate'   
-  AGER:          'Increase in crop age'                    
+  RDEM:          'Day Increase Above Emergence Temperature Sum'         
 
   #*############################################################################**
   #Respiration Dynamics States And Rates

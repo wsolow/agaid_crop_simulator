@@ -170,13 +170,15 @@
   STAGE:    'enum'     # Current phenological stage, can take the folowing values: emerging|vegetative|reproductive|mature
   DSNG:     'day'      # Days since no crop growth                         
   DSD:      'day'      # Days since dormancy started                       
-  AGE:      'year'     # Age of the crop in years                           
+  AGE:      'year'     # Age of the crop in years  
+  DOP:      'date'     # Day of planting
+  DATBE:    'day'      # Number of consecutive days above emergence temperature sum                         
 
   # **Rate variables** (For output to observation space):
   DTSUME:   '|C|'      # Increase in temperature sum for emergence         
   DTSUM:    '|C|'      # Increase in temperature sum for anthesis or maturity
   DVR:      '|day-1|'  # Development rate   
-  AGER:     'year'     # Increase in crop age           
+  RDEM:     'day'      # Day increase above emergence temperature sum          
 
   #*############################################################################**
   # Respiration Dynamics States and Rates
@@ -504,6 +506,7 @@
   # Phenology Parameters
   #*############################################################################**
   #**Simulation parameters** (To be provided in cropdata dictionary):
+  DTBEM:    'day'        # Number of consecutive days above emergence temperature sum required to germinate
   TSUMEM:   '|C| day'    # Temperature sum from sowing to emergence      
   TBASEM:   '|C|'        # Base temperature for emergence                 
   TEFFMX:   '|C|'        # Maximum effective temperature for emergence    
@@ -540,7 +543,7 @@
   TDWI:     '|ha kg-1|'      # Initial total crop dry weight 
   IAIRDU:   'bool'           # Presence of air ducts in the root (1) or not (0)
   RDRRTB:   'factor'         # Relative death rate of roots as a function of development stage
-  RDRROB:   'factor'         # Relative death rate of roots as a function of oxygen stress (water logging)
+  RDRROS:   'factor'         # Relative death rate of roots as a function of oxygen stress (water logging)
 
   #*############################################################################**
   # Stem Dynamics Parameters

@@ -253,6 +253,7 @@ class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
         TDWI   = AfgenTrait()
         IAIRDU = Float(-99)
         RDRRTB = AfgenTrait()
+        RDRROS = AfgenTrait()
                     
     def initialize(self, day:date , kiosk:VariableKiosk, parvalues:dict):
         """

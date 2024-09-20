@@ -233,6 +233,9 @@ STAGE    Current phenological stage, can take the           N    -
 DSNG     Days since no crop growth (perennial only)         Y    day
 DSD      Days since dormancy started (perennial only)       Y    day
 AGE      Age of the crop in years (perennial only)          Y    year
+DOP      Day of Planting                                    Y    -
+DATBE    Number of consecutive days above temperature sum   Y    day
+          for emergence
 =======  ================================================= ==== ============
 **Rate variables** (For output to observation space):
 =======  ================================================= ==== ============
@@ -242,8 +245,7 @@ DTSUME   Increase in temperature sum for emergence          N    |C|
 DTSUM    Increase in temperature sum for anthesis or        N    |C|
             maturity
 DVR      Development rate                                   Y    |day-1|
-AGER     Increase in age. Used to ensure the AGE state is   N    year
-             always visible (perennial only)
+RDEM     Day increase when day temp is above TSUMEM         Y    day
 =======  ================================================= ==== ============
 
 **############################################################################**

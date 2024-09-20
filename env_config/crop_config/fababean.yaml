@@ -89,6 +89,10 @@ CropParameters:
             #
             # EMERGENCE
             #
+            DTBEM:
+            - 5
+            - Number of days above TBASEM required for germination
+            - ['days']
             TBASEM:
             -  0.0
             - Lower threshold temperature for emergence

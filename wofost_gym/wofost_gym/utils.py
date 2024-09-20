@@ -79,9 +79,9 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
         "VERNR", "VERNFAC",   
         # PHENOLOGY STATES
         "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", "DSNG",
-        "DSD", "AGE",
+        "DSD", "AGE", "DOP", "DATBE"
         # PHENOLOGY RATES
-        "DTSUME", "DTSUM", "DVR", "AGER",
+        "DTSUME", "DTSUM", "DVR", "RDEM",
         # RESPIRATION STATES
             # NONE
         # RESPIRATION RATES
@@ -447,6 +447,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
         env.parameterprovider.set_override("VERNDVS", args.VERNDVS, check=False)
 
     # Phenology Parameters
+    """Number of days above TSUMEM for germination to occur"""
+    if args.DTBEM is not None:
+        env.parameterprovider.set_override("DTBEM", args.DTBEM, check=False)
     """Temperature sum from sowing to emergence (C day)"""
     if args.TSUMEM is not None:
         env.parameterprovider.set_override("TSUMEM", args.TSUMEM, check=False)
