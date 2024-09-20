@@ -17,10 +17,13 @@ from utils import Args
 import utils
 
 if __name__ == "__main__":
-
+    plot = True
+    graph = False
     args = tyro.cli(Args)
 
     env_id, env_kwargs = utils.get_gym_args(args)
+    if graph:
+        env_kwargs["args"].output_vars = wofost_gym.args.GRAPH_OUTPUT_VARS
 
     # Make the gym environment with wrappers
     env = gym.make(env_id, **env_kwargs)
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     elif isinstance(env.unwrapped, Plant_NPK_Env):
         policy = policies.No_Action_Plant(env)
     else:
-        policy = policies.No_Action(env)
+        policy = policies.Interval_W(env, amount=0, interval=1)
 
     obs_arr = []
     obs, info = env.reset()
@@ -60,20 +63,31 @@ if __name__ == "__main__":
     all_vars = args.npk_args.output_vars + args.npk_args.forecast_length * args.npk_args.weather_vars
     print(f'SUCCESS in {args.env_id}')
     
-    # Plot Data
-    plt.figure(0)
-    plt.title('Cumulative Rewards')
-    plt.xlabel('Days')
-    plt.plot(np.cumsum(reward_arr))
-    
-    plt.figure()
-    for i in range(len(all_vars)):
-        plt.figure(i+1)
-        plt.title(all_vars[i])
-        plt.plot(all_obs[ :, i])
-        plt.xlim(0-10, all_obs.shape[0]+10) 
+    if plot:
+        # Plot Data
+        plt.figure(0)
+        plt.title('Cumulative Rewards')
         plt.xlabel('Days')
-    plt.show()
+        plt.plot(np.cumsum(reward_arr))
+
+        plt.figure()
+        for i in range(len(all_vars)):
+            plt.figure(i+1)
+            plt.title(all_vars[i])
+            plt.plot(all_obs[ :, i])
+            plt.xlim(0-10, all_obs.shape[0]+10) 
+            plt.xlabel('Days')
+        plt.show()
+    
+    if graph:
+        for i in range(len(all_vars)):
+            plt.figure(i)
+            plt.title(all_vars[i])
+            plt.plot(all_obs[ :, i])
+            plt.xlim(0-10, all_obs.shape[0]+10) 
+            plt.xlabel('Days')
+            plt.savefig(f'figs/{env_kwargs["args"].ag_args.crop_name}_{all_vars[i]}')
+            plt.close()
 
 
 

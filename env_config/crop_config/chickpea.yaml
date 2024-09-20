@@ -344,7 +344,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -385,7 +391,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -593,7 +599,7 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Chickpea_VanHeemst_1988:
+        chickpea_1:
             <<: *chickpea
             Metadata:
                 <<: *meta

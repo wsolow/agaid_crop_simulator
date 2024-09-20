@@ -201,10 +201,6 @@ class NPK_Env(gym.Env):
         Args:
             action: integer
         """
-
-        if action < 0 or action >= self.action_space.n:
-            msg = f"Action {action} outside of range [0, {self.action_space.n}]"
-            raise exc.ActionException(msg)
         
         # Send action signal to model and run model
         act_tuple = self._take_action(action)
@@ -432,6 +428,7 @@ class NPK_Env(gym.Env):
         self.log['day'][self.date] = self.date  
 
 class Plant_NPK_Env(NPK_Env):
+
     """Base Gym Environment for simulating crop growth with planting and 
     harvesting actions. Does not automatically start crop
     

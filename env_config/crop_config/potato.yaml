@@ -109,11 +109,11 @@ CropParameters:
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0
+            - 14.0
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0
+            - 8.0
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
@@ -335,7 +335,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -376,7 +382,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -627,7 +633,7 @@ CropParameters:
             - reduction factor of AMAX as function of average daytime (*not* daily)  temperature
             - ['C', '-']
     Varieties:
-        Potato_701:
+        potato_1:
             <<: *potato
             Metadata:
                 <<: *meta
@@ -653,7 +659,7 @@ CropParameters:
             - 1550
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Potato_702:
+        potato_2:
             <<: *potato
             Metadata:
                 <<: *meta
@@ -677,7 +683,7 @@ CropParameters:
             - 1675
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Potato_703:
+        potato_3:
             <<: *potato
             Metadata:
                 <<: *meta
@@ -705,7 +711,7 @@ CropParameters:
             - 40.0
             - life span of leaves growing at 35 Celsius
             - ['d']
-        Potato_704:
+        potato_4:
             <<: *potato
             Metadata:
                 <<: *meta
@@ -733,7 +739,7 @@ CropParameters:
             - 40.0
             - life span of leaves growing at 35 Celsius
             - ['d']
-        Innovator:
+        potato_5:
             <<: *potato_nl
             Metadata:
                 <<: *meta
@@ -818,7 +824,7 @@ CropParameters:
                2.00, 1.00]
             - fraction of total dry matter to storage organs as a function of DVS
             - ['-', 'mass.mass-1']
-        Fontane:
+        potato_6:
             <<: *potato_nl
             Metadata:
                 <<: *meta
@@ -902,7 +908,7 @@ CropParameters:
                2.00,   0.97]
             - fraction of total dry matter to storage organs as a function of DVS
             - ['-', 'mass.mass-1']
-        Markies:
+        potato_7:
             <<: *potato_nl
             Metadata:
                 <<: *meta
@@ -986,7 +992,7 @@ CropParameters:
                2.00, 0.96]
             - fraction of total dry matter to storage organs as a function of DVS
             - ['-', 'mass.mass-1']
-        Premiere:
+        potato_8:
             Metadata:
                 <<: *meta
                 Contributor: Tamara ten Den, Pytrik Reidsma, Martin van Ittersum, Frits van Everts
@@ -1070,7 +1076,7 @@ CropParameters:
                2.00, 1.00]
             - fraction of total dry matter to storage organs as a function of DVS
             - ['-', 'mass.mass-1']
-        Festien:
+        potato_9:
             <<: *potato_nl
             Metadata:
                 <<: *meta

@@ -97,7 +97,7 @@ CropParameters:
             - maximum effective temperature for emergence
             - ['C']
             TSUMEM:
-            -    0
+            -    1.0
             - temperature sum from sowing to emergence
             - ['C.d']
             #
@@ -328,7 +328,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -369,7 +375,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -577,7 +583,7 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Tobacco_VanHeemst_1988:
+        tobacco_1:
             <<: *tobacco
             Metadata:
                 <<: *meta

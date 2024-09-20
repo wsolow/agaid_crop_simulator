@@ -84,7 +84,7 @@ CropParameters:
          - multiplication factor for AMAX to account for an increasing CO2 concentration
          - ['PPM', '-']
     EcoTypes:
-        springbarley: &springbarley
+        barley: &barley
             <<: *GenericC3
             #
             # EMERGENCE
@@ -109,11 +109,11 @@ CropParameters:
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0
+            - 14.0
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0
+            - 8.0
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
@@ -335,7 +335,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -376,7 +382,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -584,8 +590,8 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Spring_barley_301:
-            <<: *springbarley
+        barley_1:
+            <<: *barley
             Metadata:
                 <<: *meta
                 Description: Spring barley calibrated for the whole of the EU15. Sowing date varying from 9 Feb in

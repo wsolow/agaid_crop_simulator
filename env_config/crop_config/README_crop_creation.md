@@ -248,7 +248,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            # RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - < float >
             - maximum relative death rate of leaves due to water stress

@@ -243,6 +243,8 @@ IAIRDU   Presence of air ducts in the root (1) or       SCr      -
             not (0)
 RDRRTB   Relative death rate of roots as a function     TCr      -
             of development stage
+RDRROS   Relative death rate of roots as a function     TCr      -
+            of oxygen stress
 =======  ============================================= =======  ============
 
 **############################################################################**

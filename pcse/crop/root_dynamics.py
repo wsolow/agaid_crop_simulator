@@ -9,7 +9,7 @@ from datetime import date
 from ..nasapower import WeatherDataProvider
 from ..utils.traitlets import Float
 from ..utils.decorators import prepare_rates, prepare_states
-from ..util import AfgenTrait
+from ..util import AfgenTrait, limit
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
     
@@ -42,6 +42,8 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
              not (0)
     RDRRTB   Relative death rate of roots as a function     TCr      -
              of development stage
+    RDRROS   Relative death rate of roots as a function     TCr      - 
+              of oxygen shortage (over watering)
     =======  ============================================= =======  ============
     
 
@@ -82,6 +84,8 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
     DMI      Total dry matter                    CropSimulation     |kg ha-1 d-1|
              increase
     FR       Fraction biomass to roots           DVS_Partitioning    - 
+    RFOS     Reduction factor due to oxygen      Evapotranspiration  - 
+             shortage  
     =======  =================================== =================  ============
     """
     """
@@ -117,6 +121,7 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
         TDWI   = Float(-99.)
         IAIRDU = Float(-99)
         RDRRTB = AfgenTrait()
+        RDRROS = AfgenTrait()
                     
     class RateVariables(RatesTemplate):
         RR   = Float(-99.)
@@ -153,7 +158,7 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
 
         # Increase in root biomass
         r.GRRT = k.FR * k.DMI
-        r.DRRT = s.WRT * p.RDRRTB(k.DVS)
+        r.DRRT = s.WRT * limit(0.0, 1.0, (p.RDRRTB(k.DVS) + p.RDRROS(k.RFOS)))
         r.GWRT = r.GRRT - r.DRRT
         
         # Increase in root depth

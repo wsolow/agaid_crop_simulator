@@ -250,6 +250,8 @@ class WOFOST_Args:
     RML: float = None                                         
     """Relative maintenance respiration rate for storage organs |kg CH2O kg-1 d-1|"""
     RMO: float = None    
+    """Reduction factor  for senescence as function of DVS"""
+    RFSETB: float = None
 
     # Root Dynamics Parameters
     """Initial rooting depth (cm)"""
@@ -264,6 +266,8 @@ class WOFOST_Args:
     IAIRDU: bool = None
     """Relative death rate of roots as a function of development stage"""
     RDRRTB: float = None
+    """Relative death rate of roots as a function of oxygen stress (over watering)"""
+    RDRROS: float = None
 
     # Stem Dynamics Parameters   
     """Relative death rate of stems as a function of development stage"""
@@ -377,7 +381,7 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'WSO', 'DVS', 'FIN'])
+    output_vars: list = field(default_factory = lambda: ['TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'WSO', 'WRT', 'DRRT', 'DVS', 'FIN'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
     
@@ -410,3 +414,94 @@ class NPK_Args:
 
     """Flag for resetting to random year"""
     random_reset: bool = False
+
+GRAPH_OUTPUT_VARS = [ 
+        # WOFOST STATES 
+        "TAGP", "GASST", "MREST", "CTRAT", "CEVST", "HI", "FIN",
+        # WOFOST RATES 
+        "GASS", "PGASS", "MRES", "ASRC", "DMI", "ADMI",
+        # EVAPOTRANSPIRATION STATES
+        "IDOST", "IDWST",
+        # EVAPOTRANSPIRATION RATES  
+        "EVWMX", "EVSMX", "TRAMX", "TRA", "IDOS", "IDWS", "RFWS", "RFOS", 
+        "RFTRA",
+        # LEAF DYNAMICS STATES
+        "LAIEM", "LASUM", "LAIEXP", "LAIMAX", "LAI", "WLV", 
+        "DWLV", "TWLV",
+        # LEAF DYNAMICS RATES
+        "GRLV", "DSLV1", "DSLV2", "DSLV3", "DSLV4", "DSLV", "DALV", "DRLV", "SLAT", 
+        "FYSAGE", "GLAIEX", "GLASOL",
+        # NPK DYNAMICS STATES
+        "NamountLV", "PamountLV", "KamountLV", "NamountST", "PamountST", "KamountST",
+        "NamountSO", "PamountSO", "KamountSO", "NamountRT", "PamountRT", "KamountRT",
+        "NuptakeTotal", "PuptakeTotal", "KuptakeTotal", "NfixTotal", "NlossesTotal", 
+        "PlossesTotal", "KlossesTotal", 
+        # NPK DYNAMICS RATES
+        "RNamountLV", "RPamountLV", "RKamountLV", 
+        "RNamountST", "RPamountST", "RKamountST", "RNamountRT", "RPamountRT",  
+        "RKamountRT", "RNamountSO", "RPamountSO", "RKamountSO", "RNdeathLV", 
+        "RNdeathST", "RNdeathRT", "RPdeathLV", "RPdeathST", "RPdeathRT", "RKdeathLV",
+        "RKdeathST", "RKdeathRT", "RNloss", "RPloss", "RKloss", 
+        # PARTIONING STATES
+        "FR", "FL", "FS", "FO",
+        # PARTIONING RATES
+            # NONE
+        # VERNALIZATION STATES
+        "VERN",
+        # VERNALIZATION RATES
+        "VERNR", "VERNFAC",   
+        # PHENOLOGY STATES
+        "DVS", "TSUM", "TSUME", "DSNG",
+        "DSD", "AGE",
+        # PHENOLOGY RATES
+        "DTSUME", "DTSUM", "DVR", "AGER",
+        # RESPIRATION STATES
+            # NONE
+        # RESPIRATION RATES
+        "PMRES",
+        # ROOT DYNAMICS STATES
+        "RD", "RDM", "WRT", "DWRT", "TWRT", 
+        # ROOT DYNAMICS RATES
+        "RR", "GRRT", "DRRT", "GWRT", 
+        # STEM DYNAMICS STATES
+        "WST", "DWST", "TWST", "SAI", 
+        # STEM DYNAMICS RATES
+        "GRST", "DRST", "GWST",
+        # STORAGE ORGAN DYNAMICS STATES
+        "WSO", "DWSO", "TWSO", "HWSO", "PAI","LHW",
+        # STORAGE ORGAN DYNAMICS RATES
+        "GRSO", "DRSO", "GWSO", "DHSO",
+        # NPK NUTRIENT DEMAND UPTAKE STATES
+            # NONE
+        # NPK NUTRIENT DEMAND UPTAKE RATES
+        "RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO", "RPuptakeLV", 
+        "RPuptakeST", "RPuptakeRT", "RPuptakeSO", "RKuptakeLV", "RKuptakeST", 
+        "RKuptakeRT", "RKuptakeSO", "RNuptake", "RPuptake", "RKuptake", "RNfixation",
+        "NdemandLV", "NdemandST", "NdemandRT", "NdemandSO", "PdemandLV", "PdemandST", 
+        "PdemandRT", "PdemandSO", "KdemandLV", "KdemandST", "KdemandRT","KdemandSO", 
+        "Ndemand", "Pdemand", "Kdemand", 
+        # NPK STRESS STATES
+            # NONE
+        # NPK STRESS RATES
+        "NNI", "PNI", "KNI", "NPKI", "RFNPK", 
+        # NPK TRANSLOCATION STATES
+        "NtranslocatableLV", "NtranslocatableST", "NtranslocatableRT", "PtranslocatableLV",
+        "PtranslocatableST", "PtranslocatableRT", "KtranslocatableLV", "KtranslocatableST",
+        "KtranslocatableRT", "Ntranslocatable", "Ptranslocatable", "Ktranslocatable", 
+        # NPK TRANSLOCATION RATES
+        "RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT", "RPtranslocationLV",
+        "RPtranslocationST", "RPtranslocationRT", "RKtranslocationLV", "RKtranslocationST",
+        "RKtranslocationRT",
+        # SOIL STATES
+        "SM", "SS", "SSI", "WC", "WI", "WLOW", "WLOWI", "WWLOW", "WTRAT", "EVST", 
+        "EVWT", "TSR", "RAINT", "WART", "TOTINF", "TOTIRR", "PERCT", "LOSST", "WBALRT", 
+        "WBALTT", "DSOS", "TOTIRRIG",
+        # SOIL RATES
+        "EVS", "EVW", "WTRA", "RIN", "RIRR", "PERC", "LOSS", "DW", "DWLOW", "DTSR", 
+        "DSS", "DRAINT", 
+        # NPK SOIL DYNAMICS STATES
+        "NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", "TOTN", "TOTP", "TOTK",
+        # NPK SOIL DYNAMICS RATES
+        "RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", "FERT_N_SUPPLY",
+        "FERT_P_SUPPLY", "FERT_K_SUPPLY",
+        ] 

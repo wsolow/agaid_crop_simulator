@@ -105,6 +105,42 @@ class Weekly_N(Policy):
         """
         return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
 
+class Interval_W(Policy):
+    """Policy applying a small amount of Nitrogen every week
+    """
+    required_vars = ["DAYS"]
+
+    def __init__(self, env: gym.Env, amount: int=0, interval: int=1):
+        """Initialize the :class:`Daily_W`.
+
+        Args: 
+            env: The Gymnasium Environment
+            required_vars: list of required state space variables 
+        """
+        self.amount = amount
+        self.interval = interval
+        super().__init__(env, required_vars=self.required_vars)
+        
+
+    def _validate(self):
+        """Validates that the weekly amount is within the range of allowable actions
+        """
+        super()._validate()
+
+        if self.amount > self.env.num_irrig:
+            msg = "W Amount exceeds total Irrigation actions"
+            raise PolicyException(msg)
+        
+
+    def _get_action(self, obs:dict):
+        """Return an action with an amount of N fertilization
+        """
+        if obs["DAYS"] % self.interval == 0:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig':self.amount }
+        else:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig': 0}
+
+
 class No_Action_Harvest(Policy):
     """Default policy for performing no irrigation or fertilization actions
     in a Harvest Environment

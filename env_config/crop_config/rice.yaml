@@ -85,7 +85,7 @@ CropParameters:
          - multiplication factor for AMAX to account for an increasing CO2 concentration
          - ['PPM', '-']
     EcoTypes:
-        rice_eu: &rice_eu
+        rice: &rice
             <<: *GenericC3
             #
             # EMERGENCE
@@ -106,15 +106,15 @@ CropParameters:
             # PHENOLOGICAL DEVELOPMENT
             #
             IDSL:
-				-  2
+            -  2
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0
+            - 14.0
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0
+            - 8.0
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
@@ -125,6 +125,10 @@ CropParameters:
             -  625
             - temperature sum from anthesis to maturity
             - ['C.d']
+            TSUM3:
+            - 350
+            - temperature sum from maturity to death
+            - ['C.d']
             DTSMTB:
             - [ 0.0,  0.0,
                10.0,  0.0,
@@ -134,6 +138,10 @@ CropParameters:
             DVSI:
             -  0.0
             - Initial development stage
+            - ['-']
+            DVSM:
+            - 2.0
+            - Develoment stage at maturity
             - ['-']
             DVSEND:
             -  3.0
@@ -181,6 +189,13 @@ CropParameters:
                2.10, 0.00220]
             - specific leaf area as a function of DVS
             - ['-', 'ha.kg-1']
+            RDRSOB:
+            - [0.00, 0.000,
+               2.00, 0.000,
+               2.01, 0.010,
+               2.50, 0.020,
+               2.75, 0.050,
+               3.00, 0.500]
             SPA:
             - 0.0000
             - specific pod area
@@ -322,7 +337,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            # RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -363,7 +384,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -555,6 +576,18 @@ CropParameters:
             - 0.05
             - maximum relative death rate of leaves due to nutrient NPK stress
             - ['-']
+            RNUPTAKEMAX:
+             - 7.2
+             - Maximum rate of daily nitrogen uptake
+             - ['kg.ha-1.d-1']
+            RPUPTAKEMAX:
+             - 0.8
+             - Maximum rate of daily phosphorus uptake
+             - ['kg..ha-1.d-1']
+            RKUPTAKEMAX:
+             - 7.4
+             - Maximum rate of daily potassium uptake
+             - ['kg.ha-1.d-1']
         rice_irri: &rice_irri
             <<: *GenericC3
             #
@@ -609,6 +642,10 @@ CropParameters:
             DVSI:
             -  0.0
             - Initial development stage
+            - ['-']
+            DVSM:
+            - 2.0
+            - Development stage at maturity
             - ['-']
             DVSEND:
             -  2.0
@@ -804,7 +841,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -838,7 +881,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -1046,8 +1089,8 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Rice_501:
-            <<: *rice_eu
+        rice_1:
+            <<: *rice
             Metadata:
                 <<: *meta
                 Creator: Allard de Wit
@@ -1072,8 +1115,8 @@ CropParameters:
             -  625
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Rice_HYV_IR8:
-            <<: *rice_irri
+        rice_2:
+            <<: *rice
             Metadata:
                 <<: *meta
                 Creator: Allard de Wit
@@ -1098,7 +1141,7 @@ CropParameters:
             -  465
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Rice_IR64616H_DS:
+        rice_3:
             <<: *rice_irri
             Metadata:
                 <<: *meta
@@ -1259,7 +1302,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR64616H_WS:
+        rice_4:
             Metadata:
                 <<: *meta
                 Creator: Allard de Wit
@@ -1424,7 +1467,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR64:
+        rice_5:
             <<: *rice_irri
             Metadata:
                 <<: *meta
@@ -1597,7 +1640,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR72:
+        rice_6:
             <<: *rice_irri
             Metadata:
                 <<: *meta
@@ -1763,7 +1806,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR72_DS:
+        rice_7:
             <<: *rice_irri
             Metadata:
                 <<: *meta
@@ -1928,7 +1971,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR72_WS:
+        rice_8:
             <<: *rice_irri
             Metadata:
                 <<: *meta
@@ -2094,7 +2137,7 @@ CropParameters:
                2.00, 0.020]
             - relative death rate of roots as a function of DVS
             - ['-', 'kg.kg-1.d-1']
-        Rice_IR8A:
+        rice_9:
             <<: *rice_irri
             Metadata:
                 <<: *meta

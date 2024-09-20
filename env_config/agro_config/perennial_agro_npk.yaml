@@ -9,7 +9,7 @@ AgroManagement:
         site_end_date: 1990-12-01
     CropCalendar:
         crop_name: jujube
-        variety_name: Jujube_1
+        variety_name: jujube_1
         crop_start_date: 1985-01-01
         crop_start_type: sowing
         crop_end_date: 1995-08-01

@@ -105,7 +105,7 @@ CropParameters:
             # PHENOLOGICAL DEVELOPMENT
             #
             IDSL:
-				-  2
+            -  2
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
@@ -123,6 +123,10 @@ CropParameters:
             TSUM2:
             -  859
             - temperature sum from anthesis to maturity
+            - ['C.d']
+            TSUM3:
+            -  600
+            - temperature sum from maturity to death
             - ['C.d']
             DTSMTB:
             - [ 0.0,  0.0,
@@ -184,6 +188,15 @@ CropParameters:
                2.00, 0.00160]
             - specific leaf area as a function of DVS
             - ['-', 'ha.kg-1']
+            RDRSOB:
+            - [0.00, 0.000,
+               2.00, 0.000,
+               2.01, 0.010,
+               2.50, 0.020,
+               2.75, 0.050,
+               3.00, 0.500]
+            - Relative death rate of storage organs as a function of DVS
+            - ['-', 'kg.kg-1.d-1']
             SPA:
             - 0.0000
             - specific pod area
@@ -320,7 +333,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -355,7 +374,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -587,11 +606,11 @@ CropParameters:
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0
+            - 14.0
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0
+            - 8.0
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
@@ -825,7 +844,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            # RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -866,7 +891,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -1074,7 +1099,7 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Maize_VanHeemst_1988:
+        maize_1:
             <<: *tropical_maize
             Metadata:
                 <<: *meta
@@ -1094,7 +1119,7 @@ CropParameters:
             -  859
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Grain_maize_201:
+        maize_2:
             <<: *temperate_maize
             Metadata:
                 <<: *meta
@@ -1110,7 +1135,7 @@ CropParameters:
             -  800
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Grain_maize_202:
+        maize_3:
             <<: *temperate_maize
             Metadata:
                 <<: *meta
@@ -1126,7 +1151,7 @@ CropParameters:
             -  860
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Grain_maize_203:
+        maize_4:
             <<: *temperate_maize
             Metadata:
                 <<: *meta
@@ -1142,7 +1167,7 @@ CropParameters:
             -  880
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Grain_maize_204:
+        maize_5:
             <<: *temperate_maize
             Metadata:
                 <<: *meta
@@ -1158,7 +1183,7 @@ CropParameters:
             -  900
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Grain_maize_205:
+        maize_6:
             <<: *temperate_maize
             Metadata:
                 <<: *meta
@@ -1175,7 +1200,7 @@ CropParameters:
             -  920
             - temperature sum from anthesis to maturity
             - ['C.d']
-        Fodder_maize_nl:
+        maize_7:
             <<: *temperate_maize
             Metadata:
                 Creator: Allard de Wit

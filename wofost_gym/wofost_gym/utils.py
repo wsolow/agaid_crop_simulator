@@ -502,6 +502,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Relative maintenance respiration rate for storage organs |kg CH2O kg-1 d-1|"""
     if args.RMO is not None:
         env.parameterprovider.set_override("RMO", args.RMO, check=False)
+    """Reduction factor  for senescence as function of DVS"""
+    if args.RFSETB is not None:
+        env.parameterprovider.set_override("RFSETB", args.RFSETB, check=False)
 
     # Root Dynamics Parameters
     """Initial rooting depth (cm)"""
@@ -525,6 +528,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Relative death rate of roots as a function of development stage"""
     if args.RDRRTB is not None:
         env.parameterprovider.set_override("RDRRTB", args.RDRRTB, check=False)
+    """Relative death rate of roots as a function of oxygen stress (over watering)"""
+    if args.RDRROS is not None:
+        env.parameterprovider.set_override("RDRROS", args.RDRROS, check=False)
 
     # Stem Dynamics Parameters
     """Initial total crop dry weight (kg/ha)"""

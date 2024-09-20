@@ -539,7 +539,8 @@
   RDMSOL:   'cm'             # Maximum rooting depth of the soil             
   TDWI:     '|ha kg-1|'      # Initial total crop dry weight 
   IAIRDU:   'bool'           # Presence of air ducts in the root (1) or not (0)
-  RDRRTB:   'factor'         # Relative death rate of roots as a function of development stage=
+  RDRRTB:   'factor'         # Relative death rate of roots as a function of development stage
+  RDRROB:   'factor'         # Relative death rate of roots as a function of oxygen stress (water logging)
 
   #*############################################################################**
   # Stem Dynamics Parameters

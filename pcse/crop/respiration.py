@@ -38,6 +38,8 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
              leaves                                         SCr     |kg CH2O kg-1 d-1|
     RMO      Relative maintenance respiration rate for
              storage organs                                 SCr     |kg CH2O kg-1 d-1|
+    RFSETB   Reduction factor  for senescence as            SCr       - 
+             function of DVS
     =======  ============================================= =======  ============
     
 

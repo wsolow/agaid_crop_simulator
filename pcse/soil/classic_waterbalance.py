@@ -1037,7 +1037,6 @@ class WaterbalancePP(SimulationObject):
         # mean soil moisture content in rooted zone
         s.SM = p.SMFCF
 
-
         # Accumulate days since oxygen stress, but only if a crop is present
         if s.SM >= (p.SM0 - p.CRAIRC): 
             s.DSOS += 1

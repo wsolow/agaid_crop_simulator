@@ -84,7 +84,7 @@ CropParameters:
          - multiplication factor for AMAX to account for an increasing CO2 concentration
          - ['PPM', '-']
     EcoTypes:
-        winterwheat: &winterwheat
+        wheat: &wheat
             <<: *GenericC3
             #
             # EMERGENCE
@@ -343,7 +343,7 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            # 
             PERDL:
             - 0.030
             - maximum relative death rate of leaves due to water stress
@@ -357,6 +357,13 @@ CropParameters:
                2.75, 0.100,
                3.00, 0.500]
             - Relative death rate of stems as a function of DVS
+            - ['-', 'kg.kg-1.d-1']
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
             - ['-', 'kg.kg-1.d-1']
             RDRSTB:
             - [0.00, 0.000,
@@ -384,7 +391,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX:
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -592,8 +599,8 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Winter_wheat_101:
-            <<: *winterwheat
+        wheat_1:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -622,8 +629,8 @@ CropParameters:
             - 49.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_102:
-            <<: *winterwheat
+        wheat_2:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -652,8 +659,8 @@ CropParameters:
             - 44.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_103:
-            <<: *winterwheat
+        wheat_3:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -682,8 +689,8 @@ CropParameters:
             - 52.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_104:
-            <<: *winterwheat
+        wheat_4:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -712,8 +719,8 @@ CropParameters:
             - 41.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_105:
-            <<: *winterwheat
+        wheat_5:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -742,8 +749,8 @@ CropParameters:
             - 37.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_106:
-            <<: *winterwheat
+        wheat_6:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -772,8 +779,8 @@ CropParameters:
             - 25.0
             - Saturated vernalization requirement
             - ['d']
-        Winter_wheat_107:
-            <<: *winterwheat
+        wheat_7:
+            <<: *wheat
             Metadata:
                 <<: *meta
                 Coverage:
@@ -802,8 +809,8 @@ CropParameters:
             -  5.0
             - Saturated vernalization requirement
             - ['d']
-        bermude:
-            <<: *winterwheat
+        wheat_8:
+            <<: *wheat
             Metadata: 
                 <<: *meta
                 Date: 2022-07-12
@@ -842,8 +849,8 @@ CropParameters:
             - 41.0
             - Saturated vernalization requirement
             - ['d']
-        apache:
-            <<: *winterwheat
+        wheat_9:
+            <<: *wheat
             Metadata: 
                 <<: *meta
                 Date: 2022-07-12

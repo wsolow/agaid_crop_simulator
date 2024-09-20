@@ -83,6 +83,10 @@ CropParameters:
     EcoTypes:
         pear: &pear
             <<: *GenericC3
+            AGEI:
+            - 0
+            - Initial age of crop
+            - ['year']
             #
             # EMERGENCE
             #
@@ -106,11 +110,11 @@ CropParameters:
             - indicates whether pre-anthesis development depends on temperature (=0), plus daylength (=1) , plus vernalization (=2)
             - ['NA']
             DLO:
-            - -99.0 #NOT MODIFIED
+            - 14.0 #NOT MODIFIED
             - optimum daylength for development
             - ['hr']
             DLC:
-            - -99.0 # NOT MODIFIED
+            - 8.0 # NOT MODIFIED
             - critical daylength (lower threshold)
             - ['hr']
             TSUM1:
@@ -165,11 +169,25 @@ CropParameters:
                20.0,  0.0]
             - Temperature response function for vernalization
             - ['C', '-']
+            DORM: 
+            - 15
+            - Day threshold for which plant transitions to dormancy
+            - ['d']
+            DORMCD:
+            - 70
+            - Minimum length of dormancy period
+            - ['d']
+            DCYCLEMAX:
+            - 320
+            - Maximum length of crop cycle in a year
+            - ['d']
             #
             # INITIAL STATES
             #
             TDWI:
-            -  41.9
+            -  [0,  41.1,
+                2, 41.1,
+                3, 41.1]
             - initial total crop dry weight
             - ['kg.ha-1']
             RGRLAI:
@@ -342,7 +360,13 @@ CropParameters:
             - ['-', 'mass.mass-1']
             #
             # DEATH RATES
-            #
+            RDRROS:
+            - [0.000, 0.020,
+               0.250, 0.100,
+               0.999, 0.001,
+               1.000, 0.000]
+            - Relative death rate of stems as a function of Oxygen stress
+            - ['-', 'kg.kg-1.d-1']
             PERDL: 
             - 0.030 #NOT MODIFIED
             - maximum relative death rate of leaves due to water stress
@@ -383,7 +407,7 @@ CropParameters:
             - air ducts in roots present (=1) or not (=0)
             - ['NA']
             IOX: #NOT MODIFIED
-            -  0
+            -  1
             - Oxygen stress effect enabled (=1) or not (=0)
             - ['NA']
             #
@@ -590,7 +614,7 @@ CropParameters:
              - Maximum rate of daily potassium uptake
              - ['kg.ha-1.d-1']
     Varieties:
-        Pear_1:
+        pear_1:
             <<: *pear
             Metadata:
                 <<: *meta

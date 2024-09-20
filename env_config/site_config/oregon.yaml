@@ -115,7 +115,7 @@ SiteParameters:
        - soil moisture content at wilting point
        - ['cm3/cm3']
        CRAIRC:
-       - 0.050 
+       - 0.100 
        - critical soil air content for aeration
        - ['cm3/cm3']
        SOPE:

@@ -107,6 +107,7 @@ class BaseSiteCalendar(HasTraits, DispatcherObject):
         # Start of the site cycle
         if day == self.site_start_date:
             msg = "Starting site (%s) with variation (%s) on day %s" % (self.site_name, self.variation_name, day)
+            print(msg)
             self.logger.info(msg)
             self._send_signal(signal=signals.site_start, day=day, site_name=self.site_name,
                               variation_name=self.variation_name) 
@@ -261,6 +262,7 @@ class BaseCropCalendar(HasTraits, DispatcherObject):
         # Start of the crop cycle
         if day == self.crop_start_date:  # Start a new crop
             msg = "Starting crop (%s) with variety (%s) on day %s" % (self.crop_name, self.variety_name, day)
+            print(msg)
             self.logger.info(msg)
             self._send_signal(signal=signals.crop_start, day=day, crop_name=self.crop_name,
                               variety_name=self.variety_name, crop_start_type=self.crop_start_type,
@@ -354,6 +356,7 @@ class CropCalendarHarvest(BaseCropCalendar):
         # Start of the crop cycle
         if day == self.crop_start_date:  # Start a new crop
             msg = "Starting crop (%s) with variety (%s) on day %s" % (self.crop_name, self.variety_name, day)
+            print(msg)
             self.logger.info(msg)
             self._send_signal(signal=signals.crop_start, day=day, crop_name=self.crop_name,
                               variety_name=self.variety_name, crop_start_type=self.crop_start_type,

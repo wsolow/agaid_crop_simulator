@@ -9,9 +9,9 @@ AgroManagement:
         site_end_date: 1985-12-01
     CropCalendar:
         crop_name: wheat
-        variety_name: Winter_wheat_101
+        variety_name: wheat_1
         crop_start_date: 1985-01-01
         crop_start_type: sowing
         crop_end_date: 1985-08-01
-        crop_end_type: maturity
+        crop_end_type: death
         max_duration: 365

@@ -538,6 +538,7 @@
   TDWI:         'Initial Total Crop Dry Weight' 
   IAIRDU:       'Airducts Flag'
   RDRRTB:       'Relative Death Rate Of Roots Given DVS'
+  RDRROS:       'Relative Death Rate Of Roots Given Oxygen Stress'
 
   #*############################################################################**
   # Stem Dynamics Parameters
