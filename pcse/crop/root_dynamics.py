@@ -44,6 +44,13 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
              of development stage
     RDRROS   Relative death rate of roots as a function     TCr      - 
               of oxygen shortage (over watering)
+    NTRHESH  Threshold above which surface nitrogen         TCr      |kg ha-1|
+             induces stress
+    PTRHESH  Threshold above which surface phosphorous      TCr      |kg ha-1|
+             induces stress
+    KTRHESH  Threshold above which surface potassium        TCr      |kg ha-1|
+             induces stress
+    RDRRNPK  Relative rate of root death due to NPK excess  SCr      - 
     =======  ============================================= =======  ============
     
 
@@ -67,6 +74,9 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
     =======  ================================================= ==== ============
     RR       Growth rate root depth                             N    cm
     GRRT     Growth rate root biomass                           N   |kg ha-1 d-1|
+    DRRT1    Death rate of roots due to aging                   N   |kg ha-1 d-1|
+    DRRT2    Death rate of roots due to excess water            N   |kg ha-1 d-1|
+    DRRT3    Death rate of roots due to excess NPK              N   |kg ha-1 d-1|
     DRRT     Death rate root biomass                            N   |kg ha-1 d-1|
     GWRT     Net change in root biomass                         N   |kg ha-1 d-1|
     =======  ================================================= ==== ============
@@ -122,10 +132,17 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
         IAIRDU = Float(-99)
         RDRRTB = AfgenTrait()
         RDRROS = AfgenTrait()
+        NTHRESH = Float(-99.) # Threshold above which excess N stress occurs
+        PTHRESH = Float(-99.) # Threshold above which excess P stress occurs
+        KTHRESH = Float(-99.) # Threshold above which excess K stress occurs
+        RDRRNPK = AfgenTrait()
                     
     class RateVariables(RatesTemplate):
         RR   = Float(-99.)
         GRRT = Float(-99.)
+        DRRT1 = Float(-99.) # Death rate of roots due to aging
+        DRRT2 = Float(-99.) # Death rate of roots due to excess water
+        DRRT3 = Float(-99.) # Death rate of roots due to fertilizer burn
         DRRT = Float(-99.)
         GWRT = Float(-99.)
 
@@ -158,7 +175,15 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
 
         # Increase in root biomass
         r.GRRT = k.FR * k.DMI
-        r.DRRT = s.WRT * limit(0.0, 1.0, (p.RDRRTB(k.DVS) + p.RDRROS(k.RFOS)))
+
+        # Compute the maximum death rate of roots from excess NPK, excess water, and age stress
+        RDRNPK = max(k.SURFACE_N / p.NTHRESH, k.SURFACE_P / p.PTHRESH, k.SURFACE_K / p.KTHRESH)
+        r.DRRT1 = p.RDRRTB(k.DVS)
+        r.DRRT2 = p.RDRROS(k.RFOS)
+        r.DRRT3 = p.RDRRNPK(RDRNPK)
+
+        # Relative death of roots is max of aging and excess npk/water stress
+        r.DRRT = s.WRT * limit(0, 1, max(r.DRRT1, r.DRRT2+r.DRRT3))
         r.GWRT = r.GRRT - r.DRRT
         
         # Increase in root depth
@@ -183,6 +208,18 @@ class Base_WOFOST_Root_Dynamics(SimulationObject):
         states.TWRT = states.WRT + states.DWRT
         # New root depth
         states.RD += rates.RR
+
+    def publish_states(self):
+        states = self.states
+
+        # Dry weight of living roots
+        states.WRT = states.WRT
+        # Dry weight of dead roots
+        states.DWRT = states.DWRT
+        # Total weight dry + living roots
+        states.TWRT = states.TWRT
+        # New root depth
+        states.RD = states.RD
 
     def reset(self):
         """Reset all states and rates to initial values
@@ -239,7 +276,8 @@ class Annual_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
                                           RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
                                           TWRT=TWRT)
         
-        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
+        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT1",
+                                                        "DRRT2", "DRRT3", "DRRT", "GWRT"])
 
 class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
     """Class for handling root dynamics of annual crops
@@ -250,10 +288,14 @@ class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
         RRI    = Float(-99.)
         RDMCR  = Float(-99.)
         RDMSOL = Float(-99.)
-        TDWI   = AfgenTrait()
+        TDWI   = Float(-99.)
         IAIRDU = Float(-99)
         RDRRTB = AfgenTrait()
         RDRROS = AfgenTrait()
+        NTHRESH = Float(-99.) # Threshold above which excess N stress occurs
+        PTHRESH = Float(-99.) # Threshold above which excess P stress occurs
+        KTHRESH = Float(-99.) # Threshold above which excess K stress occurs
+        RDRRNPK = AfgenTrait()
                     
     def initialize(self, day:date , kiosk:VariableKiosk, parvalues:dict):
         """
@@ -284,7 +326,8 @@ class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
                                           RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
                                           TWRT=TWRT)
         
-        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT", "GWRT"])
+        self.rates = self.RateVariables(kiosk, publish=["RR", "GRRT", "DRRT1",
+                                                        "DRRT2", "DRRT3", "DRRT", "GWRT"])
 
     def reset(self):
         """Reset all states and rates to initial values

@@ -75,7 +75,7 @@ class No_Action(Policy):
         return {'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
     
 class Weekly_N(Policy):
-    """Policy applying a small amount of Nitrogen every week
+    """Policy applying a small amount of Nitrogen every day
     """
     required_vars = []
 
@@ -104,14 +104,49 @@ class Weekly_N(Policy):
         """Return an action with an amount of N fertilization
         """
         return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
-
-class Interval_W(Policy):
-    """Policy applying a small amount of Nitrogen every week
+    
+class Interval_N(Policy):
+    """Policy applying a small amount of Nitrogen at a given interval
     """
     required_vars = ["DAYS"]
 
     def __init__(self, env: gym.Env, amount: int=0, interval: int=1):
-        """Initialize the :class:`Daily_W`.
+        """Initialize the :class:`Interval_N`.
+
+        Args: 
+            env: The Gymnasium Environment
+            required_vars: list of required state space variables 
+        """
+        self.amount = amount
+        self.interval = interval
+        super().__init__(env, required_vars=self.required_vars)
+        
+
+    def _validate(self):
+        """Validates that the weekly amount is within the range of allowable actions
+        """
+        super()._validate()
+
+        if self.amount > self.env.num_fert:
+            msg = "W Amount exceeds total Fertilization actions"
+            raise PolicyException(msg)
+        
+
+    def _get_action(self, obs:dict):
+        """Return an action with an amount of N fertilization
+        """
+        if obs["DAYS"] % self.interval == 0:
+            return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
+        else:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig': 0}
+        
+class Interval_W(Policy):
+    """Policy applying a small amount of Water at a given interval
+    """
+    required_vars = ["DAYS"]
+
+    def __init__(self, env: gym.Env, amount: int=0, interval: int=1):
+        """Initialize the :class:`Interval_W`.
 
         Args: 
             env: The Gymnasium Environment

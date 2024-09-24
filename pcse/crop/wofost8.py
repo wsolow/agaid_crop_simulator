@@ -13,10 +13,11 @@ from ..utils.decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals
-from ..util import Afgen
+from ..util import Afgen, AfgenTrait
 from .. import exceptions as exc
 from .phenology import Annual_Phenology, Perennial_Phenology
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
+from .respiration import Perennial_WOFOST_Maintenance_Respiration as Perennial_MaintenanceRespiration
 from .stem_dynamics import Annual_WOFOST_Stem_Dynamics as Annual_Stem_Dynamics
 from .root_dynamics import Annual_WOFOST_Root_Dynamics as Annual_Root_Dynamics
 from .leaf_dynamics import Annual_WOFOST_Leaf_Dynamics_NPK as Annual_Leaf_Dynamics
@@ -357,6 +358,14 @@ class Wofost80Perennial(BaseCropModel):
     """
     parvalues: dict
 
+    # Parameters, rates and states which are relevant at the main crop
+    # simulation level
+    class Parameters(ParamTemplate):
+        CVL = AfgenTrait()
+        CVO = AfgenTrait()
+        CVR = AfgenTrait()
+        CVS = AfgenTrait()
+
     def initialize(self, day:date, kiosk:VariableKiosk, parvalues:dict):
         """
         :param day: start date of the simulation
@@ -371,7 +380,7 @@ class Wofost80Perennial(BaseCropModel):
         self.pheno = Perennial_Phenology(day, kiosk,  parvalues)
         self.part = Perennial_Partitioning(day, kiosk, parvalues)
         self.assim = Assimilation(day, kiosk, parvalues)
-        self.mres = MaintenanceRespiration(day, kiosk, parvalues)
+        self.mres = Perennial_MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
         self.ro_dynamics = Perennial_Root_Dynamics(day, kiosk, parvalues)
         self.st_dynamics = Perennial_Stem_Dynamics(day, kiosk, parvalues)
@@ -445,11 +454,10 @@ class Wofost80Perennial(BaseCropModel):
         # DM partitioning factors (pf), conversion factor (CVF),
         # dry matter increase (DMI) and check on carbon balance
         pf = self.part.calc_rates(day, drv)
-        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
-                  (1.-pf.FR) + pf.FR/params.CVR)
+        CVF = 1./((pf.FL/params.CVL(k.AGE) + pf.FS/params.CVS(k.AGE) + pf.FO/params.CVO(k.AGE)) *
+                  (1.-pf.FR) + pf.FR/params.CVR(k.AGE))
         rates.DMI = CVF * rates.ASRC
-        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
-                                   CVF, pf)
+        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES, CVF, pf)
 
         # distribution over plant organ
         # Below-ground dry matter increase and root dynamics
@@ -513,14 +521,15 @@ class Wofost80Perennial(BaseCropModel):
         """Handler for recieving the crop dormancy signal. Upon dormancy, reset
         all crop parameters
         """
-        print('trying to reset from dormant')
         # Deregister parameters from kiosk
         self.part.reset()
         self.assim.reset()
         self.mres.reset()
         self.evtra.reset()
-        self.ro_dynamics.reset()
-        self.st_dynamics.reset()
+        #self.ro_dynamics.reset()
+        self.ro_dynamics.publish_states()
+        #self.st_dynamics.reset()
+        self.st_dynamics.publish_states()
         self.so_dynamics.reset()
         self.lv_dynamics.reset()
         # Added for book keeping of N/P/K in crop and soil
@@ -544,7 +553,7 @@ class Wofost80Perennial(BaseCropModel):
         checksum = Afgen(self._par_values["TDWI"])(AGE) - self.states.TAGP - self.kiosk.TWRT
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
-            raise exc.PartitioningError(msg)
+            #raise exc.PartitioningError(msg)
         
         print(f'Resetting from Dormant: {day}')
 

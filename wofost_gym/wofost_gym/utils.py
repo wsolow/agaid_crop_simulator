@@ -89,7 +89,7 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
         # ROOT DYNAMICS STATES
         "RD", "RDM", "WRT", "DWRT", "TWRT", 
         # ROOT DYNAMICS RATES
-        "RR", "GRRT", "DRRT", "GWRT", 
+        "RR", "GRRT", "DRRT1", "DRRT2", "DRRT3", "DRRT", "GWRT", 
         # STEM DYNAMICS STATES
         "WST", "DWST", "TWST", "SAI", 
         # STEM DYNAMICS RATES
@@ -128,9 +128,11 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
         "DSS", "DRAINT", 
         # NPK SOIL DYNAMICS STATES
         "NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL", "TOTN", "TOTP", "TOTK",
+        "SURFACE_N", "SURFACE_P", "SURFACE_K", "TOTN_RUNOFF", "TOTP_RUNOFF", "TOTK_RUNOFF",
         # NPK SOIL DYNAMICS RATES
         "RNSOIL", "RPSOIL", "RKSOIL", "RNAVAIL", "RPAVAIL", "RKAVAIL", "FERT_N_SUPPLY",
-        "FERT_P_SUPPLY", "FERT_K_SUPPLY",
+        "FERT_P_SUPPLY", "FERT_K_SUPPLY", "RNSUBSOIL", "RPSUBSOIL", "RKSUBSOIL",
+        "RRUNOFF_N", "RRUNOFF_P", "RRUNOFF_K",
         ]
 
     # Summary variables to save at CROP_FINISH signals
@@ -200,7 +202,27 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Background supply of K through atmospheric deposition (kg/ha/day)"""
     if args.BG_K_SUPPLY is not None:
         env.parameterprovider.set_override("BG_K_SUPPLY", args.BG_K_SUPPLY, check=False)
-
+    """Maximum rate of surface N to subsoil"""
+    if args.RNSOILMAX is not None:
+        env.parameterprovider.set_override("RNSOILMAX", args.RNSOILMAX, check=False)
+    """Maximum rate of surface P to subsoil"""
+    if args.RPSOILMAX is not None:
+        env.parameterprovider.set_override("RPSOILMAX", args.RPSOILMAX, check=False)  
+    """Maximum rate of surface K to subsoil"""
+    if args.RKSOILMAX is not None:
+        env.parameterprovider.set_override("RKSOILMAX", args.RKSOILMAX, check=False)     
+    """Relative rate of N absorption from surface to subsoil"""
+    if args.RNABSORPTION is not None:
+        env.parameterprovider.set_override("RNABSORPTION", args.RNABSORPTION, check=False)     
+    """Relative rate of P absorption from surface to subsoil"""
+    if args.RPABSORPTION is not None:
+        env.parameterprovider.set_override("RPABSORPTION", args.RPABSORPTION, check=False)     
+    """Relative rate of K absorption from surface to subsoil"""
+    if args.RKABSORPTION is not None:
+        env.parameterprovider.set_override("RKABSORPTION", args.RKABSORPTION, check=False) 
+    """Relative rate of NPK runoff as a function of surface water runoff"""
+    if args.RNPKRUNOFF is not None:
+         env.parameterprovider.set_override("RNPKRUNOFF", args.RNPKRUNOFF, check=False) 
     # Waterbalance soil dynamics params
     """Field capacity of the soil"""
     if args.SMFCF is not None:
@@ -431,6 +453,15 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Coefficient for the effect of N stress on leaf biomass allocation"""
     if args.NPART is not None:
         env.parameterprovider.set_override("NPART", args.NPART, check=False)
+    """Threshold above which surface nitrogen induces stress"""
+    if args.NTHRESH is not None:
+        env.parameterprovider.set_override("NTHRESH", args.NTHRESH, check=False)
+    """Threshold above which surface phosphorous induces stress"""
+    if args.PTHRESH is not None:
+        env.parameterprovider.set_override("PTHRESH", args.PTHRESH, check=False)
+    """Threshold above which surface potassium induces stress"""
+    if args.KTHRESH is not None:
+        env.parameterprovider.set_override("KTHRESH", args.KTHRESH, check=False)
 
     # Vernalization Parameters
     """Saturated vernalisation requirements (days)"""
@@ -534,6 +565,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Relative death rate of roots as a function of oxygen stress (over watering)"""
     if args.RDRROS is not None:
         env.parameterprovider.set_override("RDRROS", args.RDRROS, check=False)
+    """Relative death rate of roots as a function of excess NPK on surface"""
+    if args.RDRRNPK is not None:
+        env.parameterprovider.set_override("RDRRNPK", args.RDRRNPK, check=False)
 
     # Stem Dynamics Parameters
     """Initial total crop dry weight (kg/ha)"""

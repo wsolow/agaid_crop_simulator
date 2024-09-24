@@ -37,7 +37,7 @@ if __name__ == "__main__":
     elif isinstance(env.unwrapped, Plant_NPK_Env):
         policy = policies.No_Action_Plant(env)
     else:
-        policy = policies.Interval_W(env, amount=0, interval=1)
+        policy = policies.Interval_N(env, amount=0, interval=1)
 
     obs_arr = []
     obs, info = env.reset()

@@ -138,6 +138,20 @@ class Base_WOFOST_Stem_Dynamics(SimulationObject):
         DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)
 
+    def publish_states(self):
+        params = self.params
+        rates = self.rates
+        states = self.states
+
+        # Stem biomass (living, dead, total)
+        states.WST += rates.GWST
+        states.DWST += rates.DRST
+        states.TWST = states.WST + states.DWST
+
+        # Calculate Stem Area Index (SAI)
+        DVS = self.kiosk["DVS"]
+        states.SAI = states.WST * params.SSATB(DVS)
+
     def reset(self):
         """Reset states and rates
         """

@@ -192,7 +192,10 @@ CropParameters:
             - specific leaf area as a function of DVS
             - ['-', 'ha.kg-1']
             SPA:
-            - 0.0000
+            - [0.00, 0.000,
+               1.00, 0.000,
+               1.50, 0.001,
+               2.00, 0.002]
             - specific pod area
             - ['ha.kg-1']
             RDRSOB:
@@ -369,6 +372,12 @@ CropParameters:
                1.000, 0.000]
             - Relative death rate of stems as a function of Oxygen stress
             - ['-', 'kg.kg-1.d-1']
+            RDRRNPK:
+            - [1.00, 0.000,
+               1.01, 0.000,
+               1.10, 0.050,
+               1.50, 0.100,
+               2.00, 0.300]
             RDRSTB:
             - [0.00, 0.000,
                1.50, 0.000,
@@ -563,6 +572,18 @@ CropParameters:
             #
             # IMPACT OF N/P/K STRESS ON PROCESSES
             #
+            NTHRESH:
+            - 2.00
+            - surface N amount above which root and leaf death occur and storage organ partioning changes
+            - ['-']
+            KTHRESH:
+            - 2.00
+            - surface P amount above which root and leaf death occur and storage organ partioning changes
+            - ['-']
+            PTHRESH:
+            - 2.00
+            - surface K amount above which root and leaf death occur and storage organ partioning changes
+            - ['-']
             NLAI_NPK:
             - 1.00
             - coefficient for the reduction due to nutrient NPK stress of the LAI increase (during juvenile phase)

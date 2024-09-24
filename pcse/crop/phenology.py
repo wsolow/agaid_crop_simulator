@@ -195,6 +195,7 @@ class Vernalisation(SimulationObject):
         s.VERN=0.
         s.DOV=None
         s.ISVERNALISED=False
+        self._force_vernalisation = False
         
         r.VERNR = r.VERNFAC = 0
 
@@ -838,7 +839,7 @@ class Perennial_Phenology(Base_Phenology):
                 # reset all crop modules
                 if s.DSD == 0:
                     s.DCYCLE = 0
-                    s.DVS = -1
+                    s.DVS = -0.2
                     self._send_signal(signal=signals.crop_dormant, day=day)
                 s.DSD +=1
         elif s.STAGE == 'dead':

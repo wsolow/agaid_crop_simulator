@@ -82,7 +82,7 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
     """
 
     class Parameters(ParamTemplate):      
-        SPA    = Float(-99.)
+        SPA    = AfgenTrait()
         TDWI   = Float(-99.)
         RDRSOB = AfgenTrait()
 
@@ -145,8 +145,8 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         states.TWSO = states.WSO + states.DWSO
         
         states.HWSO = limit(0, states.WSO, states.HWSO)
-        # Calculate Pod Area Index (SAI)
-        states.PAI = states.WSO * params.SPA
+        # Calculate Pod Area Index (PAI)
+        states.PAI = states.WSO * params.SPA(self.kiosk.DVS)
 
     def reset(self):
         """Reset states and rates
@@ -165,7 +165,7 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         LHW = HWSO
         TWSO = WSO + DWSO
         # Initial Pod Area Index
-        PAI = WSO * params.SPA
+        PAI = WSO * params.SPA(self.kiosk.DVS)
 
         s.WSO=WSO
         s.DWSO=DWSO
@@ -187,10 +187,6 @@ class Annual_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics):
 
     """Class for handling annual crop storage organs
     """
-    class Parameters(ParamTemplate):      
-        SPA    = Float(-99.)
-        TDWI   = Float(-99.)
-        RDRSOB = AfgenTrait()
 
     def initialize(self, day: date, kiosk: VariableKiosk, parvalues: dict):
         """
@@ -215,7 +211,7 @@ class Annual_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics):
         LHW = HWSO
         TWSO = WSO + DWSO
         # Initial Pod Area Index
-        PAI = WSO * params.SPA
+        PAI = WSO * params.SPA(self.kiosk.DVS)
 
         self.states = self.StateVariables(kiosk, publish=["WSO", "DWSO", "TWSO", 
                                                           "HWSO", "PAI", "LHW"],
@@ -228,7 +224,7 @@ class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics
     """Class for handling annual crop storage organs
     """
     class Parameters(ParamTemplate):      
-        SPA    = Float(-99.)
+        SPA    = AfgenTrait()
         TDWI   = AfgenTrait()
         RDRSOB = AfgenTrait()
 
@@ -257,7 +253,7 @@ class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics
         LHW = HWSO
         TWSO = WSO + DWSO
         # Initial Pod Area Index
-        PAI = WSO * params.SPA
+        PAI = WSO * params.SPA(self.kiosk.DVS)
 
         self.states = self.StateVariables(kiosk, publish=["WSO", "DWSO", "TWSO", 
                                                           "HWSO", "PAI", "LHW"],
@@ -283,7 +279,7 @@ class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics
         LHW = HWSO
         TWSO = WSO + DWSO
         # Initial Pod Area Index
-        PAI = WSO * params.SPA
+        PAI = WSO * params.SPA(self.kiosk.DVS)
 
         s.WSO=WSO
         s.DWSO=DWSO

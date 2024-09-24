@@ -1,7 +1,7 @@
 AgroManagement:
     SiteCalendar:
-        latitude: 52
-        longitude: 5
+        latitude: 40
+        longitude: 120
         year: 1984
         site_name: oregon
         variation_name: Oregon_1

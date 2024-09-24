@@ -196,7 +196,10 @@
 
   #**Rate Variables** (For Output To Observation Space):
   RR:            'Root Depth Growth Rate'                            
-  GRRT:         'Growth Rate Root Biomass'                          
+  GRRT:         'Growth Rate Root Biomass' 
+  DRRT1:        'Death rate of roots due to aging'                 
+  DRRT2:        'Death rate of roots due to excess water'            
+  DRRT3:        'Death rate of roots due to excess NPK'                                       
   DRRT:         'Death Rate Root Biomass'                            
   GWRT:         'Net Change In Root Biomass'                         
 
@@ -342,7 +345,14 @@
   KAVAIL:        'Total Mineral K Available'        
   TOTN:          'Total Mineral N Applied By Fertilization'       
   TOTP:          'Total Mineral P Applied By Fertilization'        
-  TOTK:          'Total Mineral K Applied By Fertilization'       
+  TOTK:          'Total Mineral K Applied By Fertilization'      
+  SURFACE_N:     'Mineral N on surface layer'
+  SURFACE_P:     'Mineral P on surface layer'
+  SURFACE_K:     'Mineral K on surface layer'                 
+
+  TOTN_RUNOFF:   'Total surface N runoff'                        
+  TOTP_RUNOFF:   'Total surface N runoff'                      
+  TOTK_RUNOFF:   'Total surface N runoff'                        
 
   #*RATE VARIABLES** (FOR OUTPUT TO OBSERVATION SPACE):
   RNSOIL:              'Rate Of Change On Total Soil Mineral N'         
@@ -355,7 +365,15 @@
 
   FERT_N_SUPPLY:       'Rate Of Supply Of Fertilizer N'                            
   FERT_P_SUPPLY:       'Rate Of Supply Of Fertilizer P'                  
-  FERT_K_SUPPLY:       'Rate Of Supply Of Fertilizer K'                  
+  FERT_K_SUPPLY:       'Rate Of Supply Of Fertilizer K'   
+
+  RRUNOFF_N:           'Rate of N runoff'
+  RRUNOFF_P:           'Rate of P runoff'
+  RRUNOFF_K:           'Rate of K runoff'
+
+  RNSUBSOIL:           'Rate of N from surface to subsoil'
+  RPSUBSOIL:           'Rate of N from surface to subsoil'
+  RKSUBSOIL:           'Rate of N from surface to subsoil'      
 
   #*############################################################################**
   # Soil Dynamics States And Rates
@@ -490,6 +508,9 @@
   FLTB:         'Partitioning To Leaves Given DVS'
   FOTB:         'Partitioning To Starge Organs Given DVS'
   NPART:        'Coefficient For N Stress On Leaf Biomass Allocation'
+  NTHRESH:      'Threshold above which surface nitrogen induces stress'
+  PTHRESH:      'Threshold above which surface phosphorous induces stress'
+  KTHRESH:      'Threshold above which surface potassium induces stress'
 
   #*############################################################################**
   # Vernalization Parameters
@@ -541,6 +562,7 @@
   IAIRDU:       'Airducts Flag'
   RDRRTB:       'Relative Death Rate Of Roots Given DVS'
   RDRROS:       'Relative Death Rate Of Roots Given Oxygen Stress'
+  RDRRNPK:      'Relative rate of root death due to NPK excess'
 
   #*############################################################################**
   # Stem Dynamics Parameters
@@ -651,6 +673,13 @@
   BG_N_SUPPLY:          'Background Supply Of N Through Atmospheric Deposition'
   BG_P_SUPPLY:          'Background Supply Of P Through Atmospheric Deposition'
   BG_K_SUPPLY:          'Background Supply Of K Through Atmospheric Deposition'
+  RNSOILMAX:            'Maximum rate of surface N to subsoil'           
+  RPSOILMAX:            'Maximum rate of surface P to subsoil'           
+  RKSOILMAX:            'Maximum rate of surface K to subsoil'           
+  RNABSORPTION:         'Relative rate of N absorption from surface to subsoil'
+  RPABSORPTION:         'Relative rate of P absorption from surface to subsoil'
+  RKABSORPTION:         'Relative rate of K absorption from surface to subsoil'
+  RNPKRUNOFF:           'Relative rate of nutrient runoff'
 
   #*############################################################################**
   # Soil Dynamics Parameters

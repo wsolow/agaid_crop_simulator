@@ -282,7 +282,7 @@ class MultiAfgenTrait(TraitType):
         if isinstance(value, MultiAfgen):
            return value
         elif isinstance(value, Iterable):
-           return Afgen(value)
+           return MultiAfgen(value)
         self.error(obj, value)
 
 def limit(vmin:float, vmax:float, v:float):

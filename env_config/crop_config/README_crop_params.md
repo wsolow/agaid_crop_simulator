@@ -152,6 +152,12 @@ FOTB     Partitioning to starge organs as a function     TCr       -
             of development stage.
 NPART    Coefficient for the effect of N stress on       SCR       -
             leaf biomass allocation
+NTHRESH  Threshold above which surface nitrogen          TCr       |kg ha-1|
+             induces stress
+PTHRESH  Threshold above which surface phosphorous       TCr       |kg ha-1|
+             induces stress
+KTHRESH  Threshold above which surface potassium         TCr       |kg ha-1|
+             induces stress
 =======  ============================================= =======  ============
 
 **############################################################################**
@@ -247,6 +253,7 @@ RDRRTB   Relative death rate of roots as a function     TCr      -
             of development stage
 RDRROS   Relative death rate of roots as a function     TCr      -
             of oxygen stress
+RDRRNPK  Relative rate of root death due to NPK excess  SCr      - 
 =======  ============================================= =======  ============
 
 **############################################################################**

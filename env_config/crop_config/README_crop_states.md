@@ -278,6 +278,9 @@ TWRT     Total weight of roots                              Y     |kg ha-1|
 =======  ================================================= ==== ============
 RR       Growth rate root depth                             N    cm
 GRRT     Growth rate root biomass                           N   |kg ha-1 d-1|
+DRRT1    Death rate of roots due to aging                   N   |kg ha-1 d-1|
+DRRT2    Death rate of roots due to excess water            N   |kg ha-1 d-1|
+DRRT3    Death rate of roots due to excess NPK              N   |kg ha-1 d-1|
 DRRT     Death rate root biomass                            N   |kg ha-1 d-1|
 GWRT     Net change in root biomass                         N   |kg ha-1 d-1|
 =======  ================================================= ==== ============

@@ -44,6 +44,20 @@ class WOFOST_Args:
     BG_P_SUPPLY: float = None
     """Background supply of K through atmospheric deposition (kg/ha/day)"""
     BG_K_SUPPLY: float = None
+    """Maximum rate of surface N to subsoil"""
+    RNSOILMAX: float = None
+    """Maximum rate of surface P to subsoil"""
+    RPSOILMAX: float = None     
+    """Maximum rate of surface K to subsoil"""
+    RKSOILMAX: float = None     
+    """Relative rate of N absorption from surface to subsoil"""
+    RNABSORPTION: float = None  
+    """Relative rate of P absorption from surface to subsoil"""
+    RPABSORPTION: float = None  
+    """Relative rate of K absorption from surface to subsoil"""
+    RKABSORPTION: float = None 
+    """Relative rate of NPK runoff as a function of surface water runoff"""
+    RNPKRUNOFF: float = None    
 
     # Waterbalance soil dynamics params
     """Field capacity of the soil"""
@@ -191,8 +205,14 @@ class WOFOST_Args:
     """Partitioning to starge organs as a function of development stage"""
     FOTB: float = None     
     """Coefficient for the effect of N stress on leaf biomass allocation"""
-    NPART: float = None    
-   
+    NPART: float = None   
+    """Threshold above which surface nitrogen induces stress"""
+    NTHRESH: float = None
+    """Threshold above which surface phosphorous induces stress"""
+    PTHRESH: float = None
+    """Threshold above which surface potassium induces stress"""
+    KTHRESH: float = None
+
     # Vernalization Parameters
     """Saturated vernalisation requirements (days)"""
     VERNSAT: float = None
@@ -270,6 +290,8 @@ class WOFOST_Args:
     RDRRTB: float = None
     """Relative death rate of roots as a function of oxygen stress (over watering)"""
     RDRROS: float = None
+    """Relative death rate of roots due to excess NPK on surface"""
+    RDRRNPK: float = None
 
     # Stem Dynamics Parameters   
     """Relative death rate of stems as a function of development stage"""
@@ -383,7 +405,7 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['TOTP', 'TOTK', 'TOTIRRIG', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'WSO', 'WRT', 'DRRT', 'DVS', 'FIN'])
+    output_vars: list = field(default_factory = lambda: ['FIN', 'WSO', 'DVS', "SURFACE_N", "SURFACE_P", "SURFACE_K", "NAVAIL", "PAVAIL", "KAVAIL", "RNSUBSOIL", "RPSUBSOIL", "RKSUBSOIL", "DTSR"])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
     

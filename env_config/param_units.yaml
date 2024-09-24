@@ -198,7 +198,10 @@
 
   # **Rate variables** (For output to observation space):
   RR:       'cm'                # Growth rate root depth                            
-  GRRT:     '|kg ha-1 d-1|'     # Growth rate root biomass                          
+  GRRT:     '|kg ha-1 d-1|'     # Growth rate root biomass 
+  DRRT1:    '|kg ha-1 d-1|'     # Death rate of roots due to aging                 
+  DRRT2:    '|kg ha-1 d-1|'     # Death rate of roots due to excess water           
+  DRRT3:    '|kg ha-1 d-1|'     # Death rate of roots due to excess NPK                                 
   DRRT:     '|kg ha-1 d-1|'     # Death rate root biomass                            
   GWRT:     '|kg ha-1 d-1|'     # Net change in root biomass                         
 
@@ -336,15 +339,21 @@
   # NPK Soil Dynamics States and Rates
   #*############################################################################**
   #**State variables** (For output to observation space):
-  NSOIL:    '[kg ha-1]'      # total mineral soil N available at start of growth period
-  PSOIL:    '[kg ha-1]'      # total mineral soil P available at start of growth period
-  KSOIL:    '[kg ha-1]'      # total mineral soil K available at start of growth period
-  NAVAIL:   '|kg ha-1|'      # Total mineral N from soil and fertiliser          
-  PAVAIL:   '|kg ha-1|'      # Total mineral P from soil and fertiliser           
-  KAVAIL:   '|kg ha-1|'      # Total mineral K from soil and fertiliser          
-  TOTN:     '|kg ha-1|'      # Total mineral N applied by fertilization         
-  TOTP:     '|kg ha-1|'      # Total mineral P applied by fertilization          
-  TOTK:     '|kg ha-1|'      # Total mineral K applied by fertilization         
+  NSOIL:       '[kg ha-1]'      # total mineral soil N available at start of growth period
+  PSOIL:       '[kg ha-1]'      # total mineral soil P available at start of growth period
+  KSOIL:       '[kg ha-1]'      # total mineral soil K available at start of growth period
+  NAVAIL:      '|kg ha-1|'      # Total mineral N from soil and fertiliser          
+  PAVAIL:      '|kg ha-1|'      # Total mineral P from soil and fertiliser           
+  KAVAIL:      '|kg ha-1|'      # Total mineral K from soil and fertiliser          
+  TOTN:        '|kg ha-1|'      # Total mineral N applied by fertilization         
+  TOTP:        '|kg ha-1|'      # Total mineral P applied by fertilization          
+  TOTK:        '|kg ha-1|'      # Total mineral K applied by fertilization 
+  SURFACE_N:   '|kg ha-1|'      # Mineral N on surface layer                     
+  SURFACE_P:   '|kg ha-1|'      # Mineral P on surface layer                     
+  SURFACE_K:   '|kg ha-1|'      # Mineral K on surface layer                     
+  TOTN_RUNOFF: '|kg ha-1|'      # Total surface N runoff                        
+  TOTP_RUNOFF: '|kg ha-1|'      # Total surface N runoff                         
+  TOTK_RUNOFF: '|kg ha-1|'      # Total surface N runoff                              
 
   #*Rate variables** (For output to observation space):
   RNSOIL:           '|kg ha-1 d-1|'    # Rate of change on total soil mineral N           
@@ -357,7 +366,15 @@
 
   FERT_N_SUPPLY:    '|kg ha-1 d-1|'    # Rate of supply of fertilizer N                              
   FERT_P_SUPPLY:    '|kg ha-1 d-1|'    # Rate of Supply of fertilizer P                    
-  FERT_K_SUPPLY:    '|kg ha-1 d-1|'    # Rate of Supply of fertilizer K                    
+  FERT_K_SUPPLY:    '|kg ha-1 d-1|'    # Rate of Supply of fertilizer K   
+
+  RRUNOFF_N:        '|kg ha-1 d-1|'    # Rate of N runoff                                
+  RRUNOFF_P:        '|kg ha-1 d-1|'    # Rate of P runoff                                 
+  RRUNOFF_K:        '|kg ha-1 d-1|'    # Rate of K runoff                                  
+
+  RNSUBSOIL:        '|kg ha-1 d-1|'    # Rate of N from surface to subsoil                
+  RPSUBSOIL:        '|kg ha-1 d-1|'    # Rate of N from surface to subsoil                
+  RKSUBSOIL:        '|kg ha-1 d-1|'    # Rate of N from surface to subsoil                                
 
   #*############################################################################**
   # Soil Dynamics States and Rates
@@ -492,6 +509,9 @@
   FLTB:     'factor'     # Partitioning to leaves as a function of development stage.
   FOTB:     'factor'     # Partitioning to starge organs as a function of development stage.
   NPART:    'factor'     # Coefficient for the effect of N stress on leaf biomass allocation
+  NTHRESH:  'kg ha-1'    # Threshold above which surface nitrogen induces stress
+  PTHRESH:  'kg ha-1'    # Threshold above which surface phosphorous induces stress
+  KTHRESH:  'kg ha-1'    #Threshold above which surface potassium induces stress
 
   #*############################################################################**
   # Vernalization Parameters
@@ -544,6 +564,7 @@
   IAIRDU:   'bool'           # Presence of air ducts in the root (1) or not (0)
   RDRRTB:   'factor'         # Relative death rate of roots as a function of development stage
   RDRROS:   'factor'         # Relative death rate of roots as a function of oxygen stress (water logging)
+  RDRRNPK:  'factor'         # Relative rate of root death due to NPK excess
 
   #*############################################################################**
   # Stem Dynamics Parameters
@@ -654,6 +675,14 @@
   BG_N_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of N through atmospheric deposition.
   BG_P_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of P through atmospheric deposition.
   BG_K_SUPPLY:   '|kg ha-1 d-1|'    # Background supply of K through atmospheric deposition.
+  RNSOILMAX:     '|kg ha-1 d-1|'    # Maximum rate of surface N to subsoil           
+  RPSOILMAX:     '|kg ha-1 d-1|'    # Maximum rate of surface P to subsoil           
+  RKSOILMAX:     '|kg ha-1 d-1|'    # Maximum rate of surface K to subsoil           
+  RNABSORPTION:  'factor'           # Relative rate of N absorption from surface to subsoil
+  RPABSORPTION:  'factor'           # Relative rate of P absorption from surface to subsoil
+  RKABSORPTION:  'factor'           # Relative rate of K absorption from surface to subsoil
+  RNPKRUNOFF:    'factor'           # Relative rate of nutrient runoff
+
 
   #*############################################################################**
   # Soil Dynamics Parameters

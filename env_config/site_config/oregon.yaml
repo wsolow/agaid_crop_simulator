@@ -39,6 +39,36 @@ SiteParameters:
        #
        # NPK SOIL DYNAMICS
        # 
+       RNPKRUNOFF:
+       - [0.00, 0.00,
+          0.01, 0.00,
+          0.50, 0.05,
+          1.00, 0.10,
+          5.00, 0.40]
+       RNSOILMAX:
+       - 1
+       - max rate of surface N to subsoil absorption
+       - [kg ha-1 d-1]
+       RPSOILMAX:
+       - 1
+       - max rate of surface P to subsoil absorption
+       - [kg ha-1 d-1]
+       RKSOILMAX:
+       - 1
+       - max rate of surface K to subsoil absorption
+       - [kg ha-1 d-1]
+       RNABSORPTION:
+       - .2
+       - relative rate of surface N to subsoil
+       - ['-']
+       RPABSORPTION:
+       - .2
+       - relative rate of surface P to subsoil
+       - ['-']
+       RKABSORPTION:
+       - .2
+       - relative rate of surface K to subsoil
+       - ['-']
        BG_N_SUPPLY:
        - .091
        - background supply of N through atmospheric deposition
@@ -64,15 +94,15 @@ SiteParameters:
        - initial K available in the K pool     
        - ['kg ha-1']
        NMAX:
-       - 50.
+       - 20.
        - maximum N available in the N pool
        - ['kg ha-1']
        PMAX:
-       - 50.
+       - 20.
        - maximum P available in the P pool
        - ['kg ha-1']
        KMAX:
-       - 50.
+       - 20.
        - maximum K available in the K pool
        - ['kg ha-1']
        NSOILBASE:
@@ -104,7 +134,7 @@ SiteParameters:
        # 
        SMFCF:
        - 0.460 
-       - oil moisture content at field capacity
+       - soil moisture content at field capacity
        - ['cm3/cm3']
        SM0:
        - 0.570 

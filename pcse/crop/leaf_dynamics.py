@@ -173,7 +173,12 @@ class Base_WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         """Compute LAI as Total leaf area Index as sum of leaf, pod and stem area
         """
         k = self.kiosk
-        return self.states.LASUM + k.SAI + k.PAI
+        SAI = PAI = 0
+        if "SAI" in self.kiosk:
+            SAI = k.SAI
+        if "PAI" in self.kiosk:
+            PAI = k.PAI
+        return self.states.LASUM + SAI + PAI
 
     @prepare_rates
     def calc_rates(self, day:date, drv:WeatherDataProvider):
@@ -336,7 +341,12 @@ class Base_WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         LASUM = LAIEM
         LAIEXP = LAIEM
         LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
+        SAI = PAI = 0
+        if "SAI" in self.kiosk:
+            SAI = k.SAI
+        if "PAI" in self.kiosk:
+            PAI = k.PAI
+        LAI = LASUM + SAI + PAI
 
         s.LV=LV
         s.SLA=SLA
@@ -384,7 +394,12 @@ class Annual_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
         LASUM = LAIEM
         LAIEXP = LAIEM
         LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
+        SAI = PAI = 0
+        if "SAI" in self.kiosk:
+            SAI = k.SAI
+        if "PAI" in self.kiosk:
+            PAI = k.PAI
+        LAI = LASUM + SAI + PAI
 
         # Initialize StateVariables object
         self.states = self.StateVariables(kiosk, 
@@ -443,7 +458,12 @@ class Perennial_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
         LASUM = LAIEM
         LAIEXP = LAIEM
         LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
+        SAI = PAI = 0
+        if "SAI" in self.kiosk:
+            SAI = k.SAI
+        if "PAI" in self.kiosk:
+            PAI = k.PAI
+        LAI = LASUM + SAI + PAI
 
         # Initialize StateVariables object
         self.states = self.StateVariables(kiosk, 
@@ -479,7 +499,12 @@ class Perennial_WOFOST_Leaf_Dynamics_NPK(Base_WOFOST_Leaf_Dynamics_NPK):
         LASUM = LAIEM
         LAIEXP = LAIEM
         LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
+        SAI = PAI = 0
+        if "SAI" in self.kiosk:
+            SAI = k.SAI
+        if "PAI" in self.kiosk:
+            PAI = k.PAI
+        LAI = LASUM + SAI + PAI
 
         s.LV=LV
         s.SLA=SLA

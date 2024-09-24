@@ -33,6 +33,18 @@ BG_P_SUPPLY   Background supply of P through atmospheric     SSi      |kg ha-1 d
                 deposition.
 BG_K_SUPPLY   Background supply of K through atmospheric     SSi      |kg ha-1 d-1|
                 deposition.
+RNSOILMAX     Maximum rate of surface N to subsoil           SSi      |kg ha-1 d-1|
+RPSOILMAX     Maximum rate of surface P to subsoil           SSi      |kg ha-1 d-1|
+RKSOILMAX     Maximum rate of surface K to subsoil           SSi      |kg ha-1 d-1|
+
+RNABSORPTION  Relative rate of N absorption from surface     SSi      |kg ha-1 d-1|
+                  to subsoil
+RPABSORPTION  Relative rate of P absorption from surface     SSi      |kg ha-1 d-1|
+                  to subsoil
+RKABSORPTION  Relative rate of K absorption from surface     SSi      |kg ha-1 d-1|
+                  to subsoil
+RNPKRUNOFF    Relative rate of NPK runoff as a function      SSi      - 
+                  surface water runoff
 ============  ============================================= =======  ==============
 
 **############################################################################**

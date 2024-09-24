@@ -22,6 +22,12 @@ KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
 TOTN     Total mineral N applied by fertilization           Y    |kg ha-1|
 TOTP     Total mineral P applied by fertilization           Y    |kg ha-1|
 TOTK     Total mineral K applied by fertilization           Y    |kg ha-1|
+SURFACE_N    Mineral N on surface layer                     Y    |kg ha-1|
+SURFACE_P    Mineral P on surface layer                     Y    |kg ha-1|
+SURFACE_K    Mineral K on surface layer                     Y    |kg ha-1|
+TOTN_RUNOFF  Total surface N runoff                         Y    |kg ha-1|
+TOTP_RUNOFF  Total surface N runoff                         Y    |kg ha-1|
+TOTK_RUNOFF  Total surface N runoff                         Y    |kg ha-1|
 =======  ================================================= ==== ============
 **Rate variables** (For output to observation space):
 ==============  ================================================= ==== =============
@@ -38,6 +44,14 @@ RKAVAIL          Total change in K availability                    N   |kg ha-1 
 FERT_N_SUPPLY    Rate of supply of fertilizer N                    N   |kg ha-1 d-1|            
 FERT_P_SUPPLY    Rate of Supply of fertilizer P                    N   |kg ha-1 d-1|
 FERT_K_SUPPLY    Rate of Supply of fertilizer K                    N   |kg ha-1 d-1|
+
+RRUNOFF_N        Rate of N runoff                                  N   |kg ha-1 d-1|
+RRUNOFF_P        Rate of P runoff                                  N   |kg ha-1 d-1|
+RRUNOFF_K        Rate of K runoff                                  N   |kg ha-1 d-1|
+
+RNSUBSOIL        Rate of N from surface to subsoil                 N   |kg ha-1 d-1|
+RPSUBSOIL        Rate of N from surface to subsoil                 N   |kg ha-1 d-1|
+RKSUBSOIL        Rate of N from surface to subsoil                 N   |kg ha-1 d-1|
 ==============  ================================================= ==== =============
 
 **############################################################################**
