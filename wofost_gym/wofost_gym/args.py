@@ -321,7 +321,9 @@ class WOFOST_Args:
     PCRIT_FR: float = None        
     """Critical K concentration as fraction of maximum K concentration for vegetative
                     plant organs as a whole (leaves + stems)"""
-    KCRIT_FR: float = None        
+    KCRIT_FR: float = None   
+    """DVS above which NPK uptake stops"""
+    DVS_NPK_STOP: float = None     
     
     """Time coefficient for N translation to storage organs (days)"""
     TCNT: float = None           
@@ -350,7 +352,10 @@ class WOFOST_Args:
     NLUE_NPK: float = None 
    
     # NPK Translocation Parameters
+    """NPK Translocation from roots"""
     NPK_TRANSLRT_FR: float = None 
+    """DVS above which translocation to storage organs begins"""
+    DVS_NPK_TRANSL: float = None
 
 @dataclass 
 class Agro_Args:
@@ -405,9 +410,10 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['FIN', 'WSO', 'DVS', "SURFACE_N", "SURFACE_P", "SURFACE_K", "NAVAIL", "PAVAIL", "KAVAIL", "RNSUBSOIL", "RPSUBSOIL", "RKSUBSOIL", "DTSR"])
+    output_vars: list = field(default_factory = lambda: ['FIN', 'WSO', 'DVS'])
     """Weather Variables"""
-    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    #weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    weather_vars: list = field(default_factory = lambda: [])
     
 
     """Intervention Interval"""

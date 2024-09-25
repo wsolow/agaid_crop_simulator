@@ -61,7 +61,6 @@ class NPK_Env(gym.Env):
 
 
         self.log = self._init_log()
-       
         # Load all model parameters from .yaml files
         crop = pcse.fileinput.YAMLCropDataProvider(fpath=os.path.join(base_fpath, crop_fpath))
         site = pcse.fileinput.YAMLSiteDataProvider(fpath=os.path.join(base_fpath, site_fpath))
@@ -201,7 +200,6 @@ class NPK_Env(gym.Env):
         Args:
             action: integer
         """
-        
         # Send action signal to model and run model
         act_tuple = self._take_action(action)
         output = self._run_simulation()

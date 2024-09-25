@@ -15,9 +15,10 @@ import wofost_gym.policies as policies
 from wofost_gym.envs.wofost_base import NPK_Env, Plant_NPK_Env, Harvest_NPK_Env
 from utils import Args
 import utils
+import yaml
 
 if __name__ == "__main__":
-    plot = True
+    plot = False
     graph = False
     args = tyro.cli(Args)
 

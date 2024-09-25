@@ -80,6 +80,7 @@ class NPK_Demand_Uptake(SimulationObject):
     RNUPTAKEMAX    Maximum rate of N uptake                      |kg N ha-1 d-1|
     RPUPTAKEMAX    Maximum rate of P uptake                      |kg N ha-1 d-1|
     RKUPTAKEMAX    Maximum rate of K uptake                      |kg N ha-1 d-1|
+    DVS_NPK_STOP   DVS above which NPK uptake halts               - 
     ============  =============================================  ======================
 
     **State variables**
@@ -202,6 +203,8 @@ class NPK_Demand_Uptake(SimulationObject):
         RPUPTAKEMAX = Float()  # Maximum P uptake rate
         RKUPTAKEMAX = Float()  # Maximum K uptake rate
 
+        DVS_NPK_STOP = Float(-99.)
+
     class RateVariables(RatesTemplate):
         RNuptakeLV = Float(-99.)  # N uptake rates in organs [kg ha-1 d -1]
         RNuptakeST = Float(-99.)
@@ -315,9 +318,12 @@ class NPK_Demand_Uptake(SimulationObject):
         r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
         # NPK uptake rate from soil
-        r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
-        r.RPuptake = (max(0., min(r.Pdemand, k.PAVAIL, p.RPUPTAKEMAX)) * NutrientLIMIT)
-        r.RKuptake = (max(0., min(r.Kdemand, k.KAVAIL, p.RKUPTAKEMAX)) * NutrientLIMIT)
+        if k.DVS < p.DVS_NPK_STOP:
+            r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
+            r.RPuptake = (max(0., min(r.Pdemand, k.PAVAIL, p.RPUPTAKEMAX)) * NutrientLIMIT)
+            r.RKuptake = (max(0., min(r.Kdemand, k.KAVAIL, p.RKUPTAKEMAX)) * NutrientLIMIT)
+        else:
+            r.RNuptake = r.RPuptake = r.RKuptake = 0
 
         # NPK uptake rate for different organs weighted as fraction of total demand
         # if no demand then uptake rate = 0.

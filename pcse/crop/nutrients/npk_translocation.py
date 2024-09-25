@@ -49,6 +49,8 @@ class NPK_Translocation(SimulationObject):
     NPK_TRANSLRT_FR   NPK translocation from roots as a fraction     -
                       of resp. total NPK amounts translocated
                       from leaves and stems
+    DVS_NPK_TRANSL    DVS above which translocation to storage       -
+                      organs begin
     ===============  =============================================  ======================
 
 
@@ -133,6 +135,8 @@ class NPK_Translocation(SimulationObject):
         NPK_TRANSLRT_FR = Float(-99.)  # NPK translocation from roots as a fraction of
                                        # resp. total NPK amounts translocated from leaves
                                        # and stems
+        DVS_NPK_TRANSL = Float(-99.) # Rate at which translocation to storage organs begins
+        
 
     class RateVariables(RatesTemplate):
         RNtranslocationLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
@@ -242,9 +246,12 @@ class NPK_Translocation(SimulationObject):
         s.KtranslocatableRT = max(0., k.KamountRT - k.WRT * p.KRESIDRT)
 
         # total translocatable NPK amount in the organs [kg N ha-1]
-        s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
-        s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
-        s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT
+        if k.DVS > p.DVS_NPK_TRANSL:
+            s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
+            s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
+            s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT
+        else:
+            s.Ntranslocatable = s.Ptranslocatable = s.Ktranslocatable = 0
 
     def reset(self):
         """Reset states and rates

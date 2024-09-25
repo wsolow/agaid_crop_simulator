@@ -288,7 +288,7 @@ class Perennial_WOFOST_Root_Dynamics(Base_WOFOST_Root_Dynamics):
         RRI    = Float(-99.)
         RDMCR  = Float(-99.)
         RDMSOL = Float(-99.)
-        TDWI   = Float(-99.)
+        TDWI   = AfgenTrait()
         IAIRDU = Float(-99)
         RDRRTB = AfgenTrait()
         RDRROS = AfgenTrait()

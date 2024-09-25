@@ -211,6 +211,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         if variety_name not in variety_sets:
             msg = "Variety name '%s' not available for crop '%s' in " \
                   "%s " % (variety_name, crop_name, self.__class__.__name__)
+            sys.exit(0)
             raise exc.PCSEError(msg)
 
         self.current_crop_name = crop_name

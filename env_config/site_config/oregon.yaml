@@ -58,15 +58,15 @@ SiteParameters:
        - max rate of surface K to subsoil absorption
        - [kg ha-1 d-1]
        RNABSORPTION:
-       - .2
+       - .1
        - relative rate of surface N to subsoil
        - ['-']
        RPABSORPTION:
-       - .2
+       - .1
        - relative rate of surface P to subsoil
        - ['-']
        RKABSORPTION:
-       - .2
+       - .1
        - relative rate of surface K to subsoil
        - ['-']
        BG_N_SUPPLY:

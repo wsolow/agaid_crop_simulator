@@ -592,6 +592,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
         env.parameterprovider.set_override("SPA", args.SPA, check=False)
     
     # NPK Demand Uptake Parameters
+    """DVS above which NPK uptake halts"""
+    if args.DVS_NPK_STOP is not None:
+        env.parameterprovider.set_override("DVS_NPK_STOP", args.DVS_NPK_STOP, check=False)
     """Maximum N concentration in leaves as function of DVS (kg N / kg dry biomass)"""
     if args.NMAXLV_TB is not None:
         env.parameterprovider.set_override("NMAXLV_TB", args.NMAXLV_TB, check=False)
@@ -744,10 +747,12 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Residual P fraction in stems (kg K / kg dry biomass)"""
     if args.KRESIDST is not None: 
         env.parameterprovider.set_override("KRESIDST", args.KRESIDST, check=False)      
-    """NPK translocation from roots as a fraction of resp. total NPK amounts translocated
-                        from leaves and stems"""
+    """NPK translocation from roots as a fraction of resp. total NPK amounts translocated from leaves and stems"""
     if args.NPK_TRANSLRT_FR is not None:
         env.parameterprovider.set_override("NPK_TRANSLRT_FR", args.NPK_TRANSLRT_FR, check=False)
+    """DVS above which translocation to storage organs occurs"""
+    if args.DVS_NPK_TRANSL is not None:
+        env.parameterprovider.set_override("DVS_NPK_TRANSL", args.DVS_NPK_TRANSL, check=False)
 
 def set_agro_params(agromanagement: dict, args: Agro_Args):
     """Sets editable Agromanagement parameters by modifying the agromanagement
