@@ -281,6 +281,8 @@ TDWI     Initial total crop dry weight                  SCr      |kg ha-1|
 RDRSOB   Relative Death rate of storage organs as a     Scr      |kg ha-1|
             function of development stage               
 SPA      Specific Pod Area                              SCr      |ha kg-1|
+RDRSOB   Relative Death rate of storage organs as a     Scr      |kg ha-1|
+            function of frost kill   
 =======  ============================================= =======  ============    
 
 **############################################################################**

@@ -326,6 +326,10 @@ CropParameters:
           0.500]
         - Relative death rate of storage organs as a function of DVS
         - ['-', 'kg.kg-1.d-1']
+      RDRSOF:
+        - [0.00, 0.200, 5.00, 0.050, 7.00, 0.001, 8.00, 0.00]
+        - Relative death rate of storage organs due to frost kill
+        - ['-', 'kg.kg-1.d-1']
       #
       # WATER USE
       #

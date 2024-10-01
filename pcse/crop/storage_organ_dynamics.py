@@ -39,6 +39,8 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
     RDRSOB   Relative Death rate of storage organs as a     Scr      |kg ha-1|
             function of development stage               
     SPA      Specific Pod Area                              SCr      |ha kg-1|
+    RDRSOF   Relative Death rate of storage organs due to   SCr      |ha kg-1|
+             frost kill 
     =======  ============================================= =======  ============    
 
     **State variables**
@@ -85,6 +87,7 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         SPA    = AfgenTrait()
         TDWI   = Float(-99.)
         RDRSOB = AfgenTrait()
+        RDRSOF = AfgenTrait()
 
     class StateVariables(StatesTemplate):
         WSO  = Float(-99.) # Weight living storage organs
@@ -126,8 +129,8 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Growth/death rate organs
         rates.GRSO = ADMI * FO
 
-        rates.DRSO = states.WSO * params.RDRSOB(k.DVS)
-        rates.DHSO = states.HWSO * params.RDRSOB(k.DVS)
+        rates.DRSO = states.WSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(k.DVS))
+        rates.DHSO = states.HWSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(k.DVS))
         rates.GWSO = rates.GRSO - rates.DRSO
 
     @prepare_states
@@ -227,6 +230,7 @@ class Perennial_WOFOST_Storage_Organ_Dynamics(Base_WOFOST_Storage_Organ_Dynamics
         SPA    = AfgenTrait()
         TDWI   = AfgenTrait()
         RDRSOB = AfgenTrait()
+        RDRSOF = AfgenTrait()
 
     def initialize(self, day: date, kiosk: VariableKiosk, parvalues: dict):
         """

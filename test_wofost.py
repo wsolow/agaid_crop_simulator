@@ -18,7 +18,7 @@ import utils
 import yaml
 
 if __name__ == "__main__":
-    plot = False
+    plot = True
     graph = False
     args = tyro.cli(Args)
 

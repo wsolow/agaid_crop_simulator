@@ -590,6 +590,9 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Specific Pod Area (ha / kg)""" 
     if args.SPA is not None:
         env.parameterprovider.set_override("SPA", args.SPA, check=False)
+    """Relative death rate of storage organs as a function of frost kill"""
+    if args.RDRSOF is not None:
+        env.parameterprovider.set_override("RDRSOF", args.RDRSOF, check=False) 
     
     # NPK Demand Uptake Parameters
     """DVS above which NPK uptake halts"""

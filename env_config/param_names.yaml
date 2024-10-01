@@ -577,7 +577,9 @@
   #*############################################################################**
   #*SIMULATION PARAMETERS** (TO BE PROVIDED IN CROPDATA DICTIONARY):
   TDWI:          'Initial Total Crop Dry Weight'               
-  SPA:           'Specific Pod Area'                            
+  SPA:           'Specific Pod Area'  
+  RDRSOB:        'Relative Death Rate of Storage Organs as Function of DVS'
+  RDRSOF:        'Relative Death Rate of Storage Organs as Function of Temperature'                          
 
   #*############################################################################**
   # Npk Demand Uptake Parameters

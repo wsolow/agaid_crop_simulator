@@ -306,6 +306,8 @@ class WOFOST_Args:
     RDRSOB: float = None
     """Specific Pod Area (ha / kg)""" 
     SPA: float = None    
+    """Relative death rate of storage organs as a function of frost kill"""
+    RDRSOF: float = None
     
     # NPK Demand Uptake Parameters     
     NMAXSO: float = None      
@@ -410,10 +412,10 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['FIN', 'WSO', 'DVS'])
+    output_vars: list = field(default_factory = lambda: ['FIN', 'WSO', 'DVS', 'WRT', 'WST', 'WLV'])
     """Weather Variables"""
-    #weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
-    weather_vars: list = field(default_factory = lambda: [])
+    weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TMIN', 'TMAX', 'TEMP', 'VAP', 'RAIN', 'WIND'])
+    #weather_vars: list = field(default_factory = lambda: [])
     
 
     """Intervention Interval"""

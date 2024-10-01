@@ -151,6 +151,7 @@ CropParameters:
      RDRRTB:
      RDRSTB:
      RDRSOB:
+     RDRSOF:
 
       #
       # WATER USE
