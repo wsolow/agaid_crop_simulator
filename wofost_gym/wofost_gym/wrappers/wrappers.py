@@ -488,13 +488,13 @@ class RewardFertilizationThresholdWrapper(RewardWrapper):
             act_tuple  - amount of NPK/Water applied
         """
         if output.iloc[-1]['TOTN'] > self.max_n and act_tuple[self.env.unwrapped.N] > 0:
-            return -1e3 * act_tuple[self.env.unwrapped.N]
+            return -1e4 * act_tuple[self.env.unwrapped.N]
         if output.iloc[-1]['TOTP'] > self.max_p and act_tuple[self.env.unwrapped.P] > 0:
-            return -1e3 * act_tuple[self.env.unwrapped.P]
+            return -1e4 * act_tuple[self.env.unwrapped.P]
         if output.iloc[-1]['TOTK'] > self.max_k and act_tuple[self.env.unwrapped.K] > 0:
-            return -1e3 * act_tuple[self.env.unwrapped.K]
+            return -1e4 * act_tuple[self.env.unwrapped.K]
         if output.iloc[-1]['TOTIRRIG'] > self.max_w and act_tuple[self.env.unwrapped.I] > 0:
-            return -1e3 * act_tuple[self.env.unwrapped.I]
+            return -1e4 * act_tuple[self.env.unwrapped.I]
         return np.nan_to_num(output.iloc[-1]['WSO'])
     
 

@@ -129,8 +129,8 @@ class Base_WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Growth/death rate organs
         rates.GRSO = ADMI * FO
 
-        rates.DRSO = states.WSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(k.DVS))
-        rates.DHSO = states.HWSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(k.DVS))
+        rates.DRSO = states.WSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(drv.TEMP))
+        rates.DHSO = states.HWSO * limit(0, 1, params.RDRSOB(k.DVS)+params.RDRSOF(drv.TEMP))
         rates.GWSO = rates.GRSO - rates.DRSO
 
     @prepare_states
