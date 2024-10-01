@@ -70,15 +70,15 @@ SiteParameters:
        - relative rate of surface K to subsoil
        - ['-']
        BG_N_SUPPLY:
-       - .091
+       - .011
        - background supply of N through atmospheric deposition
        - ['kg ha-1 d-1']
        BG_P_SUPPLY:
-       - .091
+       - .011
        - background supply of P through atmospheric deposition
        - ['kg ha-1 d-1']
        BG_K_SUPPLY:
-       - .091
+       - .011
        - background supply of K through atmospheric deposition
        - ['kg ha-1 d-1']
        NAVAILI:

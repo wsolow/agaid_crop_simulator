@@ -14,29 +14,15 @@ import tyro
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
+import wofost_gym.wrappers.wrappers as wrappers
+
 # Import relative npk_args file
 sys.path.append(str(Path(__file__).parent.parent))
-from wofost_gym.args import NPK_Args
 import utils
 
 
 @dataclass
 class Args:
-
-    # Environment configuration
-    """Environment parameters for WOFOST Env"""
-    npk_args: NPK_Args
-    """the id of the environment"""
-    env_id: str = "lnpkw-v0"
-    """Path"""
-    base_fpath: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
-    """Relative path to agromanagement configuration file"""
-    agro_fpath: str = "env_config/agro_config/annual_agro_npk.yaml"
-    """Relative path to crop configuration file"""
-    crop_fpath: str = "env_config/crop_config/"
-    """Relative path to site configuration file"""
-    site_fpath: str = "env_config/site_config/"
-    
     # Experiment configuration
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
@@ -60,7 +46,7 @@ class Args:
     """total timesteps of the experiments"""
     learning_rate: float = 2.5e-4
     """the learning rate of the optimizer"""
-    num_envs: int = 1
+    num_envs: int = 4
     """the number of parallel game environments"""
     num_steps: int = 650
     """the number of steps to run in each environment per policy rollout"""
@@ -99,27 +85,10 @@ class Args:
     num_iterations: int = 0
     """the number of iterations (computed in runtime)"""
 
-
-def make_env(kwargs, idx, capture_video, run_name):
-    env_id, env_kwargs = utils.get_gym_args(kwargs)
-    def thunk():
-        if capture_video and idx == 0:
-            env = gym.make(env_id, render_mode="rgb_array", **env_kwargs)
-            env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
-        else:
-            env = gym.make(env_id, **env_kwargs)
-        env = gym.wrappers.RecordEpisodeStatistics(env)
-
-        return env
-
-    return thunk
-
-
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
-
 
 class Agent(nn.Module):
     def __init__(self, envs):
@@ -155,11 +124,27 @@ class Agent(nn.Module):
             action = probs.sample()
         return action, probs.log_prob(action), probs.entropy(), self.critic(x)
 
-def main(args):
+def make_env(kwargs, idx, capture_video, run_name):
+    env_id, env_kwargs = utils.get_gym_args(kwargs)
+    def thunk():
+        if capture_video and idx == 0:
+            env = gym.make(env_id, render_mode="rgb_array", **env_kwargs)
+            env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
+        else:
+            env = gym.make(env_id, **env_kwargs)
+        env = utils.wrap_env_reward(env, kwargs)
+        env = gym.wrappers.RecordEpisodeStatistics(env)
+        env = gym.wrappers.NormalizeReward(env)
+        return env
+    return thunk
+
+
+def main(kwargs):
+    args = kwargs.ppo
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
-    run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
+    run_name = f"{kwargs.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
 
     CHECKPOINT_FREQUENCY = args.checkpoint_frequency
     starting_update = 1
@@ -192,7 +177,7 @@ def main(args):
 
     # env setup
     envs = gym.vector.SyncVectorEnv(
-        [make_env(args, i, args.capture_video, run_name) for i in range(args.num_envs)],
+        [make_env(kwargs, i, args.capture_video, run_name) for i in range(args.num_envs)],
     )
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
 
@@ -351,6 +336,3 @@ def main(args):
 
     envs.close()
     writer.close()
-
-if __name__ == "__main__":
-    main(tyro.cli(Args))

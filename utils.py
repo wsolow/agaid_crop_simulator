@@ -43,11 +43,6 @@ class Args:
     """Relative path to site configuration file"""
     site_fpath: str = "env_config/site_config/"
 
-    """Path to policy if using a trained Deep RL Agent Policy"""
-    """Typically in wandb/files/"""
-    agent_path: str = None
-    """Agent type (PPO, DQN, SAC)"""
-    agent_type: str = None
     """Policy name if using a policy in the policies.py file"""
     policy_name: str = None
 
@@ -80,13 +75,11 @@ def norm(x):
 # Based on the reward functions created in the wofost_gym/wrappers/
 def wrap_env_reward(env: gym.Env, args):
 
-
-    if args.env_reward == "default":
-        print('Default Reward Function')
-        return env
-    elif args.env_reward == "fertilizationcost":
+    if args.env_reward == "RewardFertilizationCostWrapper":
         print('Fertilization Cost Reward Function')
         return wrappers.RewardFertilizationCostWrapper(env)
-    elif args.env_reward == 'fertilization_threshold':
+    elif args.env_reward == 'RewardFertilizationThresholdWrapper':
         print('Fertilization Threshold Reward Function')
-        return wrappers.RewardFertilizationThresholdWrapper(env)
+        return wrappers.RewardFertilizationThresholdWrapper(env, max_n=args.max_n, max_p = args.max_p, max_k=args.max_k, max_w=args.max_w)
+    else:
+        return env

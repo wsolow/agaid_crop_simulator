@@ -434,7 +434,7 @@ class RewardFertilizationThresholdWrapper(RewardWrapper):
     """ Modifies the reward to be a function with high penalties for if a 
      threshold is crossed during fertilization or irrigation
     """
-    def __init__(self, env,  max_n: float=np.inf, max_p: float=np.inf, max_k: float=np.inf, max_w: float=np.inf):
+    def __init__(self, env: gym.Env, max_n: float=np.inf, max_p: float=np.inf, max_k: float=np.inf, max_w: float=np.inf):
         """Initialize the :class:`RewardFertilizationThresholdWrapper` wrapper with an environment.
 
         Args: 
@@ -444,7 +444,7 @@ class RewardFertilizationThresholdWrapper(RewardWrapper):
             max_k: Potassium threshold
             max_w: Irrigation threshold
         """
-        super().__init__(env,)
+        super().__init__(env)
         self.env = env
 
         # Thresholds for nutrient application
@@ -452,6 +452,32 @@ class RewardFertilizationThresholdWrapper(RewardWrapper):
         self.max_p = max_p
         self.max_k = max_k
         self.max_w = max_w
+
+    def step(self, action):
+        """Run one timestep of the environment's dynamics.
+
+        Sends action to the WOFOST model and recieves the resulting observation
+        which is then processed to the _get_reward() function and _process_output()
+        function for a reward and observation
+
+        Args:
+            action: integer
+        """
+        # Send action signal to model and run model
+        act_tuple = self.env.unwrapped._take_action(action)
+        output = self.env.unwrapped._run_simulation()
+
+        observation = self.env.unwrapped._process_output(output)
+        
+        reward = self._get_reward(output, act_tuple) 
+        
+        # Terminate based on site end date
+        terminate = self.env.unwrapped.date >= self.env.unwrapped.site_end_date
+        # Truncate based on crop finishing
+        truncation = output.iloc[-1]['FIN'] == 1.0
+
+        self.env.unwrapped._log(output.iloc[-1]['WSO'], act_tuple, reward)
+        return observation, reward, terminate, truncation, self.env.unwrapped.log
     
     def _get_reward(self, output, act_tuple):
         """Convert the reward by applying a high penalty if a fertilization
@@ -462,13 +488,13 @@ class RewardFertilizationThresholdWrapper(RewardWrapper):
             act_tuple  - amount of NPK/Water applied
         """
         if output.iloc[-1]['TOTN'] > self.max_n and act_tuple[self.env.unwrapped.N] > 0:
-            return -1e4
+            return -1e3 * act_tuple[self.env.unwrapped.N]
         if output.iloc[-1]['TOTP'] > self.max_p and act_tuple[self.env.unwrapped.P] > 0:
-            return -1e4
+            return -1e3 * act_tuple[self.env.unwrapped.P]
         if output.iloc[-1]['TOTK'] > self.max_k and act_tuple[self.env.unwrapped.K] > 0:
-            return -1e4
+            return -1e3 * act_tuple[self.env.unwrapped.K]
         if output.iloc[-1]['TOTIRRIG'] > self.max_w and act_tuple[self.env.unwrapped.I] > 0:
-            return -1e4
-        
+            return -1e3 * act_tuple[self.env.unwrapped.I]
         return np.nan_to_num(output.iloc[-1]['WSO'])
     
+

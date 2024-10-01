@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Make the gym environment with wrappers
     env = gym.make(env_id, **env_kwargs)
-    env = wofost_gym.wrappers.RewardFertilizationThresholdWrapper(env, max_n=50)
+    env = wofost_gym.wrappers.RewardFertilizationThresholdWrapper(env, max_n=5)
     env = wofost_gym.wrappers.NPKDictActionWrapper(env)
     env = wofost_gym.wrappers.NPKDictObservationWrapper(env)
     
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     elif isinstance(env.unwrapped, Plant_NPK_Env):
         policy = policies.No_Action_Plant(env)
     else:
-        policy = policies.Interval_N(env, amount=0, interval=1)
+        policy = policies.Interval_N(env, amount=1, interval=21)
 
     obs_arr = []
     obs, info = env.reset()

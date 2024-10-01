@@ -34,8 +34,7 @@ class Limited_NPKW_Env(NPK_Env):
         """
         super().__init__(args, base_fpath, agro_fpath, site_fpath, crop_fpath, \
                          config=self.config)
-
-        self.action_space = gym.spaces.Discrete(1)
+        self.action_space = gym.spaces.Discrete(1+3*self.num_fert + self.num_irrig)
     
     def _take_action(self, action: int):
         """Controls sending fertilization and irrigation signals to the model. 
@@ -73,8 +72,7 @@ class Limited_NPKW_Env(NPK_Env):
         elif (action-1) // self.num_fert == 2:
             k_amount = self.fert_amount * (( (action-1) % self.num_fert)+1) 
             self.model._send_signal(signal=pcse.signals.apply_npk, \
-                                        K_amount=k_amount, K_recovery=self.k_recovery)
-            
+                                        K_amount=k_amount, K_recovery=self.k_recovery)  
         return (n_amount, p_amount, k_amount, irrig_amount)
 
 class PP_Env(NPK_Env):
