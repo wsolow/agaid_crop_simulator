@@ -601,7 +601,8 @@ class Perennial_Phenology(Base_Phenology):
     AGEI      The initial age of the crop in years           Scr        year
     DCYCLEMAX The maximum number of days in a crop cycle     Scr        day
                before dormancy
-
+    MLDORM    The daylength threshold at which a plant goes  SCR        hr
+                into dormancy
     **State variables**
 
     =======  ================================================= ==== ============
@@ -621,6 +622,9 @@ class Perennial_Phenology(Base_Phenology):
 
     =======  ================================================= ==== ============
     """
+    # Day length helper variable
+    _DAY_LENGTH = Float(0)
+
     class Parameters(ParamTemplate):
         TSUMEM = Float(-99.)  # Temp. sum for emergence
         TBASEM = Float(-99.)  # Base temp. for emergence
@@ -643,6 +647,7 @@ class Perennial_Phenology(Base_Phenology):
         AGEI   = Int(-99)     # Initial Tree age
         DCYCLEMAX = Int(-99)   # Maximum number of days in crop cycle before dormancy
         DTBEM  = Int(-99)     # Number of days above emergence temp required for germination
+        MLDORM = Float(-99.)  # Daylength at which a plant will go into dormancy
 
     class StateVariables(StatesTemplate):
         DVS   = Float(-99.)  # Development stage
@@ -698,8 +703,9 @@ class Perennial_Phenology(Base_Phenology):
 
         # Day length sensitivity
         DVRED = 1.
+        DAYLP = daylength(day, drv.LAT)
+        self._DAY_LENGTH = DAYLP
         if p.IDSL >= 1:
-            DAYLP = daylength(day, drv.LAT)
             DVRED = limit(0., 1., (DAYLP - p.DLC)/(p.DLO - p.DLC))
 
         # Vernalisation
@@ -813,21 +819,21 @@ class Perennial_Phenology(Base_Phenology):
             if s.DVS >= 1.0:
                 self._next_stage(day)
                 s.DVS = 1.0
-            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX or self._DAY_LENGTH < p.MLDORM:
                 s.STAGE = "dormant"
         elif s.STAGE == 'reproductive':
             s.DCYCLE += 1
             if s.DVS >= p.DVSM:
                 self._next_stage(day)
                 s.DVS = p.DVSM
-            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX or self._DAY_LENGTH < p.MLDORM:
                 s.STAGE = "dormant"
         elif s.STAGE == 'mature':
             s.DCYCLE += 1
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
                 s.DVS = p.DVSEND
-            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX:
+            if s.DSNG >= p.DORM or s.DCYCLE >= p.DCYCLEMAX or self._DAY_LENGTH < p.MLDORM:
                 s.STAGE = "dormant"
         elif s.STAGE == "dormant":
             if s.DSD >= p.DORMCD:
@@ -854,6 +860,7 @@ class Perennial_Phenology(Base_Phenology):
             
         msg = "Finished state integration for %s"
         self.logger.debug(msg % day)
+        self._DAY_LENGTH = 0
 
     def _next_stage(self, day:datetime.date):
         """Moves states.STAGE to the next phenological stage"""

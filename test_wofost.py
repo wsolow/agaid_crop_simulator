@@ -6,6 +6,7 @@ Written by: Will Solow, 2024
 
 import gymnasium as gym
 import numpy as np
+import pandas as pd
 import tyro
 import matplotlib.pyplot as plt
 import sys
@@ -17,8 +18,11 @@ from utils import Args
 import utils
 import yaml
 
+import visualize_data
+
 if __name__ == "__main__":
-    plot = True
+    plot = False
+    plot2 = True
     graph = False
     args = tyro.cli(Args)
 
@@ -38,7 +42,7 @@ if __name__ == "__main__":
     elif isinstance(env.unwrapped, Plant_NPK_Env):
         policy = policies.No_Action_Plant(env)
     else:
-        policy = policies.Interval_N(env, amount=1, interval=21)
+        policy = policies.Interval_N(env, amount=1, interval=7)
 
     obs_arr = []
     obs, info = env.reset()
@@ -56,10 +60,14 @@ if __name__ == "__main__":
         reward_arr.append(rewards)
         obs = next_obs
         k+=1
-        if term:
+        if term or trunc:
             obs, info = env.reset()
             break
     all_obs = np.array([list(d.values()) for d in obs_arr])
+
+    df = pd.DataFrame(data=np.array(all_obs), columns=env.get_output_vars())
+    df.to_csv("data/weekly_n.csv")
+
 
     all_vars = args.npk_args.output_vars + args.npk_args.forecast_length * args.npk_args.weather_vars
     print(f'SUCCESS in {args.env_id}')
@@ -89,7 +97,9 @@ if __name__ == "__main__":
             plt.xlabel('Days')
             plt.savefig(f'figs/{env_kwargs["args"].ag_args.crop_name}_{all_vars[i]}')
             plt.close()
-
+        
+    if plot2: 
+        visualize_data.plot_season(args, [df])
 
 
 

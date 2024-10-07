@@ -541,6 +541,7 @@
   DORM:     'day'        # Dormancy threshold after which the plant enters dormancy 
   DORMCD: 'day'          # The number of days a plant will stay dormant
   AGEI:   'year'         # The initial age of the crop in years       
+  MLDORM: 'hour'         # The daylight threshold below which the crop goes dormant
 
   #*############################################################################**
   # Respiration Parameters

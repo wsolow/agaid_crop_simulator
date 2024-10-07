@@ -519,6 +519,18 @@ def set_params(env: gym.Env, args: WOFOST_Args):
     """Daily increase in temperature sum as a function of daily mean temperature (C)"""  
     if args.DTSMTB is not None:             
         env.parameterprovider.set_override("DTSMTB", args.DTSMTB, check=False)
+    """Dormancy threshold after which plant becomes dormant (days)"""
+    if args.DORM is not None:
+        env.parameterprovider.set_override("DORM", args.DORM, check=False)
+    """Minimum length of dormancy state"""
+    if args.DORMCD is not None:
+        env.parameterprovider.set_override("DORMCD", args.DORMCD, check=False)  
+    """Initial age of crop (years)"""
+    if args.AGEI is not None:
+        env.parameterprovider.set_override("AGEI", args.AGEI, check=False)  
+    """Daylength dormancy threshold"""
+    if args.MLDORM is not None:
+        env.parameterprovider.set_override("MLDORM", args.MLDORM, check=False)  
 
     # Respiration Parameters
     """Relative increase in maintenance repiration rate with each 10 degrees increase in temperature"""

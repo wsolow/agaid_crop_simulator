@@ -538,7 +538,8 @@
   DTSMTB:      'Daily Increase In Temperature Sum'
   DORM:        'Days after which plant enters dormancy'
   DORMCD:      'Minimum length of dormant state' 
-  AGEI:        'The initial age of the crop in years'         
+  AGEI:        'The initial age of the crop in years'   
+  MLDORM:      'Daylength dormancy threshold'    
 
   #*############################################################################**
   # Respiration Parameters

@@ -59,7 +59,6 @@ class NPK_Env(gym.Env):
         self.weather_vars = args.weather_vars
         self.output_vars = args.output_vars
 
-
         self.log = self._init_log()
         # Load all model parameters from .yaml files
         crop = pcse.fileinput.YAMLCropDataProvider(fpath=os.path.join(base_fpath, crop_fpath))
@@ -111,6 +110,10 @@ class NPK_Env(gym.Env):
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, \
                                 shape=(1+len(self.output_vars)+len(self.weather_vars)*self.forecast_length,))
 
+    def get_output_vars(self):
+        """Return a list of the output vars"""
+        return self.output_vars + self.weather_vars + ["DAYS"]
+    
     def seed(self, seed: int=None):
         """Set the seed for the environment using Gym seeding.
         Minimal impact - generally will only effect Gaussian noise for 

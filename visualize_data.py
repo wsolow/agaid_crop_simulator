@@ -7,6 +7,7 @@ import gymnasium as gym
 import numpy as np
 import wofost_gym
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import pandas as pd
 import torch
 import sys
@@ -21,9 +22,9 @@ np.set_printoptions(precision=3)
 def norm(x):
     return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
 
-def plot_average_farms(args, filenames):
-    unit_fname = f'env_config/param_units.yaml'
-    title_fname = f'env_config/param_names.yaml'
+def load_labels(args):
+    unit_fname = args.unit_fpath
+    title_fname = args.name_fpath
     with open(unit_fname) as fp:
         try:
             r = yaml.safe_load(fp)
@@ -36,7 +37,12 @@ def plot_average_farms(args, filenames):
         except yaml.YAMLError as e:
             msg = "Failed parsing agromanagement file %s: %s" % (title_fname, e)
             print(msg)
+
+    return r, y
     
+
+def plot_average_farms(args, filenames):
+    r, y = load_labels(args)
 
     farm_avg = []
     farm_std = []
@@ -140,9 +146,71 @@ def plot_matrix(args, data_files, agents):
     plt.colorbar()
 
     plt.show()
-        
+
+def plot_season(dfs):
+    """
+    Plot the season where we represent each season's actions as 
+    fertilization and irrigation and plot the total growth
+    """
+
+    REQUIRED_VARS = ["TOTN", "TOTP", "TOTK", "TOTIRRIG", "WSO"]
+
+    cols = ['b','g','r','c','m','y','k']
+
+    """Assert all necessary params are present"""
+    for df in dfs:
+        utils.assert_vars(df, REQUIRED_VARS)
+
+    """Create fertilizer/irrigation values"""
+    new_totn = [np.array(df["TOTN"].copy()) for df in dfs]
+    new_totp = [np.array(df["TOTP"].copy()) for df in dfs]
+    new_totk = [np.array(df["TOTK"].copy()) for df in dfs]
+    new_totirrig = [np.array(df["TOTIRRIG"].copy()) for df in dfs]
+    
+    for i in range(len(dfs)): new_totn[i][1:] -= new_totn[i][:-1].copy()
+    for i in range(len(dfs)): new_totp[i][1:] -= new_totp[i][:-1].copy()
+    for i in range(len(dfs)): new_totk[i][1:] -= new_totk[i][:-1].copy()
+    for i in range(len(dfs)): new_totirrig[i][1:] -= new_totirrig[i][:-1].copy()
+
+    """Create indicies for graphing"""
+    totn_inds = [np.argwhere(new_totn[i] != 0).flatten() for i in range(len(dfs))]
+    totn_vals = [new_totn[i][totn_inds[i]] for i in range(len(dfs))]
+    totp_inds = [np.argwhere(new_totp[i] != 0).flatten() for i in range(len(dfs))]
+    totp_vals = [new_totp[i][totp_inds[i]] for i in range(len(dfs))]
+    totk_inds = [np.argwhere(new_totk[i] != 0).flatten() for i in range(len(dfs))]
+    totk_vals = [new_totk[i][totk_inds[i]] for i in range(len(dfs))]
+    totirrig_inds = [np.argwhere(new_totirrig[i] != 0).flatten() for i in range(len(dfs))]
+    totirrig_vals = [new_totirrig[i][totirrig_inds[i]] for i in range(len(dfs))]
+
+    fig, ax = plt.subplots(1)
+    ax.set_xlim(0, len(df))
+
+    max_y = np.max([np.max(new_totn), np.max(new_totp), np.max(new_totk), np.max(new_totirrig)])
+    ax.set_ylim(0, 100)
+    twinax = plt.twinx(ax)
+    
+    """Add fertilizer and irrigation patches to plot"""
+    n = [[patches.Rectangle((totn_inds[j][i],0), 1, totn_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totn_inds[j]))] for j in range(len(totn_inds))]
+    [[ax.add_patch(ni) for ni in nj] for nj in n]
+    p = [[patches.Rectangle((totp_inds[j][i],0), 1, totp_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totp_inds[j]))] for j in range(len(totn_inds))]
+    [[ax.add_patch(pi) for pi in pj] for pj in p]
+    k = [[patches.Rectangle((totk_inds[j][i],0), 1, totk_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totk_inds[j]))] for j in range(len(totn_inds))]
+    [[ax.add_patch(ki) for ki in kj] for kj in k]
+    w = [[patches.Rectangle((totirrig_inds[j][i],0), 1, totirrig_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totirrig_inds[j]))] for j in range(len(totn_inds))]
+    [[ax.add_patch(wi) for wi in wj] for wj in w]
+
+    [twinax.plot(dfs[i]["WSO"], color=cols[i]) for i in range(len(dfs))]
+
+    plt.show()
+
 if __name__ == "__main__":
 
+    dfs = utils.load_data_files(["data/weekly_n.csv", "data/triweekly_n.csv"])
+    print(dfs)
+    plot_season(dfs)
+
+
+    sys.exit(0)
     args = tyro.cli(NPK_Args)
 
     env_kwargs = {'args':args}

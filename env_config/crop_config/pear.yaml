@@ -237,6 +237,10 @@ CropParameters:
         - 320
         - Maximum length of crop cycle in a year
         - ['d']
+      MLDORM:
+        - 6
+        - Number of daylight hours below which dormancy is induced
+        - ['hr'
       #
       # VERNALIZATION
       #

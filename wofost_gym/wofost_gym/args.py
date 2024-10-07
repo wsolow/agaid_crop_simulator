@@ -260,6 +260,8 @@ class WOFOST_Args:
     DORMCD: float = None  
     """Initial age of crop (years)"""
     AGEI: float = None
+    """Daylength dormancy threshold"""
+    MLDORM: float = None
 
     # Respiration Parameters
     """Relative increase in maintenance repiration rate with each 10 degrees increase in temperature"""

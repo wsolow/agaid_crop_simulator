@@ -11,6 +11,7 @@ Written by: Will Solow, 2024
 import gymnasium as gym
 import warnings
 import numpy as np 
+import pandas as pd
 from dataclasses import dataclass, field
 
 import wofost_gym.wrappers.wrappers as wrappers
@@ -38,10 +39,14 @@ class Args:
     base_fpath: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
     """Relative path to agromanagement configuration file"""
     agro_fpath: str = "env_config/agro_config/annual_agro_npk.yaml"
-    """Relative path to crop configuration file"""
+    """Relative path to crop configuration folder"""
     crop_fpath: str = "env_config/crop_config/"
-    """Relative path to site configuration file"""
+    """Relative path to site configuration foloder"""
     site_fpath: str = "env_config/site_config/"
+    """Relative path to the state units """
+    unit_fpath: str = "env_config/param_units.yaml"
+    """Relative path to the state names"""
+    name_fpath: str = "env_config/param_names.yaml"
 
     """Policy name if using a policy in the policies.py file"""
     policy_name: str = None
@@ -54,7 +59,8 @@ class Args:
     long_range: list = field(default_factory = lambda: [5, 5])
 
 def get_gym_args(args: Args):
-    """Returns the Environment ID and required arguments for the WOFOST Gym
+    """
+    Returns the Environment ID and required arguments for the WOFOST Gym
     Environment
 
     Arguments:
@@ -66,14 +72,34 @@ def get_gym_args(args: Args):
     
     return args.env_id, env_kwargs
 
-
 def norm(x):
+    """
+    Take the norm ignoring nans
+    """
     return (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
 
+def load_data_files(df_names: list[str]) -> list[pd.DataFrame]:
+    """
+    Load datafiles as dataframe from CSV and return list
+    """
+    dfs = []
+    for dfn in df_names:
+        dfs.append(pd.read_csv(dfn, delimiter=',', index_col=0))
 
-# Function to wrap the environment with a given reward function
-# Based on the reward functions created in the wofost_gym/wrappers/
+    return dfs
+
+def assert_vars(df:pd.DataFrame, vars:list[str]):
+    """
+    Assert that required variables are present in dataframe
+    """
+    for var in vars:
+        assert var in df, f"{var} not in data" 
+
 def wrap_env_reward(env: gym.Env, args):
+    """
+    Function to wrap the environment with a given reward function
+    Based on the reward functions created in the wofost_gym/wrappers/
+    """
 
     if args.env_reward == "RewardFertilizationCostWrapper":
         print('Fertilization Cost Reward Function')
