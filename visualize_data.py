@@ -40,7 +40,6 @@ def load_labels(args):
 
     return r, y
     
-
 def plot_average_farms(args, filenames):
     r, y = load_labels(args)
 
@@ -147,15 +146,19 @@ def plot_matrix(args, data_files, agents):
 
     plt.show()
 
-def plot_season(dfs):
+def plot_season(dfs, names):
     """
     Plot the season where we represent each season's actions as 
     fertilization and irrigation and plot the total growth
     """
+    labels = [s.strip('.csv') for s in names]
+    labels = [s.strip('data/') for s in labels]
 
     REQUIRED_VARS = ["TOTN", "TOTP", "TOTK", "TOTIRRIG", "WSO"]
 
-    cols = ['b','g','r','c','m','y','k']
+    cols = ['#377eb8', '#ff7f00', '#4daf4a',
+                  '#f781bf', '#a65628', '#984ea3',
+                  '#999999', '#e41a1c', '#dede00']
 
     """Assert all necessary params are present"""
     for df in dfs:
@@ -184,10 +187,14 @@ def plot_season(dfs):
 
     fig, ax = plt.subplots(1)
     ax.set_xlim(0, len(df))
+    ax.set_xlabel('Days')
+    ax.set_ylabel('N Applied (kg/ha)')
+    ax.set_title('Yield Comparison of Two Fertilization Policies')
 
     max_y = np.max([np.max(new_totn), np.max(new_totp), np.max(new_totk), np.max(new_totirrig)])
     ax.set_ylim(0, 100)
     twinax = plt.twinx(ax)
+    twinax.set_ylabel('Yield (kg/ha)')
     
     """Add fertilizer and irrigation patches to plot"""
     n = [[patches.Rectangle((totn_inds[j][i],0), 1, totn_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totn_inds[j]))] for j in range(len(totn_inds))]
@@ -199,16 +206,38 @@ def plot_season(dfs):
     w = [[patches.Rectangle((totirrig_inds[j][i],0), 1, totirrig_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totirrig_inds[j]))] for j in range(len(totn_inds))]
     [[ax.add_patch(wi) for wi in wj] for wj in w]
 
-    [twinax.plot(dfs[i]["WSO"], color=cols[i]) for i in range(len(dfs))]
+    [twinax.plot(dfs[i]["WSO"], color=cols[i], label=labels[i]) for i in range(len(dfs))]
 
+    plt.legend()
+    plt.show()
+
+def plot_vars(dfs, names):
+    labels = [s.strip('.csv') for s in names]
+    labels = [s.strip('data/') for s in labels]
+
+    REQUIRED_VARS = []
+
+    cols = ['#377eb8', '#ff7f00', '#4daf4a',
+                  '#f781bf', '#a65628', '#984ea3',
+                  '#999999', '#e41a1c', '#dede00']
+
+    """Assert all necessary params are present"""
+    for df in dfs:
+        utils.assert_vars(df, REQUIRED_VARS)
+
+    for i in range(len(dfs[0].columns)):
+        plt.figure(i)
+        plt.title(dfs[0].columns[i])
+        for j in range(len(dfs)):
+            plt.plot(dfs[j].iloc[:,i], label=dfs[j].columns[i],c=cols[j])
+    
     plt.show()
 
 if __name__ == "__main__":
-
-    dfs = utils.load_data_files(["data/weekly_n.csv", "data/triweekly_n.csv"])
-    print(dfs)
-    plot_season(dfs)
-
+    names = ["data/weekly_n.csv", "data/below_n.csv"]
+    dfs = utils.load_data_files(names)
+    plot_season(dfs, names)
+    plot_vars(dfs, names)
 
     sys.exit(0)
     args = tyro.cli(NPK_Args)

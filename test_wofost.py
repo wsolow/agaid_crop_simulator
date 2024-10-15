@@ -22,7 +22,7 @@ import visualize_data
 
 if __name__ == "__main__":
     plot = False
-    plot2 = True
+    plot2 = False
     graph = False
     args = tyro.cli(Args)
 
@@ -43,6 +43,7 @@ if __name__ == "__main__":
         policy = policies.No_Action_Plant(env)
     else:
         policy = policies.Interval_N(env, amount=1, interval=7)
+        policy = policies.Below_N(env, threshold=10, amount=1)
 
     obs_arr = []
     obs, info = env.reset()
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     all_obs = np.array([list(d.values()) for d in obs_arr])
 
     df = pd.DataFrame(data=np.array(all_obs), columns=env.get_output_vars())
-    df.to_csv("data/weekly_n.csv")
+    df.to_csv("data/below_n.csv")
 
 
     all_vars = args.npk_args.output_vars + args.npk_args.forecast_length * args.npk_args.weather_vars

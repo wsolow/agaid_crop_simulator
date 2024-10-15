@@ -414,11 +414,9 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['FIN', 'DVS', 'WSO', 'LAI', 'SM', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG'])
+    output_vars: list = field(default_factory = lambda: ['FIN', 'DVS', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TEMP', 'RAIN'])
-    #weather_vars: list = field(default_factory = lambda: [])
-    
 
     """Intervention Interval"""
     intvn_interval: int = 1

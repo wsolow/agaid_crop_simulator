@@ -244,7 +244,7 @@ class No_Action_Plant(Policy):
 
 class Threshold_N(Policy):
     required_vars = ['TOTN']
-    def __init__(self, env: gym.Env, threshold: float, amount:int=1):
+    def __init__(self, env: gym.Env, threshold:float=10, amount:int=1):
         """Initialize the :class:`Threshold_N`.
 
         Args: 
@@ -262,7 +262,39 @@ class Threshold_N(Policy):
         if obs['TOTN'] > self.threshold:
             return {'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         else:
-            return {'n': 1, 'p': 0, 'k': 0, 'irrig':0 }
+            return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
+        
+    def _validate(self):
+        """Validates that the weekly amount is within the range of allowable actions
+        """
+        super()._validate()
+
+        if self.amount > self.env.num_fert:
+            msg = "N Amount exceeds total Nitrogen actions"
+            raise PolicyException(msg)
+        
+class Below_N(Policy):
+    required_vars = ['NAVAIL']
+
+    def __init__(self, env: gym.Env, threshold:float=1, amount:int=1):
+        """Initialize the :class:`Below_N`.
+
+        Args: 
+            env: The Gymnasium Environment
+            threshold: the amount of Nitrogen that can be applied
+            amount: the amount of Nitrogen to be applied
+        """
+        self.threshold = threshold
+        self.amount = amount
+        super().__init__(env, required_vars=self.required_vars)
+
+    def _get_action(self, obs):
+        """Returns an action that applies Nitrogen while below a certain threshold
+        """
+        if obs['NAVAIL'] < self.threshold:
+            return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
+        else:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         
     def _validate(self):
         """Validates that the weekly amount is within the range of allowable actions

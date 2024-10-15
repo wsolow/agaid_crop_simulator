@@ -310,7 +310,7 @@ CropParameters:
         - Relative death rate of stems as a function of Oxygen stress
         - ['-', 'kg.kg-1.d-1']
       RDRRNPK:
-        - [1.00, 0.000, 1.01, 0.000, 1.10, 0.050, 1.50, 0.100, 2.00, 0.300]
+        - [1.00, 0.000, 1.01, 0.000, 1.10, 0.010, 1.50, 0.020, 2.00, 0.050]
         - Relative death rate of roots as a function of NPK stress
         - ['-', 'kg.kg-1.d-1']
       RDRRTB:
@@ -355,7 +355,7 @@ CropParameters:
       # IMPACT OF N/P/K STRESS ON PROCESSES
       #
       NTHRESH:
-        - 2.00
+        - 4.00
         - surface N amount above which root and leaf death occur and storage organ
           partioning changes
         - ['-']

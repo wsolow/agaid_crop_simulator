@@ -58,6 +58,11 @@ class Args:
     """Longitude Range of values, incremented by .5"""
     long_range: list = field(default_factory = lambda: [5, 5])
 
+    """Agent type, for generating data"""
+    agent_type: str = None
+    """Agent path, for loading .pt agents"""
+    agent_path: str = None
+
 def get_gym_args(args: Args):
     """
     Returns the Environment ID and required arguments for the WOFOST Gym

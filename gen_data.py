@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 import sys
 
-from utils import NPK_Args
+from utils import Args
 import tyro
 import utils
 import wofost_gym.policies as policies
@@ -19,21 +19,15 @@ from inspect import getmembers, isfunction
 from rl_algs.ppo import Agent as ppo
 from rl_algs.sac import Actor as sac
 from rl_algs.dqn import QNetwork as dqn
-from wofost_gym.wrappers import NPKDiscreteWrapper
 
-# Make the Sync Vector Env with the correct wrapper 
 def make_env(kwargs):
+    env_id, env_kwargs = utils.get_gym_args(kwargs)
     def thunk():
-        env = gym.make(kwargs.env_id, **{'args': kwargs})
-        env = gym.wrappers.RecordEpisodeStatistics(env)
-        # Change the reward function used as specified by args.env_reward
+        env = gym.make(env_id, **env_kwargs)
         env = utils.wrap_env_reward(env, kwargs)
-
-        # Wrap the action space to discrete
-        env = NPKDiscreteWrapper(env)
-       
+        env = gym.wrappers.RecordEpisodeStatistics(env)
+        env = gym.wrappers.NormalizeReward(env)
         return env
-
     return thunk
 
 
@@ -53,7 +47,8 @@ def gen_data(env, args, pol):
     # Go through every year possibility
     obs_arr = []
 
-    df = pd.DataFrame(columns=["Year", "Latitude", "Longitude", "Date"]+args.output_vars+args.weather_vars+["Days Elapsed"])
+    df = pd.DataFrame(columns=["Year", "Latitude", "Longitude", "Date"]+ \
+                      args.npk_args.output_vars+args.npk_args.weather_vars+["Days Elapsed"])
 
     for pair in loc_yr:
         print(pair)
@@ -82,10 +77,9 @@ def gen_data(env, args, pol):
         
 if __name__ == "__main__":
 
-    args = tyro.cli(NPK_Args)
+    args = tyro.cli(Args)
 
-    env_kwargs = {'args':args}
-    env_id = args.env_id
+    env_id, env_kwargs = utils.get_gym_args(args)
 
     # Make the gym environment - should be as a SyncVectorEnv to support
     # Easy loading from PPO/SAC/DQN agentzs
@@ -93,7 +87,7 @@ if __name__ == "__main__":
     # Load the desired policy
     if args.policy_name == None:
         if args.agent_path == None:
-            env = gym.make(args.env_id, **{'args':args})
+            env = gym.make(env_id, **env_kwargs)
             env = utils.wrap_env_reward(env, args)
 
             policy = policies.default_policy
@@ -102,9 +96,8 @@ if __name__ == "__main__":
 
             envs= gym.vector.SyncVectorEnv([make_env(args) for i in range(1)],)
 
-            env = gym.make(args.env_id, **{'args':args})
+            env = gym.make(args.env_id, **env_kwargs)
             env = utils.wrap_env_reward(env, args)
-            env = NPKDiscreteWrapper(env)
     
             if args.agent_type == 'PPO':
                 policy = ppo(envs)
@@ -117,7 +110,7 @@ if __name__ == "__main__":
 
     else:
         try:
-            env = gym.make(args.env_id, **{'args':args})
+            env = gym.make(args.env_id, **env_kwargs)
             env = utils.wrap_env_reward(env, args)
 
             policy = dict(getmembers(policies, isfunction))[args.policy_name]
@@ -125,6 +118,7 @@ if __name__ == "__main__":
             print(f'No policy {args.policy_name} found in policies.py')
 
     df = gen_data(env, args, policy)
+
 
     sys.exit(0)
     df = pd.read_csv(args.save_folder, index_col=0)
