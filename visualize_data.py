@@ -13,7 +13,7 @@ import torch
 import sys
 import yaml
 
-from utils import NPK_Args
+from utils import Args
 import tyro
 import utils
 import wofost_gym.policies as policies
@@ -40,49 +40,51 @@ def load_labels(args):
 
     return r, y
     
-def plot_average_farms(args, filenames):
+def plot_average_farms(args, filenames, agents):
     r, y = load_labels(args)
 
-    farm_avg = []
-    farm_std = []
-    for f in filenames:
-        df = pd.read_csv(f'{args.save_folder}ppo_{f}.csv', index_col=0)
-        np_arr = df.to_numpy()
+    
+    for a in agents:
+        farm_avg = []
+        farm_std = []
+        for f in filenames:
+            df = pd.read_csv(f'{args.save_folder}{f}_{a}.csv', index_col=0)
+            np_arr = df.to_numpy()
 
-        sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
+            sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
 
-        arr = []
-        # Get all the individual runs within the data file 
-        for i in range(len(sim_starts)):
-            if i+1 >= len(sim_starts):
-                arr.append(np_arr[sim_starts[i]:])
-            else:
-                arr.append(np_arr[sim_starts[i]:sim_starts[i+1]])
+            arr = []
+            # Get all the individual runs within the data file 
+            for i in range(len(sim_starts)):
+                if i+1 >= len(sim_starts):
+                    arr.append(np_arr[sim_starts[i]:])
+                else:
+                    arr.append(np_arr[sim_starts[i]:sim_starts[i+1]])
 
-        # Clip the length of the simulation to the minimum value 
-        # Deals with data from leap years 
-        clipped_length = np.min([arr[i].shape[0] for i in range(len(arr))])
+            # Clip the length of the simulation to the minimum value 
+            # Deals with data from leap years 
+            clipped_length = np.min([arr[i].shape[0] for i in range(len(arr))])
 
-        clipped_arr = np.array([arr[i][:clipped_length] for i in range(len(arr))])[:,:,4:].astype('float32')
+            clipped_arr = np.array([arr[i][:clipped_length] for i in range(len(arr))])[:,:,4:].astype('float32')
 
-        #print(np.array(clipped_arr[:,:,4:]).dtype)
-        farm_avg.append(np.mean(clipped_arr, axis=0))
-        farm_std.append(np.std(clipped_arr, axis=0))
-        
-    farm_avg = np.array(farm_avg)
-    farm_std = np.array(farm_std)
-    plt.figure(0)
-    plt.title('Average Rewards')
+            #print(np.array(clipped_arr[:,:,4:]).dtype)
+            farm_avg.append(np.mean(clipped_arr, axis=0))
+            farm_std.append(np.std(clipped_arr, axis=0))
+            
+        farm_avg = np.array(farm_avg)
+        farm_std = np.array(farm_std)
+        plt.figure(0)
+        plt.title('Average Rewards')
+        ind = 2
+        for i in range(len(farm_avg)):
+            plt.plot(farm_avg[i,:,ind],label=filenames[i])
+            plt.fill_between(np.arange(clipped_length),farm_avg[i,:,ind]-farm_std[i,:,ind],farm_avg[i,:,ind]+farm_std[i,:,ind], alpha=.5, linestyle='solid')
+            plt.xlabel('Days')
+        plt.legend()
+        plt.show()
 
-    for i in range(len(farm_avg)):
-        plt.plot(farm_avg[i,:,-1],label=filenames[i])
-        plt.fill_between(np.arange(clipped_length),farm_avg[i,:,-1]-farm_std[i,:,-1],farm_avg[i,:,-1]+farm_std[i,:,-1], alpha=.5, linestyle='solid')
-        plt.xlabel('Days')
-    plt.legend()
-    plt.show()
 
-
-    all_vars = args.output_vars + args.weather_vars
+    '''all_vars = args.output_vars + args.weather_vars
     for j in range(len(all_vars)):
         plt.figure(j+1)
         plt.title(y[all_vars[j]])
@@ -94,7 +96,7 @@ def plot_average_farms(args, filenames):
             plt.fill_between(np.arange(clipped_length),farm_avg[i,:,j]-farm_std[i,:,j],farm_avg[i,:,j]+farm_std[i,:,j], alpha=.5, linestyle='solid')
         plt.plot(np.arange(len(farm_avg[i,:,j])), np.tile([15],len(farm_avg[i,:,j])), c='k', linestyle='dashed', label='Threshold')
         plt.legend()
-        plt.show()
+        plt.show()'''
 
 def plot_matrix(args, data_files, agents):
     ag_avg = []
@@ -104,7 +106,7 @@ def plot_matrix(args, data_files, agents):
         farm_std = []
         for i in range(len(data_files)):
             print(f'[{j},{i}], {agents[j]}, {data_files[i]}' )
-            df = pd.read_csv(f'{args.save_folder}ppo_{agents[j]}_{data_files[i]}.csv', index_col=0)
+            df = pd.read_csv(f'{args.save_folder}{data_files[i]}_{agents[j]}.csv', index_col=0)
             np_arr = df.to_numpy()
 
             sim_starts = np.argwhere(np_arr[:,-2]==1).flatten().astype('int32')
@@ -159,10 +161,21 @@ def plot_season(dfs, names):
     cols = ['#377eb8', '#ff7f00', '#4daf4a',
                   '#f781bf', '#a65628', '#984ea3',
                   '#999999', '#e41a1c', '#dede00']
+    linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
 
     """Assert all necessary params are present"""
     for df in dfs:
+        print(df["GWSO"])
+        print(np.cumsum(df["GWSO"]))
+        df.insert(6, "WSO", np.cumsum(df["GWSO"]))
+    for df in dfs:
         utils.assert_vars(df, REQUIRED_VARS)
+    new_dfs = []
+    for i in range(len(dfs)):
+        new_dfs.append(dfs[i].iloc[0:323])
+
+    dfs = new_dfs
+    print(new_dfs[0])
 
     """Create fertilizer/irrigation values"""
     new_totn = [np.array(df["TOTN"].copy()) for df in dfs]
@@ -186,29 +199,44 @@ def plot_season(dfs, names):
     totirrig_vals = [new_totirrig[i][totirrig_inds[i]] for i in range(len(dfs))]
 
     fig, ax = plt.subplots(1)
-    ax.set_xlim(0, len(df))
+    ax.set_xlim(0, len(dfs[0]))
     ax.set_xlabel('Days')
-    ax.set_ylabel('N Applied (kg/ha)')
+    ax.set_ylabel('Mineral Applied (kg/ha) (cm/ha)')
     ax.set_title('Yield Comparison of Two Fertilization Policies')
 
     max_y = np.max([np.max(new_totn), np.max(new_totp), np.max(new_totk), np.max(new_totirrig)])
-    ax.set_ylim(0, 100)
+    ax.set_ylim(0, 10)
     twinax = plt.twinx(ax)
     twinax.set_ylabel('Yield (kg/ha)')
     
     """Add fertilizer and irrigation patches to plot"""
-    n = [[patches.Rectangle((totn_inds[j][i],0), 1, totn_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totn_inds[j]))] for j in range(len(totn_inds))]
+    print(totirrig_inds)
+    n = [[patches.Rectangle((totn_inds[j][i],0), 1, totn_vals[j][i], color='g', linestyle=linestyles[j], alpha=.6) \
+          for i in range(len(totn_inds[j]))] for j in range(len(totn_inds))]
     [[ax.add_patch(ni) for ni in nj] for nj in n]
-    p = [[patches.Rectangle((totp_inds[j][i],0), 1, totp_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totp_inds[j]))] for j in range(len(totn_inds))]
+    p = [[patches.Rectangle((totp_inds[j][i],0), 1, totp_vals[j][i], color='m', linestyle=linestyles[j], alpha=.6) \
+          for i in range(len(totp_inds[j]))] for j in range(len(totn_inds))]
     [[ax.add_patch(pi) for pi in pj] for pj in p]
-    k = [[patches.Rectangle((totk_inds[j][i],0), 1, totk_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totk_inds[j]))] for j in range(len(totn_inds))]
+    k = [[patches.Rectangle((totk_inds[j][i],0), 1, totk_vals[j][i], color='y', linestyle=linestyles[j], alpha=.6) \
+          for i in range(len(totk_inds[j]))] for j in range(len(totn_inds))]
     [[ax.add_patch(ki) for ki in kj] for kj in k]
-    w = [[patches.Rectangle((totirrig_inds[j][i],0), 1, totirrig_vals[j][i], color=cols[j], alpha=.6) for i in range(len(totirrig_inds[j]))] for j in range(len(totn_inds))]
+    w = [[patches.Rectangle((totirrig_inds[j][i],0), 1, totirrig_vals[j][i], color='b', linestyle=linestyles[j], alpha=.6) \
+          for i in range(len(totirrig_inds[j]))] for j in range(len(totn_inds))]
     [[ax.add_patch(wi) for wi in wj] for wj in w]
 
-    [twinax.plot(dfs[i]["WSO"], color=cols[i], label=labels[i]) for i in range(len(dfs))]
-
-    plt.legend()
+    labs = [twinax.plot(dfs[i]["WSO"], color=cols[i], label=labels[i], linestyle=linestyles[i]) for i in range(len(dfs))]
+    
+    n = patches.Patch(color='g', alpha=.6, label='Nitrogen')
+    p = patches.Patch(color='m', alpha=.6, label='Phosphorous')
+    k = patches.Patch(color='y', alpha=.6, label='Potassium')
+    w = patches.Patch(color='b', alpha=.6, label='Water')
+    print(labs)
+    print([n,p,k,w])
+    print([n,p,k,w]+labs)
+    hands = [n,p,k,w]
+    [hands.append(labs[i][0]) for i in range(len(labs))]
+    print(hands)
+    plt.legend(handles=hands)
     plt.show()
 
 def plot_vars(dfs, names):
@@ -234,16 +262,15 @@ def plot_vars(dfs, names):
     plt.show()
 
 if __name__ == "__main__":
-    names = ["data/weekly_n.csv", "data/below_n.csv"]
+    names = ["data/tot_growth_ppo_default_farm_DEFAULT.csv", "data/tot_growth_ppo_co2_100_farm_DEFAULT.csv"]
     dfs = utils.load_data_files(names)
     plot_season(dfs, names)
-    plot_vars(dfs, names)
+    #plot_vars(dfs, names)
 
     sys.exit(0)
-    args = tyro.cli(NPK_Args)
+    args = tyro.cli(Args)
 
-    env_kwargs = {'args':args}
-    env_id = args.env_id
+    env_id, env_kwargs = utils.get_gym_args(args)
 
     # Farm
     output_vars = ['TOTN', 'TOTP', 'TOTK', 'GWSO', 'TOTIRRIG', 'DVS', 'LAI','RD', 'WSO','NAVAIL','PAVAIL','KAVAIL','WC','SM']
@@ -256,13 +283,16 @@ if __name__ == "__main__":
     # Make the gym environment - should be as a SyncVectorEnv to support
     # Easy loading from PPO/SAC/DQN agentzs
 
-    data_files = ['farm_default', 'farm_CO2_100', 'farm_CO2_450', 'farm_KSUB_.7', \
+    data_files = ['farm_DEFAULT', 'farm_CO2_100', 'farm_CO2_450', 'farm_KSUB_.7', \
                   'farm_RDMSOL_50', 'farm_RDMSOL_200', 'farm_SMLIM_.4', 'farm_SSI_2']
+    data_files = ['farm_DEFAULT', 'farm_CO2_100', 'farm_CO2_450', 'farm_KSUB_.7', \
+                  'farm_RDMSOL_50', 'farm_RDMSOL_200', 'farm_SSI_2']
     
-    agents = ['default', 'ksub_.7', 'co2_100', 'co2_450', 'rdmsol_50', 'rdmsol_200', 'ssi_2', 'smlim_.4']
+    #agents = ['default', 'ksub_.7', 'co2_100', 'co2_450', 'rdmsol_50', 'rdmsol_200', 'ssi_2', 'smlim_.4']
+    agents = ['belowi_0.3_2', 'belowi_0.4_1', 'belown_5_3', 'belown_10_1', 'intervaln_7_1', 'intervaln_28_3', 'intervalw_7_1', 'intervalw_28_3']
 
-    plot_average_farms(args, data_files)
-    #plot_matrix(args, data_files, agents)
+    #plot_average_farms(args, data_files, agents)
+    plot_matrix(args, data_files, agents)
 
     sys.exit(0)
     plt.figure(0)

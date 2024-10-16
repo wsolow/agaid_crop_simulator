@@ -50,6 +50,12 @@ class Policy:
         else:
             msg = "Observation Space is not of type `Dict`. Wrap Environment with NPKDictObservationWrapper before proceeding."
             raise PolicyException(msg)
+        
+        action = self.env.action_space.sample()
+
+        if not isinstance(action, dict):
+            msg = "Action Space is not of type `Dict`. Wrap Environment with NPKDictActionWrapper before proceeding."
+            raise PolicyException(msg)
 
     @abstractmethod     
     def _get_action(self, obs:dict):
@@ -57,6 +63,12 @@ class Policy:
         """
         msg = "Policy Subclass should implement this"
         raise NotImplementedError(msg) 
+    
+    @abstractmethod
+    def __str__(self):
+        """
+        Returns the string representation
+        """
 
 class No_Action(Policy):
     """Default policy performing no irrigation or fertilization actions
@@ -73,6 +85,12 @@ class No_Action(Policy):
 
     def _get_action(self, obs):
         return {'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+    
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"no_action"
     
 class Weekly_N(Policy):
     """Policy applying a small amount of Nitrogen every day
@@ -104,6 +122,12 @@ class Weekly_N(Policy):
         """Return an action with an amount of N fertilization
         """
         return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
+    
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"weeklyn_{self.amount}"
     
 class Interval_N(Policy):
     """Policy applying a small amount of Nitrogen at a given interval
@@ -139,6 +163,12 @@ class Interval_N(Policy):
             return {'n': self.amount, 'p': 0, 'k': 0, 'irrig':0 }
         else:
             return {'n': 0, 'p': 0, 'k': 0, 'irrig': 0}
+    
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"intervaln_{self.interval}_{self.amount}"
         
 class Interval_W(Policy):
     """Policy applying a small amount of Water at a given interval
@@ -174,6 +204,12 @@ class Interval_W(Policy):
             return {'n': 0, 'p': 0, 'k': 0, 'irrig':self.amount }
         else:
             return {'n': 0, 'p': 0, 'k': 0, 'irrig': 0}
+        
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"intervalw_{self.interval}_{self.amount}"
 
 
 class No_Action_Harvest(Policy):
@@ -207,6 +243,12 @@ class No_Action_Harvest(Policy):
             return {'harvest': 1, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         
         return {'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"noactionharvest"
     
 class No_Action_Plant(Policy):
     """Default policy for performing no irrigation or fertilization actions
@@ -241,6 +283,12 @@ class No_Action_Plant(Policy):
             return {'plant': 0, 'harvest': 1, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
         
         return {'plant': 0, 'harvest': 0, 'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+    
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"noactionplant"
 
 class Threshold_N(Policy):
     required_vars = ['TOTN']
@@ -273,6 +321,12 @@ class Threshold_N(Policy):
             msg = "N Amount exceeds total Nitrogen actions"
             raise PolicyException(msg)
         
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"thresholdn_{self.threshold}_{self.amount}"
+        
 class Below_N(Policy):
     required_vars = ['NAVAIL']
 
@@ -281,7 +335,7 @@ class Below_N(Policy):
 
         Args: 
             env: The Gymnasium Environment
-            threshold: the amount of Nitrogen that can be applied
+            threshold: the threshold below which to apply nitrogen
             amount: the amount of Nitrogen to be applied
         """
         self.threshold = threshold
@@ -304,3 +358,47 @@ class Below_N(Policy):
         if self.amount > self.env.num_fert:
             msg = "N Amount exceeds total Nitrogen actions"
             raise PolicyException(msg)
+
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"belown_{self.threshold}_{self.amount}"
+        
+class Below_I(Policy):
+    required_vars = ['SM']
+
+    def __init__(self, env: gym.Env, threshold:float=1, amount:int=1):
+        """Initialize the :class:`Below_I`.
+
+        Args: 
+            env: The Gymnasium Environment
+            threshold: the threshold below which to apply irrigation
+            amount: the amount of Irrigation to be applied
+        """
+        self.threshold = threshold
+        self.amount = amount
+        super().__init__(env, required_vars=self.required_vars)
+
+    def _get_action(self, obs):
+        """Returns an action that applies Nitrogen while below a certain threshold
+        """
+        if obs['SM'] < self.threshold:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig':self.amount }
+        else:
+            return {'n': 0, 'p': 0, 'k': 0, 'irrig':0 }
+        
+    def _validate(self):
+        """Validates that the weekly amount is within the range of allowable actions
+        """
+        super()._validate()
+
+        if self.amount > self.env.num_irrig:
+            msg = "N Amount exceeds total Irrigation actions"
+            raise PolicyException(msg)
+        
+    def __str__(self):
+        """
+        Returns a human readable string
+        """
+        return f"belowi_{self.threshold}_{self.amount}"
