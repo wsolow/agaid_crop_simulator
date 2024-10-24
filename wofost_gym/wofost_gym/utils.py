@@ -74,12 +74,12 @@ def make_config(soil: BaseSoilModuleWrapper=SoilModuleWrapper_LNPKW, crop: BaseC
         # PARTIONING RATES
             # NONE
         # VERNALIZATION STATES
-        "VERN", "DOV", "ISVERNALISED",
+        "VERN", "ISVERNALISED",
         # VERNALIZATION RATES
         "VERNR", "VERNFAC",   
         # PHENOLOGY STATES
-        "DVS", "TSUM", "TSUME", "DOS", "DOE", "DOA", "DOM", "DOH", "STAGE", "DSNG",
-        "DSD", "AGE", "DOP", "DATBE"
+        "DVS", "TSUM", "TSUME", "STAGE", "DSNG",
+        "DSD", "AGE", "DOP", "DATBE", "DOC", "DON", "DOB", "DOF", "DOV", "DOR", "DOL",
         # PHENOLOGY RATES
         "DTSUME", "DTSUM", "DVR", "RDEM",
         # RESPIRATION STATES

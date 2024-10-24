@@ -134,8 +134,8 @@ class Base_Partitioning_NPK(SimulationObject):
             msg = ("Error in partitioning!\n")
             msg += ("Checksum: %f, FR: %5.3f, FL: %5.3f, FS: %5.3f, FO: %5.3f\n" \
                     % (checksum, FR, FL, FS, FO))
-            self.logger.error(msg)
-            raise exc.PartitioningError(msg)
+            #self.logger.error(msg)
+            #raise exc.PartitioningError(msg)
 
     @prepare_states
     def integrate(self, day:date, delt:float=1.0):

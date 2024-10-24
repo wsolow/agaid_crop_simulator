@@ -366,7 +366,10 @@ class NPK_Env(gym.Env):
 
         observation = np.concatenate([crop_observation, weather_observation.flatten(), [days_elapsed.days]])
 
-        return observation.astype('float32')
+        for i in range(len(observation)):
+            if isinstance(observation[i], datetime.date):
+                observation[i] = int(observation[i].strftime('%Y%m%d'))
+        return observation.astype('float64')
 
     def _run_simulation(self):
         """Run the WOFOST model for the specified number of days

@@ -5,6 +5,7 @@ available_crops:
   - cotton
   - cowpea
   - fababean
+  - grape
   - groundnut
   - jujube
   - maize
@@ -24,3 +25,4 @@ available_crops:
   - tobacco
   - wheat
   - seed_onion
+

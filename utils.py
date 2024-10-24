@@ -38,7 +38,7 @@ class Args:
     """Path"""
     base_fpath: str = "/Users/wsolow/Projects/agaid_crop_simulator/"
     """Relative path to agromanagement configuration file"""
-    agro_fpath: str = "env_config/agro_config/annual_agro_npk.yaml"
+    agro_fpath: str = "env_config/agro_config/perennial_agro_npk.yaml"
     """Relative path to crop configuration folder"""
     crop_fpath: str = "env_config/crop_config/"
     """Relative path to site configuration foloder"""

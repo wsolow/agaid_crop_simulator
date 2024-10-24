@@ -414,7 +414,7 @@ class NPK_Args:
     
     """Output Variables"""
     """See env_config/README.md for more information"""
-    output_vars: list = field(default_factory = lambda: ['FIN', 'DVS', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG'])
+    output_vars: list = field(default_factory = lambda: ['FIN', 'DVS', 'WSO', 'NAVAIL', 'PAVAIL', 'KAVAIL', 'SM', 'TOTN', 'TOTP', 'TOTK', 'TOTIRRIG', 'DOC', 'DON', 'DOB', 'DOL', 'DOV', 'DOR', 'DOP'])
     """Weather Variables"""
     weather_vars: list = field(default_factory = lambda: ['IRRAD', 'TEMP', 'RAIN'])
 
@@ -485,8 +485,9 @@ GRAPH_OUTPUT_VARS = [
         # PHENOLOGY STATES
         "DVS", "TSUM", "TSUME", "DSNG",
         "DSD", "AGE",
+        "DOP", "DOC", "DON", "DOB", "DOF", "DOV", "DOR", "DOL",
         # PHENOLOGY RATES
-        "DTSUME", "DTSUM", "DVR", "AGER",
+        "DTSUME", "DTSUM", "DVR",
         # RESPIRATION STATES
             # NONE
         # RESPIRATION RATES

@@ -432,7 +432,6 @@ class CropCalendarPlant(BaseCropCalendar):
             self._send_signal(signal=signals.crop_finish, day=day,
                               finish_type=finish_type, crop_delete=True)
 
-
 class PerennialCropCalendar(BaseCropCalendar):
     """A crop calendar for managing the crop cycle.
 
@@ -450,7 +449,7 @@ class PerennialCropCalendar(BaseCropCalendar):
     :return: A CropCalendar Instance
     """
 
-    crop_start_type = Enum(["sowing", "emergence", "dormant"])
+    crop_start_type = Enum(["sowing", "emergence", "dormant", "endodorm", "ecodorm"])
 
     def __init__(self, kiosk, crop_name: str=None, variety_name: str=None, \
                  crop_start_date: date=None, crop_start_type: date=None, 
